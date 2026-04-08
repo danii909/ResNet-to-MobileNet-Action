@@ -124,21 +124,26 @@ TEACHER_JOB=$(CONFIG=experiments/configs/teacher.yaml sbatch --parsable cluster/
 CONFIG=experiments/configs/distillation.yaml sbatch --dependency=afterok:$TEACHER_JOB cluster/train.sh
 ```
 
-**Catena multipla (teacher -> baseline -> distillation) con script helper:**
+**Catena multipla (teacher -> baseline -> distillation):**
 
 ```bash
-bash cluster/submit_chain.sh \
-	experiments/configs/teacher.yaml \
-	experiments/configs/baseline.yaml \
-	experiments/configs/distillation.yaml
+CONFIGS="experiments/configs/teacher.yaml experiments/configs/baseline.yaml experiments/configs/distillation.yaml" \
+sbatch cluster/train_sequential.sh
 ```
 
-Lo script usa dipendenze `afterok`, quindi resta sempre attivo un solo job alla volta.
-Se un job fallisce, i successivi non partono.
+Questo e' il comando da usare per la sequenza completa quando vuoi eseguire tutti i training in ordine dentro un solo job SLURM.
+Se un run fallisce, lo script interrompe la sequenza e marca il job come `FAILED`.
+
+**Alias comodo da shell:**
+
+```bash
+source cluster/aliases.sh
+train-seq teacher.yaml baseline.yaml distillation.yaml
+```
 
 **Se ricevi `QOSMaxSubmitJobPerUserLimit`:**
 
-Alcuni account permettono solo 1 job totale (running + pending). In quel caso usa un solo job SLURM che esegue piu training in sequenza:
+Alcuni account permettono solo 1 job totale (running + pending). In quel caso usa sempre un solo job SLURM che esegue piu training in sequenza:
 
 ```bash
 CONFIGS="experiments/configs/teacher.yaml experiments/configs/baseline.yaml experiments/configs/distillation.yaml" \
@@ -157,6 +162,16 @@ CONFIG=experiments/configs/teacher.yaml \
 CHECKPOINT=experiments/checkpoints/teacher_finetune_best.pth \
 sbatch cluster/eval.sh
 ```
+
+### 4.4. Alias utili
+
+Se carichi gli alias con `source cluster/aliases.sh`, i comandi piu' utili per il training sono:
+
+- `train teacher.yaml` per lanciare un singolo training
+- `train-chain teacher.yaml baseline.yaml distillation.yaml` per una catena di job con dipendenze `afterok`
+- `train-seq teacher.yaml baseline.yaml distillation.yaml` per un singolo job SLURM con i training eseguiti in sequenza
+
+Per la sequenza completa, usa `train-seq` oppure direttamente `sbatch cluster/train_sequential.sh`.
 
 ---
 
