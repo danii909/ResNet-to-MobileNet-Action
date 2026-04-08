@@ -1,0 +1,215 @@
+# Analisi dettagliata dei risultati e dei problemi rilevati
+
+## Contesto sintetico
+
+La repo implementa tre scenari principali:
+
+- `teacher_finetune`: fine-tuning di un teacher 3D ResNet-50 pretrainato su Kinetics-400
+- `baseline`: training da zero di uno student MobileNet3D
+- `distillation`: student addestrato con knowledge distillation dal teacher
+
+I risultati osservati mostrano un pattern molto chiaro:
+
+- il teacher raggiunge una qualita' buona e stabile
+- lo student baseline si overfitta pesantemente
+- la distillation migliora poco la generalizzazione, ma non risolve il problema strutturale
+
+### Numeri chiave
+
+- Teacher finetune: `best_acc 83.29`, `final_test_acc 81.13`, `final_test_top5 96.38`
+- Baseline student: `best_acc 35.66`, `final_test_acc 35.34`, `final_test_top5 59.42`
+- Distillation student: `best_acc 38.86`, `final_test_acc 38.25`, `final_test_top5 63.97`
+
+La lettura corretta non e' solo "teacher meglio dello student". Il punto centrale e' che lo student mostra un divario enorme tra training e test:
+
+- baseline: `train_acc 99.70` vs `test_acc 35.34`
+- distillation: `train_acc 99.16` vs `test_acc 38.25`
+
+Questo significa che il modello piccolo riesce quasi a memorizzare il train set, ma generalizza molto male.
+
+## 1. Problema principale: overfitting dello student
+
+Il segnale piu' forte nei log e' il gap tra train e test. Quando un modello arriva quasi al 100% di train accuracy ma resta vicino al 35-38% su test, il problema non e' la capacita' di apprendimento, ma la capacita' di generalizzazione.
+
+Le cause piu' probabili sono tre:
+
+- dati troppo poco variati per lo student
+- regolarizzazione insufficiente rispetto alla difficolta' del task
+- distillation non abbastanza forte da guidare davvero lo student verso una rappresentazione piu' robusta
+
+In pratica lo student impara a riconoscere bene i pattern ricorrenti del training set, ma non riesce a costruire una rappresentazione abbastanza invariabile rispetto a posizione, timing, illuminazione, sfondo e piccoli cambiamenti di prospettiva.
+
+## 2. Perche' il teacher va meglio
+
+Il teacher parte da una base molto piu' forte: una 3D ResNet-50 pretrainata su Kinetics-400. Questo fa due differenze cruciali:
+
+- il backbone ha gia' visto tantissimi video e pattern temporali utili
+- la capacita' del modello e' molto maggiore, quindi la rappresentazione e' piu' ricca
+
+Il fine-tuning su UCF-101 si comporta quindi come un adattamento finale, non come apprendimento da zero. Per questo motivo il teacher riesce a mantenere una accuratezza test molto piu' alta.
+
+Il fatto che il teacher non arrivi molto oltre 83% non e' strano: UCF-101 non e' enorme, il task e' difficile e il fine-tuning completo con pochi dati puo' comunque introdurre una certa instabilita'. Ma nel complesso il teacher sta chiaramente nella zona giusta.
+
+## 3. Perche' le augmentazioni attuali sono deboli per il video
+
+Nel dataset loader le augmentazioni sono applicate frame per frame. Questo e' un dettaglio molto importante.
+
+Nel training dei video non basta aumentare la varieta' spaziale. Bisogna anche preservare la coerenza temporale del clip. Se ogni frame riceve trasformazioni casuali indipendenti, il video risultante puo' diventare artificialmente incoerente: il soggetto si sposta in modo innaturale, i bordi cambiano in maniera non correlata, e il modello vede una sequenza meno realistica.
+
+Perche' probabilmente l'implementazione e' stata fatta cosi:
+
+- semplicità: applicare torchvision transforms per-frame e' facile da implementare
+- compatibilita': funziona con PIL/tensor senza dover introdurre librerie video specifiche piu' complesse
+- riuso: la stessa pipeline puo' essere applicata sia a immagini singole sia a frame video
+- stabilita' tecnica: e' meno rischioso rispetto a scrivere una trasformazione video custom da zero
+
+Questa scelta e' comprensibile in una prima versione della repo, ma ha un costo importante: il clip non e' aumentato come oggetto temporale, ma come collezione di immagini indipendenti.
+
+Effetto pratico:
+
+- il modello vede una sequenza meno naturale
+- la spatial augmentation varia in modo non sincronizzato tra i frame
+- il segnale temporale puo' peggiorare invece di migliorare
+
+## 4. Perche' il sampling temporale attuale e' poco robusto
+
+Nel loader si usano frame uniformemente spazati con `linspace`. Anche qui la scelta ha una logica precisa:
+
+- garantisce che ogni clip abbia esattamente `num_frames` frame
+- evita di gestire clip molto corti o molto lunghi con logiche complicate
+- produce un input deterministico e facile da debuggare
+- rende il training riproducibile
+
+Questa e' una buona scelta come baseline infrastrutturale, ma non e' la migliore per generalizzare. Il motivo e' che il modello vede sempre gli stessi frame di un video, nello stesso ordine e nelle stesse posizioni relative. Quindi il dataset effettivo diventa piu' piccolo di quello reale.
+
+In altri termini:
+
+- il video viene normalizzato correttamente in lunghezza
+- ma si perde variabilita' temporale tra un'epoca e l'altra
+
+Per un task di action recognition, il temporal jitter e la selezione casuale di frame vicini o finestra temporale casuale spesso aiutano molto piu' di un campionamento fisso.
+
+## 5. Perche' la distillation non sta dando il salto atteso
+
+La knowledge distillation funziona bene quando il teacher fornisce un segnale informativo che va oltre le etichette hard. Qui invece il salto tra baseline e distillation e' piccolo.
+
+Le ragioni piu' probabili sono:
+
+- lo student e' gia' molto sovradeterminato dai dati e continua a overfittare
+- il peso della CE rimane alto rispetto al contributo del teacher
+- la temperatura e' relativamente bassa per un task con molte classi
+- non c'e' una fase di warmup strutturata che faccia prima stabilizzare lo student
+
+La distillation, cosi' com'e', segue una logica corretta ma conservativa: non forza abbastanza lo student a imitare la struttura della distribuzione del teacher. In pratica il modello continua a imparare soprattutto dalle label vere, e il teacher aggiunge solo un vincolo morbido.
+
+Perche' puo' essere stato progettato cosi':
+
+- `alpha = 0.4` privilegia la parte CE per non rischiare di copiare errori del teacher
+- `temperature = 3.0` mantiene distribuzioni meno piatte e quindi piu' vicine alle classi originali
+- e' una configurazione prudente, adatta a una prima sperimentazione
+
+Il problema e' che, per uno student piccolo e difficile da addestrare, la prudenza puo' tradursi in un distillatore troppo debole.
+
+## 6. Perche' il training del baseline overfitta cosi' tanto
+
+Il baseline student parte da zero. Questo significa che deve imparare contemporaneamente:
+
+- feature spaziali utili
+- dinamica temporale dei movimenti
+- separazione tra 101 classi
+
+E deve farlo con un modello relativamente piccolo. Se il dataset non e' sufficientemente diversificato dal punto di vista delle augmentazioni, il modello trova una scorciatoia: memorizza i pattern del train set.
+
+Altri fattori che aiutano l'overfitting:
+
+- dropout moderato ma non aggressivo
+- weight decay non molto forte
+- training lungo (60 epoche) senza evidenze di early stopping
+- uso di sampling deterministico dei frame
+
+Il risultato e' coerente con un modello che continua a migliorare sul train fino quasi alla perfezione, mentre il test si ferma molto prima.
+
+## 7. Il ruolo del loop di training
+
+Nel trainer, dopo il passo di ottimizzazione, il modello viene richiamato una seconda volta per calcolare accuracy sul train batch corrente.
+
+Perche' questa scelta puo' esserci:
+
+- facilita il calcolo della metrica senza salvare i logits del forward usato per la loss
+- mantiene il codice semplice e leggibile
+- separa il passaggio di ottimizzazione dal passaggio di logging
+
+Tuttavia, per i modelli con BatchNorm, un secondo forward in training mode non e' neutro: puo' aggiornare di nuovo le statistiche interne e introdurre una piccola distorsione. Non e' probabilmente la causa principale del crollo di prestazioni, ma e' un dettaglio tecnico da sistemare per pulizia e stabilita'.
+
+## 8. Perche' top-5 e' molto piu' alto di top-1
+
+Il gap tra top-1 e top-5 e' ampio, soprattutto nel teacher:
+
+- teacher: top-1 81.13, top-5 96.38
+- baseline: top-1 35.34, top-5 59.42
+- distillation: top-1 38.25, top-5 63.97
+
+Questo significa che il modello spesso e' "vicino" alla risposta corretta, ma non abbastanza sicuro da metterla al primo posto.
+
+Interpretazione:
+
+- il problema non e' solo confusione totale
+- il modello identifica una famiglia di classi plausibili
+- ma non riesce a ordinare bene le probabilita' tra classi simili
+
+Questo e' tipico di action recognition con classi semanticamente vicine. Il dato suggerisce che il modello ha una rappresentazione parziale del contenuto del video, ma non una discriminazione fine sufficientemente robusta.
+
+## 9. Perche' il preprocessing attuale e' comunque sensato come baseline
+
+Nonostante i limiti, gran parte della pipeline attuale ha una logica di base corretta:
+
+- usare UCF-101 e un teacher pretrained e' una scelta standard per knowledge distillation video
+- normalizzare con mean/std tipo Kinetics e' corretto per modelli pretrained su video dataset grandi
+- usare `num_frames` fisso rende il modello semplice da addestrare
+- usare mixed precision e cosine scheduler e' una combinazione ragionevole per stabilita' e velocita'
+- usare HF backend rende il setup piu' riproducibile e meno dipendente dal file system locale
+
+Quindi il problema non e' che la repo sia sbagliata in assoluto. Il punto e' che l'impostazione attuale e' ancora troppo "baseline-oriented" per estrarre il massimo da uno student video piccolo.
+
+## 10. Priorita' di correzione
+
+Se l'obiettivo e' migliorare davvero i numeri, l'ordine giusto e':
+
+1. Rendere coerenti le augmentazioni per clip
+- stesso crop, stesso flip, stesso resize per tutti i frame dello stesso video
+- aggiungere random temporal jitter
+
+2. Aumentare la variabilita' temporale
+- non usare sempre gli stessi frame
+- campionare finestre o indici in modo casuale nel training
+
+3. Rendere la distillation piu' incisiva
+- aumentare la temperatura
+- alzare alpha verso il segnale teacher
+- valutare un warmup CE + KD
+
+4. Rafforzare la regolarizzazione dello student
+- weight decay piu' alto
+- label smoothing
+- dropout leggermente maggiore
+
+5. Pulire il loop di training
+- evitare il secondo forward solo per logging
+
+## 11. Interpretazione finale dei risultati
+
+In modo diretto: i risultati attuali dicono che il teacher e' solido, ma lo student non ha ancora una pipeline di training abbastanza forte per generalizzare.
+
+La distillation non fallisce in senso assoluto: sta migliorando rispetto al baseline. Pero' il miglioramento e' troppo piccolo rispetto al gap che ci si aspetterebbe in un progetto di KD ben calibrato. Questo indica che il problema non e' solo il loss, ma soprattutto il modo in cui i video vengono campionati, trasformati e presentati al modello.
+
+Se si correggono preprocessing, sampling e bilanciamento della KD, lo student ha margine reale di crescita.
+
+## 12. Conclusione pratica
+
+Il messaggio piu' importante e' questo:
+
+- il teacher sta imparando bene perche' parte da una rappresentazione molto forte
+- lo student sta memorizzando il train perche' vede troppo poca variabilita' utile
+- la distillation attuale e' troppo conservativa per cambiare davvero questo comportamento
+
+Quindi il collo di bottiglia non e' solo il modello, ma soprattutto la pipeline video e la forza del segnale di regolarizzazione.
