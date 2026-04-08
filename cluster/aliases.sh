@@ -238,7 +238,7 @@ clean() {
 
 _KD_ALIASES="myjobs jobinfo killjob killalljobs trainlog lastlog metrics tree gpu quota diskusage proj ckpts configs train setup monitor pip-clean pip-setup pip-reset clean daniele unload-aliases install-aliases uninstall-aliases"
 
-# Submit multiple training configs in sequence (one active job at a time)
+# Submit multiple training configs as a dependency chain (one active job at a time)
 train-chain() {
     if [ "$#" -lt 1 ]; then
         echo "Uso: train-chain CONFIG1 [CONFIG2 ...]"
@@ -291,7 +291,7 @@ train-seq() {
 }
 
 # Mostra i comandi disponibili
-daniele() {
+sas() {
     echo "Comandi KD disponibili:"
     echo ""
     echo "-- Job management --"
@@ -311,7 +311,7 @@ daniele() {
     echo "   train-chain C1 [C2 ...]"
     echo "                     -- lancia una catena di training (afterok)"
     echo "   train-seq C1 [C2 ...]"
-    echo "                     -- un solo job SLURM con training sequenziali"
+    echo "                     -- un solo job SLURM con training sequenziali (usa train_sequential.sh)"
     echo "   setup             -- (ri)lancia cluster/setup.sh"
     echo "   configs           -- mostra config disponibili"
     echo "   monitor [--poll N] -- monitor live del training"
@@ -331,7 +331,7 @@ daniele() {
     echo "   pip-reset         -- pip-clean + pip-setup"
     echo ""
     echo "-- Meta --"
-    echo "   daniele           -- mostra questo messaggio"
+    echo "   sas               -- mostra questo messaggio"
     echo "   install-aliases   -- aggiungi alias al .bashrc"
     echo "   uninstall-aliases -- rimuovi alias dal .bashrc"
 }
@@ -369,4 +369,4 @@ uninstall-aliases() {
     unload-aliases
 }
 
-echo "Alias KD caricati. Digita 'daniele' per la lista comandi."
+echo "Alias KD caricati. Digita 'sas' per la lista comandi."
