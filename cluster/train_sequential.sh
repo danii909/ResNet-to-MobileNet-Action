@@ -1,0 +1,115 @@
+#!/bin/bash
+# ============================================================================
+# SLURM batch script - Run multiple trainings sequentially in ONE job.
+#
+# Use this when QoS allows only one submitted job per user.
+#
+# Usage:
+#   CONFIGS="experiments/configs/teacher.yaml experiments/configs/baseline.yaml experiments/configs/distillation.yaml" \
+#   sbatch cluster/train_sequential.sh
+#
+# Optional:
+#   EXTRA_ARGS="--override training.batch_size=16"
+# ============================================================================
+
+#SBATCH --job-name=kd-train-seq
+#SBATCH --account=dl-course-q2
+#SBATCH --partition=dl-course-q2
+#SBATCH --qos=gpu-xlarge
+#SBATCH --mem=48G
+#SBATCH --cpus-per-task=8
+#SBATCH --gres=gpu:1 --gres=shard:22528
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=your@email.com
+#SBATCH --output=logs/slurm-train-seq-%j.log
+
+set -euo pipefail
+
+CONFIGS="${CONFIGS:-}"
+EXTRA_ARGS="${EXTRA_ARGS:-}"
+
+if [ -z "$CONFIGS" ]; then
+    echo "CONFIGS is empty. Example:"
+    echo "  CONFIGS=\"experiments/configs/teacher.yaml experiments/configs/baseline.yaml\" sbatch cluster/train_sequential.sh"
+    exit 1
+fi
+
+echo "============================================"
+echo "  KD Sequential Training - Cluster DMI"
+echo "  Job ID:    ${SLURM_JOB_ID}"
+echo "  Node:      $(hostname)"
+echo "  Date:      $(date)"
+echo "  Configs:   ${CONFIGS}"
+echo "  Extra:     ${EXTRA_ARGS}"
+echo "============================================"
+
+mkdir -p logs
+
+export WANDB_MODE=offline
+export HF_DATASETS_OFFLINE=1
+export PYTORCH_ALLOC_CONF=garbage_collection_threshold:0.8
+
+cd "$HOME/dl26-projects"
+
+# One parent directory for the sequential job; each run gets a subfolder.
+PARENT_TAG="slurm-train-seq-${SLURM_JOB_ID:-nojob}"
+PARENT_DIR="$HOME/dl26-projects/experiments/logs/${PARENT_TAG}"
+mkdir -p "$PARENT_DIR"
+
+echo "parent_log_dir=${PARENT_DIR}" > "$PARENT_DIR/job_meta.txt"
+echo "started_at=$(date --iso-8601=seconds)" >> "$PARENT_DIR/job_meta.txt"
+
+idx=1
+total=$(echo "$CONFIGS" | wc -w)
+
+for cfg in $CONFIGS; do
+    if [ ! -f "$cfg" ]; then
+        echo "Config not found: $cfg"
+        exit 1
+    fi
+
+    run_tag="run-${idx}"
+    run_dir="$PARENT_DIR/$run_tag"
+    mkdir -p "$run_dir"
+    export TRAIN_LOG_DIR="$run_dir"
+
+    echo ""
+    echo "[${idx}/${total}] Starting: $cfg"
+    echo "run_config=${cfg}" > "$run_dir/job_meta.txt"
+    echo "started_at=$(date --iso-8601=seconds)" >> "$run_dir/job_meta.txt"
+
+    set +e
+    apptainer run --nv \
+        --env WANDB_MODE=offline \
+        --env PYTORCH_ALLOC_CONF=garbage_collection_threshold:0.8 \
+        --env PYTHONUNBUFFERED=1 \
+        --env HF_DATASETS_OFFLINE=1 \
+        /shared/sifs/latest.sif \
+        python -u -m src.training.train --config "$cfg" ${EXTRA_ARGS}
+    rc=$?
+    set -e
+
+    echo "finished_at=$(date --iso-8601=seconds)" >> "$run_dir/job_meta.txt"
+    echo "exit_code=${rc}" >> "$run_dir/job_meta.txt"
+
+    if [ "$rc" -ne 0 ]; then
+        touch "$run_dir/status_FAILED"
+        echo "[${idx}/${total}] FAILED: $cfg (exit code ${rc})"
+        echo "finished_at=$(date --iso-8601=seconds)" >> "$PARENT_DIR/job_meta.txt"
+        echo "overall_status=FAILED" >> "$PARENT_DIR/job_meta.txt"
+        exit "$rc"
+    fi
+
+    touch "$run_dir/status_SUCCESS"
+    echo "[${idx}/${total}] SUCCESS: $cfg"
+    idx=$((idx + 1))
+done
+
+echo "finished_at=$(date --iso-8601=seconds)" >> "$PARENT_DIR/job_meta.txt"
+echo "overall_status=SUCCESS" >> "$PARENT_DIR/job_meta.txt"
+
+echo ""
+echo "============================================"
+echo "  Sequential training completed!"
+echo "  $(date)"
+echo "============================================"

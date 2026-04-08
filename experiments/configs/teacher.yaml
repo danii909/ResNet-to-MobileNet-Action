@@ -1,0 +1,35 @@
+# Teacher fine-tuning: 3D ResNet-50 (slow_r50) on UCF-101
+# Usage: python -m src.training.train --config experiments/configs/teacher.yaml
+
+seed: 42
+
+model:
+  type: teacher
+  pretrained: true
+  freeze_backbone: false
+
+dataset:
+  data_dir: data/ucf101
+  num_classes: 101
+  num_frames: 16
+  crop_size: 112
+  backend: hf
+
+training:
+  mode: teacher_finetune
+  epochs: 40
+  batch_size: 12
+  num_workers: 4
+  optimizer: sgd
+  lr: 0.0005
+  momentum: 0.9
+  weight_decay: 0.0005
+  scheduler: cosine
+  grad_clip: 1.0
+  mixed_precision: true
+  checkpoint_dir: experiments/checkpoints
+
+logging:
+  enabled: true
+  project: kd-action-recognition
+  run_name: teacher-finetune-retuned

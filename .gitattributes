@@ -1,0 +1,4 @@
+# Force LF line endings for shell scripts (required for Unix/cluster)
+*.sh text eol=lf
+# Default: auto-detect for everything else
+* text=auto
