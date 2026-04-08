@@ -2,14 +2,16 @@
 
 import shutil
 import subprocess
+import urllib.request
 import zipfile
-from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
+from torchvision.transforms import InterpolationMode
+from torchvision.transforms import functional as F
 
 
 # Kinetics mean/std (used by most pretrained video models)
@@ -37,6 +39,62 @@ def _progress_hook(block_num: int, block_size: int, total_size: int) -> None:
         mb = downloaded / (1024 * 1024)
         total_mb = total_size / (1024 * 1024)
         print(f"\r  {mb:.1f}/{total_mb:.1f} MB ({pct}%)", end="", flush=True)
+
+
+def _sample_temporal_indices(total_frames: int, num_frames: int, train: bool) -> np.ndarray:
+    """Sample frame indices with optional temporal jitter."""
+    if total_frames <= 0:
+        raise RuntimeError("Cannot sample from an empty video/clip")
+
+    if total_frames < num_frames:
+        return np.arange(num_frames, dtype=int) % total_frames
+
+    if train:
+        boundaries = np.linspace(0, total_frames, num_frames + 1)
+        indices = []
+        for start, end in zip(boundaries[:-1], boundaries[1:]):
+            start_idx = int(np.floor(start))
+            end_idx = int(np.ceil(end))
+            end_idx = max(end_idx, start_idx + 1)
+            indices.append(np.random.randint(start_idx, min(end_idx, total_frames)))
+        return np.asarray(indices, dtype=int)
+
+    return np.linspace(0, total_frames - 1, num_frames, dtype=int)
+
+
+def _apply_clip_spatial_transform(
+    frames: torch.Tensor,
+    train: bool,
+    crop_size: int,
+) -> torch.Tensor:
+    """Apply the same spatial transform to all frames in a clip."""
+    resized_frames = torch.stack([
+        F.resize(frame, [128], interpolation=InterpolationMode.BILINEAR)
+        for frame in frames
+    ])
+
+    if train:
+        crop_i, crop_j, crop_h, crop_w = transforms.RandomCrop.get_params(
+            resized_frames[0], output_size=(crop_size, crop_size)
+        )
+        flip = np.random.rand() < 0.5
+        transformed_frames = [
+            F.crop(frame, crop_i, crop_j, crop_h, crop_w)
+            for frame in resized_frames
+        ]
+        if flip:
+            transformed_frames = [F.hflip(frame) for frame in transformed_frames]
+    else:
+        transformed_frames = [
+            F.center_crop(frame, [crop_size, crop_size])
+            for frame in resized_frames
+        ]
+
+    normalized_frames = [
+        F.normalize(frame, mean=KINETICS_MEAN, std=KINETICS_STD)
+        for frame in transformed_frames
+    ]
+    return torch.stack(normalized_frames)
 
 
 def download_ucf101(data_root: str = "data") -> tuple[Path, Path]:
@@ -120,26 +178,26 @@ def _try_import_decord():
         return None
 
 
-def _read_video_decord(path: str, num_frames: int) -> torch.Tensor:
+def _read_video_decord(path: str, num_frames: int, train: bool) -> torch.Tensor:
     """Read video using decord. Returns tensor of shape [T, H, W, C] uint8."""
     import decord
     vr = decord.VideoReader(path, num_threads=1)
     total = len(vr)
     if total == 0:
         raise RuntimeError(f"Empty video: {path}")
-    indices = np.linspace(0, total - 1, num_frames, dtype=int)
+    indices = _sample_temporal_indices(total, num_frames, train)
     frames = vr.get_batch(indices)  # [T, H, W, C] torch tensor
     return frames
 
 
-def _read_video_torchvision(path: str, num_frames: int) -> torch.Tensor:
+def _read_video_torchvision(path: str, num_frames: int, train: bool) -> torch.Tensor:
     """Fallback: read video using torchvision (pyav). Returns [T, H, W, C] uint8."""
     from torchvision.io import read_video as tv_read_video
     video, _, info = tv_read_video(path, pts_unit="sec")
     total = video.shape[0]
     if total == 0:
         raise RuntimeError(f"Empty video: {path}")
-    indices = np.linspace(0, total - 1, num_frames, dtype=int)
+    indices = _sample_temporal_indices(total, num_frames, train)
     return video[indices]
 
 
@@ -233,21 +291,13 @@ class UCF101Dataset(Dataset):
                 samples.append((full_path, label))
         return samples
 
-    def _build_transforms(self) -> transforms.Compose:
-        """Build spatial transforms applied per-frame."""
-        if self.train:
-            return transforms.Compose([
-                transforms.Resize(128),
-                transforms.RandomCrop(self.crop_size),
-                transforms.RandomHorizontalFlip(),
-                transforms.Normalize(mean=KINETICS_MEAN, std=KINETICS_STD),
-            ])
-        else:
-            return transforms.Compose([
-                transforms.Resize(128),
-                transforms.CenterCrop(self.crop_size),
-                transforms.Normalize(mean=KINETICS_MEAN, std=KINETICS_STD),
-            ])
+    def _build_transforms(self):
+        """Build clip-level spatial transforms."""
+        return lambda frames: _apply_clip_spatial_transform(
+            frames=frames,
+            train=self.train,
+            crop_size=self.crop_size,
+        )
 
     def __len__(self) -> int:
         return len(self.samples)
@@ -256,19 +306,13 @@ class UCF101Dataset(Dataset):
         path, label = self.samples[idx]
 
         # Read video: [T, H, W, C] uint8
-        frames = self._read_video(path, self.num_frames)
+        frames = self._read_video(path, self.num_frames, self.train)
 
         # Convert to float [T, C, H, W] in [0, 1]
         frames = frames.float() / 255.0
         frames = frames.permute(0, 3, 1, 2)  # [T, C, H, W]
 
-        # Apply spatial transforms (operate on each frame)
-        frames = torch.stack([self.spatial_transform(f) for f in frames])
-
-        # Reshape to [C, T, H, W] (channel-first for 3D CNNs)
-        clip = frames.permute(1, 0, 2, 3)
-
-        return clip, label
+        return self.spatial_transform(frames).permute(1, 0, 2, 3), label
 
 
 class UCF101HFDataset(Dataset):
@@ -335,22 +379,12 @@ class UCF101HFDataset(Dataset):
 
         self.spatial_transform = self._build_transforms()
 
-    def _build_transforms(self) -> transforms.Compose:
-        if self.train:
-            return transforms.Compose([
-                transforms.Resize(128),
-                transforms.RandomCrop(self.crop_size),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=KINETICS_MEAN, std=KINETICS_STD),
-            ])
-        else:
-            return transforms.Compose([
-                transforms.Resize(128),
-                transforms.CenterCrop(self.crop_size),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=KINETICS_MEAN, std=KINETICS_STD),
-            ])
+    def _build_transforms(self):
+        return lambda frames: _apply_clip_spatial_transform(
+            frames=frames,
+            train=self.train,
+            crop_size=self.crop_size,
+        )
 
     def __len__(self) -> int:
         return len(self.clips)
@@ -360,11 +394,7 @@ class UCF101HFDataset(Dataset):
 
         # Uniformly sample num_frames from the clip
         total = len(row_indices)
-        if total >= self.num_frames:
-            sample_indices = np.linspace(0, total - 1, self.num_frames, dtype=int)
-        else:
-            # Repeat frames if clip is too short
-            sample_indices = np.arange(self.num_frames) % total
+        sample_indices = _sample_temporal_indices(total, self.num_frames, self.train)
 
         selected = [row_indices[i] for i in sample_indices]
 
@@ -372,12 +402,10 @@ class UCF101HFDataset(Dataset):
         frames = []
         for row_idx in selected:
             img = self.hf_dataset[row_idx]["image"]  # PIL Image
-            frames.append(self.spatial_transform(img))
+            frames.append(F.to_tensor(img))
 
-        # Stack: [T, C, H, W] -> [C, T, H, W]
-        clip = torch.stack(frames).permute(1, 0, 2, 3)
-
-        return clip, label
+        clip = torch.stack(frames)  # [T, C, H, W]
+        return self.spatial_transform(clip).permute(1, 0, 2, 3), label
 
 
 def get_dataloaders(config: dict) -> dict[str, DataLoader]:

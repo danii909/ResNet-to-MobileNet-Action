@@ -59,6 +59,13 @@ class Trainer:
         # Mixed precision
         self.use_amp = tr_cfg.get("mixed_precision", True)
         self.scaler = torch.amp.GradScaler("cuda", enabled=self.use_amp)
+        self.label_smoothing = tr_cfg.get("label_smoothing", 0.0)
+        self.kd_warmup_epochs = tr_cfg.get(
+            "kd_warmup_epochs",
+            5 if self.mode in ("distillation", "distillation_at") else 0,
+        )
+        self.current_epoch = 0
+        self.hard_criterion = nn.CrossEntropyLoss(label_smoothing=self.label_smoothing)
 
         # Setup teacher for distillation
         if self.mode in ("distillation", "distillation_at") and self.teacher is not None:
@@ -322,17 +329,19 @@ class Trainer:
         kd_cfg = config.get("distillation", {})
 
         if self.mode in ("teacher_finetune", "baseline"):
-            return nn.CrossEntropyLoss()
+            return self.hard_criterion
         elif self.mode == "distillation":
             return KDLoss(
                 temperature=kd_cfg.get("temperature", 5.0),
                 alpha=kd_cfg.get("alpha", 0.7),
+                label_smoothing=self.label_smoothing,
             )
         elif self.mode == "distillation_at":
             return CombinedKDATLoss(
                 temperature=kd_cfg.get("temperature", 5.0),
                 alpha=kd_cfg.get("alpha", 0.7),
                 beta=kd_cfg.get("at_beta", 0.1),
+                label_smoothing=self.label_smoothing,
                 teacher_keys=kd_cfg.get("teacher_keys", [3, 4, 5]),
                 student_keys=kd_cfg.get("student_keys", [2, 4, 6]),
             )
@@ -413,6 +422,7 @@ class Trainer:
 
         last_metrics = None
         for epoch in range(self.start_epoch, self.epochs):
+            self.current_epoch = epoch
             train_metrics = self._train_epoch(epoch)
             test_metrics = self._evaluate(epoch)
 
@@ -474,7 +484,7 @@ class Trainer:
             self.optimizer.zero_grad()
 
             with torch.amp.autocast("cuda", enabled=self.use_amp):
-                loss = self._compute_loss(clips, labels)
+                loss, logits = self._compute_loss(clips, labels)
 
             self.scaler.scale(loss).backward()
 
@@ -487,12 +497,8 @@ class Trainer:
 
             running_loss += loss.item() * clips.size(0)
 
-            # Accuracy (use student logits for distillation modes)
+            # Accuracy from the logits already computed for the loss
             with torch.no_grad():
-                if self.mode in ("teacher_finetune", "baseline"):
-                    logits = self.model(clips)
-                else:
-                    logits = self.model(clips)
                 preds = logits.argmax(dim=1)
                 correct += (preds == labels).sum().item()
                 total += labels.size(0)
@@ -503,20 +509,24 @@ class Trainer:
         acc = 100.0 * correct / total
         return {"train_loss": avg_loss, "train_acc": acc}
 
-    def _compute_loss(self, clips: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+    def _compute_loss(self, clips: torch.Tensor, labels: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute loss depending on training mode."""
         if self.mode in ("teacher_finetune", "baseline"):
             logits = self.model(clips)
-            return self.criterion(logits, labels)
+            return self.criterion(logits, labels), logits
 
         elif self.mode == "distillation":
             student_logits = self.model(clips)
+            if self.current_epoch < self.kd_warmup_epochs:
+                return self.hard_criterion(student_logits, labels), student_logits
             with torch.no_grad():
                 teacher_logits = self.teacher(clips)
-            return self.criterion(student_logits, teacher_logits, labels)
+            return self.criterion(student_logits, teacher_logits, labels), student_logits
 
         elif self.mode == "distillation_at":
             student_logits = self.model(clips)
+            if self.current_epoch < self.kd_warmup_epochs:
+                return self.hard_criterion(student_logits, labels), student_logits
             with torch.no_grad():
                 teacher_logits = self.teacher(clips)
             teacher_feats = self.teacher.get_intermediate_features()
@@ -525,7 +535,7 @@ class Trainer:
                 student_logits, teacher_logits, labels,
                 teacher_feats, student_feats,
             )
-            return total
+            return total, student_logits
 
         raise ValueError(f"Unknown mode: {self.mode}")
 

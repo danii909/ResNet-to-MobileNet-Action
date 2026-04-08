@@ -16,11 +16,11 @@ class KDLoss(nn.Module):
         alpha: Weight for the distillation loss (1-alpha for CE).
     """
 
-    def __init__(self, temperature: float = 5.0, alpha: float = 0.7):
+    def __init__(self, temperature: float = 5.0, alpha: float = 0.7, label_smoothing: float = 0.0):
         super().__init__()
         self.temperature = temperature
         self.alpha = alpha
-        self.ce_loss = nn.CrossEntropyLoss()
+        self.ce_loss = nn.CrossEntropyLoss(label_smoothing=label_smoothing)
 
     def forward(
         self,
@@ -145,11 +145,16 @@ class CombinedKDATLoss(nn.Module):
         temperature: float = 5.0,
         alpha: float = 0.7,
         beta: float = 0.1,
+        label_smoothing: float = 0.0,
         teacher_keys: list[int] | None = None,
         student_keys: list[int] | None = None,
     ):
         super().__init__()
-        self.kd_loss = KDLoss(temperature=temperature, alpha=alpha)
+        self.kd_loss = KDLoss(
+            temperature=temperature,
+            alpha=alpha,
+            label_smoothing=label_smoothing,
+        )
         self.at_loss = AttentionTransferLoss(beta=beta)
         self.teacher_keys = teacher_keys or [3, 4, 5]
         self.student_keys = student_keys or [2, 4, 6]
