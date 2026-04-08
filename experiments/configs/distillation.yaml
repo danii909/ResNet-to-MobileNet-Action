@@ -22,18 +22,20 @@ training:
   optimizer: adamw
   lr: 0.0006
   momentum: 0.9
-  weight_decay: 0.001
+  weight_decay: 0.01
   scheduler: cosine
   grad_clip: 1.0
   mixed_precision: true
+  label_smoothing: 0.1
+  kd_warmup_epochs: 5
   checkpoint_dir: experiments/checkpoints
 
 distillation:
   teacher_checkpoint: experiments/checkpoints/teacher_finetune_best.pth
-  temperature: 3.0
-  alpha: 0.4
+  temperature: 8.0
+  alpha: 0.7
 
 logging:
   enabled: true
   project: kd-action-recognition
-  run_name: distillation-retuned-T3-a0.4
+  run_name: distillation-retuned-T8-a0.7-warmup5
