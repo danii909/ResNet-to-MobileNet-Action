@@ -68,7 +68,7 @@ echo "   Dipendenze installate."
 # -- 3. Scarica dataset UCF-101 da Hugging Face --------------------------------
 cd "$HOME/dl26-projects"
 
-export HF_TOKEN="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"
+export HF_TOKEN="${HF_TOKEN:-}"
 
 # Controlliamo se il dataset e' gia' in cache HF
 HF_CACHE_CHECK=$($PY -c "
