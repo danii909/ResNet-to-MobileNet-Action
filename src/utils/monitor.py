@@ -23,6 +23,7 @@ from pathlib import Path
 # -- Config -------------------------------------------------------------------
 PROJ_DIR = Path(os.environ.get("HOME", "~")) / "dl26-projects"
 LOGS_DIR = PROJ_DIR / "logs"
+EXP_LOGS_DIR = PROJ_DIR / "experiments" / "logs"
 
 # -- ANSI colors --------------------------------------------------------------
 _RST = "\033[0m"
@@ -66,6 +67,12 @@ class JobInfo:
     elapsed: str = ""
     exit_code: str = ""
     config: str = ""
+    training_type: str = ""
+    node: str = ""
+    gpu_name: str = ""
+    partition: str = ""
+    qos: str = ""
+    job_log_dir: str = ""
     # Training metrics (parsed from log)
     current_epoch: int = 0
     total_epochs: int = 0
@@ -92,22 +99,114 @@ def _run(cmd: str) -> str:
         return ""
 
 
+def _read_kv_file(path: Path) -> dict[str, str]:
+    if not path.exists():
+        return {}
+    out: dict[str, str] = {}
+    try:
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            if "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip()
+            if key:
+                out[key] = value
+    except OSError:
+        return {}
+    return out
+
+
+def _read_json_file(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    try:
+        import json
+
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _coalesce(*values: str) -> str:
+    for value in values:
+        if value and str(value).strip():
+            return str(value).strip()
+    return ""
+
+
+def _short(text: str, width: int) -> str:
+    if not text:
+        return "-"
+    if len(text) <= width:
+        return text
+    if width <= 3:
+        return text[:width]
+    return text[: width - 3] + "..."
+
+
+def _infer_training_type(mode: str, config_path: str) -> str:
+    mode_l = (mode or "").lower()
+    cfg_l = (config_path or "").lower()
+    if mode_l == "teacher_finetune" or "teacher" in cfg_l:
+        return "teacher"
+    if mode_l == "baseline" or "baseline" in cfg_l:
+        return "baseline"
+    if mode_l in ("distillation", "distillation_at") or "distill" in cfg_l:
+        return "distillation"
+    return "unknown"
+
+
+def _infer_pipeline_phase(job_dir: Path) -> tuple[str, str]:
+    """Return the current phase and config path for a train-eval pipeline job."""
+    phase_order = [
+        ("teacher", "teacher_finetune"),
+        ("baseline", "baseline"),
+        ("distillation", "distillation"),
+    ]
+
+    for phase_name, mode_name in phase_order:
+        phase_dir = job_dir / phase_name
+        train_dir = phase_dir / "train"
+        eval_dir = phase_dir / "eval"
+        if not phase_dir.exists():
+            continue
+
+        train_success = (train_dir / "status_SUCCESS").exists()
+        train_failed = (train_dir / "status_FAILED").exists()
+        eval_success = (eval_dir / "status_SUCCESS").exists()
+        eval_failed = (eval_dir / "status_FAILED").exists()
+
+        if not train_success or (train_success and not eval_success and not eval_failed):
+            train_meta = _read_kv_file(train_dir / "job_meta.txt")
+            return mode_name, train_meta.get("config", "")
+
+        if train_failed or eval_failed:
+            train_meta = _read_kv_file(train_dir / "job_meta.txt")
+            return mode_name, train_meta.get("config", "")
+
+    last_train_meta = _read_kv_file(job_dir / "distillation" / "train" / "job_meta.txt")
+    return "distillation", last_train_meta.get("config", "")
+
+
 # -- SLURM queries ------------------------------------------------------------
 def _get_my_jobs() -> list[JobInfo]:
     """Get all recent SLURM jobs (last 2 days) matching kd-train."""
     out = _run(
         "sacct --me --starttime=$(date -d '2 days ago' +%Y-%m-%d) "
-        "--format=JobID%15,JobName%20,State%15,Elapsed%12,ExitCode%10 "
+        "--format=JobID%15,JobName%20,State%15,Elapsed%12,ExitCode%10,NodeList%24,Partition%16,QOS%16 "
         "--noheader --parsable2"
     )
     jobs: list[JobInfo] = []
     seen_ids: set[str] = set()
     for line in out.splitlines():
         parts = line.split("|")
-        if len(parts) < 5:
+        if len(parts) < 8:
             continue
-        job_id, name, state, elapsed, exit_code = (
-            parts[0], parts[1], parts[2], parts[3], parts[4],
+        job_id, name, state, elapsed, exit_code, node, partition, qos = (
+            parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6], parts[7],
         )
         # Skip sub-steps
         if "." in job_id:
@@ -126,26 +225,43 @@ def _get_my_jobs() -> list[JobInfo]:
             state=state,
             elapsed=elapsed,
             exit_code=exit_code,
+            node=node,
+            partition=partition,
+            qos=qos,
         )
         jobs.append(job)
 
     # Also check squeue for pending/running not yet in sacct
-    sq_out = _run('squeue --me --noheader --format="%i|%j|%T|%M"')
+    sq_out = _run('squeue --me --noheader --format="%i|%j|%T|%M|%N|%P|%q"')
     for line in sq_out.splitlines():
         parts = line.strip().split("|")
-        if len(parts) < 4:
+        if len(parts) < 7:
             continue
-        sid, name, state, elapsed = parts[0], parts[1], parts[2], parts[3]
+        sid, name, state, elapsed, node, partition, qos = (
+            parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6],
+        )
         if sid in seen_ids:
             # Update state if running
             for j in jobs:
                 if j.slurm_id == sid:
                     j.state = state
                     j.elapsed = elapsed
+                    if node and node != "(null)":
+                        j.node = node
+                    if partition and partition != "(null)":
+                        j.partition = partition
+                    if qos and qos != "(null)":
+                        j.qos = qos
             continue
         seen_ids.add(sid)
         jobs.append(JobInfo(
-            slurm_id=sid, name=name, state=state, elapsed=elapsed,
+            slurm_id=sid,
+            name=name,
+            state=state,
+            elapsed=elapsed,
+            node=node,
+            partition=partition,
+            qos=qos,
         ))
 
     # Sort by ID descending (most recent first)
@@ -163,25 +279,78 @@ _EPOCH_RE = re.compile(
     r"LR: ([\d.]+)"
 )
 _CONFIG_RE = re.compile(r"Config:\s+(\S+)")
+_CONFIGS_RE = re.compile(r"Configs:\s+(.+)")
+_SEQ_START_RE = re.compile(r"\[\d+/\d+\]\s+Starting:\s+(\S+)")
+_MODE_RE = re.compile(r"Training mode:\s+([A-Za-z0-9_]+)")
+_NODE_RE = re.compile(r"^\s*Node:\s+(\S+)")
+_GPU_RE = re.compile(r"\[main\]\s+GPU:\s+(.+)")
 _TQDM_RE = re.compile(r"(\d+)%\|.*\|\s*(\d+)/(\d+)")
 _STARTING_RE = re.compile(r"Starting training.*epochs=(\d+)")
 
 
+def _enrich_from_job_artifacts(job: JobInfo) -> None:
+    """Enrich a job with metadata saved under experiments/logs."""
+    candidate_dirs = [
+        EXP_LOGS_DIR / f"slurm-train-eval-{job.slurm_id}",
+        EXP_LOGS_DIR / f"slurm-train-{job.slurm_id}",
+        EXP_LOGS_DIR / f"slurm-train-seq-{job.slurm_id}",
+    ]
+    job_dir = next((p for p in candidate_dirs if p.exists()), None)
+    if job_dir is None:
+        return
+
+    job.job_log_dir = str(job_dir)
+
+    root_meta = _read_kv_file(job_dir / "job_meta.txt")
+    job.config = _coalesce(job.config, root_meta.get("config", ""))
+    job.node = _coalesce(job.node, root_meta.get("hostname", ""))
+    job.gpu_name = _coalesce(job.gpu_name, root_meta.get("gpu_name", ""))
+    job.partition = _coalesce(job.partition, root_meta.get("partition", ""))
+    job.qos = _coalesce(job.qos, root_meta.get("qos", ""))
+    job.training_type = _coalesce(job.training_type, root_meta.get("training_type", ""))
+
+    if "slurm-train-eval-" in job_dir.name:
+        phase_type, phase_config = _infer_pipeline_phase(job_dir)
+        job.training_type = _coalesce(job.training_type, phase_type)
+        job.config = _coalesce(job.config, phase_config)
+
+    summary = _read_json_file(job_dir / "job_training_summary.json")
+    runs = summary.get("runs") if isinstance(summary.get("runs"), list) else []
+    if not runs:
+        return
+
+    latest = runs[-1]
+    if isinstance(latest, dict):
+        job.config = _coalesce(job.config, latest.get("config_path", ""))
+        job.node = _coalesce(job.node, latest.get("node", ""))
+        job.gpu_name = _coalesce(job.gpu_name, latest.get("gpu", ""))
+        job.training_type = _coalesce(job.training_type, latest.get("training_type", ""))
+
+
 def _parse_log(job: JobInfo) -> None:
     """Parse the SLURM log file for a job and populate metrics."""
+    _enrich_from_job_artifacts(job)
+
     candidate_paths = [
+        LOGS_DIR / f"slurm-train-eval-{job.slurm_id}.log",
         LOGS_DIR / f"slurm-train-{job.slurm_id}.log",
         LOGS_DIR / f"slurm-train-seq-{job.slurm_id}.log",
     ]
 
     log_path = next((p for p in candidate_paths if p.exists()), None)
     if log_path is None:
+        if not job.training_type:
+            job.training_type = _infer_training_type("", job.config)
         return
 
     try:
         lines = log_path.read_text(errors="replace").splitlines()
     except OSError:
+        if not job.training_type:
+            job.training_type = _infer_training_type("", job.config)
         return
+
+    seen_mode = ""
 
     # Parse from end for latest metrics
     for line in reversed(lines):
@@ -196,12 +365,36 @@ def _parse_log(job: JobInfo) -> None:
             job.lr = m.group(7)
             break
 
-    # Parse config from top
-    for line in lines[:30]:
-        m = _CONFIG_RE.search(line)
+    # Parse current config for sequential jobs from latest start marker.
+    for line in reversed(lines[-250:]):
+        m = _SEQ_START_RE.search(line)
         if m:
             job.config = m.group(1)
             break
+
+    # Parse config/mode/node/gpu from top section.
+    for line in lines[:150]:
+        m = _CONFIG_RE.search(line)
+        if m and not job.config:
+            job.config = m.group(1)
+
+        m = _CONFIGS_RE.search(line)
+        if m and not job.config:
+            all_cfgs = m.group(1).split()
+            if all_cfgs:
+                job.config = all_cfgs[0]
+
+        m = _MODE_RE.search(line)
+        if m:
+            seen_mode = m.group(1)
+
+        m = _NODE_RE.search(line)
+        if m and (not job.node or job.node in ("Unknown", "None assigned")):
+            job.node = m.group(1)
+
+        m = _GPU_RE.search(line)
+        if m and not job.gpu_name:
+            job.gpu_name = m.group(1).strip()
 
     # If no epoch found yet, check for starting message
     if job.total_epochs == 0:
@@ -219,6 +412,14 @@ def _parse_log(job: JobInfo) -> None:
             job.tqdm_step = int(m.group(2))
             job.tqdm_total = int(m.group(3))
             break
+
+    if not job.training_type or job.training_type == "unknown":
+        job.training_type = _infer_training_type(seen_mode, job.config)
+    if not job.training_type or job.training_type == "unknown":
+        if "slurm-train-eval-" in job.job_log_dir:
+            phase_type, phase_config = _infer_pipeline_phase(Path(job.job_log_dir))
+            job.training_type = phase_type
+            job.config = _coalesce(job.config, phase_config)
 
 
 # -- GPU info -----------------------------------------------------------------
@@ -276,24 +477,31 @@ def _display(jobs: list[JobInfo]) -> None:
         return
 
     # -- Job table
-    print(f"\n  {_BOLD}{'ID':<12s} {'Config':<30s} {'Stato':<12s} {'Tempo':<12s}{_RST}")
-    print(f"  {'-' * 66}")
+    print(
+        f"\n  {_BOLD}{'ID':<10s} {'Type':<13s} {'Config':<20s} "
+        f"{'Node':<14s} {'GPU':<20s} {'Stato':<10s} {'Tempo':<10s}{_RST}"
+    )
+    print(f"  {'-' * 108}")
 
     for job in jobs[:10]:  # Show last 10 jobs max
         _parse_log(job)
         icon = _STATE_ICONS.get(job.state, "?")
         sc = _STATE_COLORS.get(job.state, "")
 
-        config_short = Path(job.config).stem if job.config else job.name
-        state_str = f"{sc}{job.state}{_RST}"
+        config_short = _short(Path(job.config).stem if job.config else job.name, 20)
+        type_short = _short(job.training_type or _infer_training_type("", job.config), 13)
+        node_short = _short(job.node, 14)
+        gpu_short = _short(job.gpu_name, 20)
+        state_str = f"{sc}{_short(job.state, 10)}{_RST}"
 
         detail = ""
         if job.state == "FAILED" and job.exit_code:
             detail = f" {_RED}(exit {job.exit_code}){_RST}"
 
         print(
-            f"  {icon} {job.slurm_id:<10s} {config_short:<30s} "
-            f"{state_str:<22s} {_DIM}{job.elapsed}{_RST}{detail}"
+            f"  {icon} {job.slurm_id:<8s} {type_short:<13s} {config_short:<20s} "
+            f"{node_short:<14s} {gpu_short:<20s} {state_str:<19s} "
+            f"{_DIM}{_short(job.elapsed, 10)}{_RST}{detail}"
         )
 
     # -- Active job details
@@ -303,6 +511,16 @@ def _display(jobs: list[JobInfo]) -> None:
         _parse_log(j)
         print(f"\n{_CYAN}{'-' * 70}{_RST}")
         print(f"  {_BOLD}{_CYAN}Job attivo:{_RST} {j.slurm_id} ({Path(j.config).stem if j.config else j.name})")
+        print(f"  Tipo: {_WHITE}{j.training_type or _infer_training_type('', j.config)}{_RST}")
+        print(f"  Nodo: {_WHITE}{j.node or '-'}{_RST}")
+        print(f"  GPU: {_WHITE}{j.gpu_name or '-'}{_RST}")
+        if j.partition or j.qos:
+            print(f"  Partition/QoS: {_WHITE}{j.partition or '-'} / {j.qos or '-'}{_RST}")
+        if j.job_log_dir:
+            print(f"  Job log dir: {_DIM}{j.job_log_dir}{_RST}")
+            summary_path = Path(j.job_log_dir) / "job_training_summary.txt"
+            if summary_path.exists():
+                print(f"  Job summary: {_DIM}{summary_path}{_RST}")
         print(f"  Tempo: {_WHITE}{j.elapsed}{_RST}")
 
         if j.current_epoch > 0:
