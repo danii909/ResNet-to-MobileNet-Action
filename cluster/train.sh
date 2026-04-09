@@ -39,12 +39,31 @@ fi
 # â”€â”€ Setup ambiente â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 set -e
 
+infer_training_type() {
+    local cfg_lower
+    cfg_lower=$(basename "$1" | tr '[:upper:]' '[:lower:]')
+    if [[ "$cfg_lower" == *"teacher"* ]]; then
+        echo "teacher"
+    elif [[ "$cfg_lower" == *"baseline"* ]]; then
+        echo "baseline"
+    elif [[ "$cfg_lower" == *"distill"* ]]; then
+        echo "distillation"
+    else
+        echo "unknown"
+    fi
+}
+
+TRAINING_TYPE="$(infer_training_type "$CONFIG")"
+GPU_NAME="$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1 || true)"
+GPU_NAME="${GPU_NAME:-unknown}"
+
 echo "============================================"
 echo "  KD Training â€” Cluster DMI"
 echo "  Job ID:    ${SLURM_JOB_ID}"
 echo "  Node:      $(hostname)"
 echo "  Date:      $(date)"
 echo "  Config:    ${CONFIG}"
+echo "  Type:      ${TRAINING_TYPE}"
 echo "  Extra:     ${EXTRA_ARGS}"
 echo "============================================"
 
@@ -55,7 +74,7 @@ mkdir -p logs
 export WANDB_MODE=offline
 # HF datasets offline (usa la cache scaricata da setup.sh)
 export HF_DATASETS_OFFLINE=1
-export HF_TOKEN="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"
+export HF_TOKEN="${HF_TOKEN:-}"
 # Memory management
 export PYTORCH_ALLOC_CONF=garbage_collection_threshold:0.8
 
@@ -67,12 +86,18 @@ JOB_TAG="slurm-train-${SLURM_JOB_ID:-nojob}"
 JOB_LOG_DIR="$HOME/dl26-projects/experiments/logs/${JOB_TAG}"
 mkdir -p "$JOB_LOG_DIR"
 export TRAIN_LOG_DIR="$JOB_LOG_DIR"
+export TRAIN_CONFIG_PATH="$CONFIG"
+export TRAINING_TYPE="$TRAINING_TYPE"
 
 # Salva metadati minimi del job in anticipo
 {
     echo "job_tag=${JOB_TAG}"
     echo "slurm_job_id=${SLURM_JOB_ID}"
+    echo "partition=${SLURM_JOB_PARTITION:-}"
+    echo "qos=${SLURM_JOB_QOS:-}"
+    echo "training_type=${TRAINING_TYPE}"
     echo "hostname=$(hostname)"
+    echo "gpu_name=${GPU_NAME}"
     echo "started_at=$(date --iso-8601=seconds)"
     echo "config=${CONFIG}"
     echo "extra_args=${EXTRA_ARGS}"
@@ -99,7 +124,7 @@ apptainer run --nv \
     --env PYTORCH_ALLOC_CONF=garbage_collection_threshold:0.8 \
     --env PYTHONUNBUFFERED=1 \
     --env HF_DATASETS_OFFLINE=1 \
-    --env HF_TOKEN="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" \
+    ${HF_TOKEN:+--env HF_TOKEN="$HF_TOKEN"} \
     /shared/sifs/latest.sif \
     python -u -m src.training.train --config "${CONFIG}" ${EXTRA_ARGS}
 TRAIN_EXIT_CODE=$?
@@ -118,6 +143,9 @@ if [ "$TRAIN_EXIT_CODE" -eq 0 ]; then
 else
     touch "$JOB_LOG_DIR/status_FAILED"
 fi
+
+# Build aggregate summary for this job directory.
+python3 -u -m src.utils.job_summary --job-log-dir "$JOB_LOG_DIR" --quiet || true
 
 echo ""
 echo "============================================"
