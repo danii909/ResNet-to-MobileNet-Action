@@ -34,8 +34,8 @@ Obiettivo:
 Cosa cambia:
 - config base: experiments/configs/baseline.yaml
 - training.weight_decay=0.02
-- training.checkpoint_dir=experiments/checkpoints/next_runs_4041/baseline_wd002_ls01
-- training.run_log_dir=experiments/logs/next_runs_4041/baseline_wd002_ls01/train
+- training.checkpoint_dir=experiments/checkpoints/slurm-multiple-runs-<JOBID>/baseline_wd002_ls01
+- training.run_log_dir=experiments/logs/slurm-multiple-runs-<JOBID>/baseline_wd002_ls01/train
 - logging.run_name=baseline-wd002-ls01
 
 Cosa ci aspettiamo:
@@ -55,8 +55,8 @@ Cosa cambia:
 - training.lr=0.0006
 - training.weight_decay=0.01
 - training.kd_warmup_epochs=5
-- training.checkpoint_dir=experiments/checkpoints/next_runs_4041/kd_t6_a06
-- training.run_log_dir=experiments/logs/next_runs_4041/kd_t6_a06/train
+- training.checkpoint_dir=experiments/checkpoints/slurm-multiple-runs-<JOBID>/kd_t6_a06
+- training.run_log_dir=experiments/logs/slurm-multiple-runs-<JOBID>/kd_t6_a06/train
 - logging.run_name=kd-t6-a06
 
 Cosa ci aspettiamo:
@@ -75,8 +75,8 @@ Cosa cambia:
 - training.lr=0.0006
 - training.weight_decay=0.01
 - training.kd_warmup_epochs=5
-- training.checkpoint_dir=experiments/checkpoints/next_runs_4041/kd_t10_a07
-- training.run_log_dir=experiments/logs/next_runs_4041/kd_t10_a07/train
+- training.checkpoint_dir=experiments/checkpoints/slurm-multiple-runs-<JOBID>/kd_t10_a07
+- training.run_log_dir=experiments/logs/slurm-multiple-runs-<JOBID>/kd_t10_a07/train
 - logging.run_name=kd-t10-a07
 
 Cosa ci aspettiamo:
@@ -95,8 +95,8 @@ Cosa cambia:
 - training.lr=0.0005
 - training.weight_decay=0.02
 - training.kd_warmup_epochs=5
-- training.checkpoint_dir=experiments/checkpoints/next_runs_4041/kd_t6_a06_lr5e4_wd002
-- training.run_log_dir=experiments/logs/next_runs_4041/kd_t6_a06_lr5e4_wd002/train
+- training.checkpoint_dir=experiments/checkpoints/slurm-multiple-runs-<JOBID>/kd_t6_a06_lr5e4_wd002
+- training.run_log_dir=experiments/logs/slurm-multiple-runs-<JOBID>/kd_t6_a06_lr5e4_wd002/train
 - logging.run_name=kd-t6-a06-lr5e4-wd002
 
 Cosa ci aspettiamo:
@@ -109,10 +109,10 @@ Per ogni training, eseguire evaluation dedicata con:
 - checkpoint best della run
 
 Checkpoint usati in evaluation:
-- Run A: experiments/checkpoints/next_runs_4041/baseline_wd002_ls01/baseline_best.pth
-- Run B: experiments/checkpoints/next_runs_4041/kd_t6_a06/distillation_best.pth
-- Run C: experiments/checkpoints/next_runs_4041/kd_t10_a07/distillation_best.pth
-- Run D: experiments/checkpoints/next_runs_4041/kd_t6_a06_lr5e4_wd002/distillation_best.pth
+- Run A: experiments/checkpoints/slurm-multiple-runs-<JOBID>/baseline_wd002_ls01/baseline_best.pth
+- Run B: experiments/checkpoints/slurm-multiple-runs-<JOBID>/kd_t6_a06/distillation_best.pth
+- Run C: experiments/checkpoints/slurm-multiple-runs-<JOBID>/kd_t10_a07/distillation_best.pth
+- Run D: experiments/checkpoints/slurm-multiple-runs-<JOBID>/kd_t6_a06_lr5e4_wd002/distillation_best.pth
 
 ## 3) Criterio di scelta finale (semplice)
 

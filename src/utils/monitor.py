@@ -159,6 +159,29 @@ def _infer_training_type(mode: str, config_path: str) -> str:
     return "unknown"
 
 
+def _infer_training_type_from_run_name(run_name: str) -> str:
+    """Infer training type from the custom run label used in multi-run scripts."""
+    name_l = (run_name or "").lower()
+    if "teacher" in name_l:
+        return "teacher"
+    if "baseline" in name_l:
+        return "baseline"
+    if "kd" in name_l or "distill" in name_l:
+        return "distillation"
+    return "unknown"
+
+
+def _default_config_for_type(training_type: str) -> str:
+    """Return the canonical config path for a known training type."""
+    if training_type == "teacher":
+        return "experiments/configs/teacher.yaml"
+    if training_type == "baseline":
+        return "experiments/configs/baseline.yaml"
+    if training_type == "distillation":
+        return "experiments/configs/distillation.yaml"
+    return ""
+
+
 def _infer_pipeline_phase(job_dir: Path) -> tuple[str, str]:
     """Return the current phase and config path for a train-eval pipeline job."""
     phase_order = [
@@ -281,6 +304,8 @@ _EPOCH_RE = re.compile(
 _CONFIG_RE = re.compile(r"Config:\s+(\S+)")
 _CONFIGS_RE = re.compile(r"Configs:\s+(.+)")
 _SEQ_START_RE = re.compile(r"\[\d+/\d+\]\s+Starting:\s+(\S+)")
+_MULTI_TRAIN_START_RE = re.compile(r"^>>>\s+TRAINING:\s+(\S+)")
+_MULTI_CONFIG_RE = re.compile(r"^\s*config:\s+(\S+)")
 _MODE_RE = re.compile(r"Training mode:\s+([A-Za-z0-9_]+)")
 _NODE_RE = re.compile(r"^\s*Node:\s+(\S+)")
 _GPU_RE = re.compile(r"\[main\]\s+GPU:\s+(.+)")
@@ -291,11 +316,17 @@ _STARTING_RE = re.compile(r"Starting training.*epochs=(\d+)")
 def _enrich_from_job_artifacts(job: JobInfo) -> None:
     """Enrich a job with metadata saved under experiments/logs."""
     candidate_dirs = [
+        EXP_LOGS_DIR / f"slurm-multiple-runs-{job.slurm_id}",
+        EXP_LOGS_DIR / f"slurm-next-runs-4041-{job.slurm_id}",
         EXP_LOGS_DIR / f"slurm-train-eval-{job.slurm_id}",
         EXP_LOGS_DIR / f"slurm-train-{job.slurm_id}",
         EXP_LOGS_DIR / f"slurm-train-seq-{job.slurm_id}",
     ]
     job_dir = next((p for p in candidate_dirs if p.exists()), None)
+    if job_dir is None:
+        # Fallback: accept any job directory suffixing with the SLURM id.
+        wildcard_matches = sorted(EXP_LOGS_DIR.glob(f"*-{job.slurm_id}"))
+        job_dir = wildcard_matches[0] if wildcard_matches else None
     if job_dir is None:
         return
 
@@ -332,12 +363,16 @@ def _parse_log(job: JobInfo) -> None:
     _enrich_from_job_artifacts(job)
 
     candidate_paths = [
+        LOGS_DIR / f"slurm-next-4041-{job.slurm_id}.log",
         LOGS_DIR / f"slurm-train-eval-{job.slurm_id}.log",
         LOGS_DIR / f"slurm-train-{job.slurm_id}.log",
         LOGS_DIR / f"slurm-train-seq-{job.slurm_id}.log",
     ]
-
     log_path = next((p for p in candidate_paths if p.exists()), None)
+    if log_path is None:
+        # Fallback: pick any SLURM log ending with this job id.
+        wildcard_logs = sorted(LOGS_DIR.glob(f"*{job.slurm_id}.log"))
+        log_path = wildcard_logs[-1] if wildcard_logs else None
     if log_path is None:
         if not job.training_type:
             job.training_type = _infer_training_type("", job.config)
@@ -351,6 +386,7 @@ def _parse_log(job: JobInfo) -> None:
         return
 
     seen_mode = ""
+    latest_run_name = ""
 
     # Parse from end for latest metrics
     for line in reversed(lines):
@@ -371,6 +407,22 @@ def _parse_log(job: JobInfo) -> None:
         if m:
             job.config = m.group(1)
             break
+
+    # Parse current run for single-job multi-run scripts.
+    # We look for the latest ">>> TRAINING: <run_name>" marker and read its config line.
+    tail_start = max(0, len(lines) - 400)
+    tail_lines = lines[tail_start:]
+    for i in range(len(tail_lines) - 1, -1, -1):
+        m = _MULTI_TRAIN_START_RE.search(tail_lines[i])
+        if not m:
+            continue
+        latest_run_name = m.group(1)
+        for j in range(i, min(i + 8, len(tail_lines))):
+            c = _MULTI_CONFIG_RE.search(tail_lines[j])
+            if c:
+                job.config = c.group(1)
+                break
+        break
 
     # Parse config/mode/node/gpu from top section.
     for line in lines[:150]:
@@ -396,6 +448,13 @@ def _parse_log(job: JobInfo) -> None:
         if m and not job.gpu_name:
             job.gpu_name = m.group(1).strip()
 
+    # Also parse latest mode from tail (important for multi-phase logs).
+    for line in reversed(lines[-400:]):
+        m = _MODE_RE.search(line)
+        if m:
+            seen_mode = m.group(1)
+            break
+
     # If no epoch found yet, check for starting message
     if job.total_epochs == 0:
         for line in lines:
@@ -413,8 +472,20 @@ def _parse_log(job: JobInfo) -> None:
             job.tqdm_total = int(m.group(3))
             break
 
+    if latest_run_name and job.state == "RUNNING":
+        # For active multi-run jobs, the latest marker is the source of truth.
+        run_type = _infer_training_type_from_run_name(latest_run_name)
+        if run_type != "unknown":
+            job.training_type = run_type
+            if not job.config:
+                job.config = _default_config_for_type(run_type)
+
     if not job.training_type or job.training_type == "unknown":
         job.training_type = _infer_training_type(seen_mode, job.config)
+    if (not job.training_type or job.training_type == "unknown") and latest_run_name:
+        job.training_type = _infer_training_type_from_run_name(latest_run_name)
+    if (not job.config) and job.training_type:
+        job.config = _default_config_for_type(job.training_type)
     if not job.training_type or job.training_type == "unknown":
         if "slurm-train-eval-" in job.job_log_dir:
             phase_type, phase_config = _infer_pipeline_phase(Path(job.job_log_dir))

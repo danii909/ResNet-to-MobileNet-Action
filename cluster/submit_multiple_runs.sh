@@ -17,7 +17,7 @@
 #SBATCH --gres=gpu:1 --gres=shard:22528
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=your@email.com
-#SBATCH --output=logs/slurm-next-4041-%j.log
+#SBATCH --output=logs/slurm-multiple-runs-%j.log
 
 set -euo pipefail
 
@@ -35,7 +35,9 @@ mkdir -p logs
 
 ROOT_DIR="$PROJECT_DIR/experiments/logs/slurm-multiple-runs-${SLURM_JOB_ID:-local}"
 SUMMARY_FILE="$ROOT_DIR/pipeline_summary.txt"
+CHECKPOINT_ROOT="$PROJECT_DIR/experiments/checkpoints/slurm-multiple-runs-${SLURM_JOB_ID:-local}"
 mkdir -p "$ROOT_DIR"
+mkdir -p "$CHECKPOINT_ROOT"
 
 echo "============================================"
 echo "Single-job KD next runs (minimum goals)"
@@ -309,40 +311,40 @@ RUN="baseline_wd002_ls01"
 TRAIN_DIR="$ROOT_DIR/$RUN/train"
 EVAL_DIR="$ROOT_DIR/$RUN/eval"
 run_training "$RUN" "experiments/configs/baseline.yaml" "$TRAIN_DIR" \
-    "training.weight_decay=0.02 training.checkpoint_dir=experiments/checkpoints/next_runs_4041/$RUN training.run_log_dir=experiments/logs/next_runs_4041/$RUN/train logging.run_name=baseline-wd002-ls01"
+    "training.weight_decay=0.02 training.checkpoint_dir=$CHECKPOINT_ROOT/$RUN logging.run_name=baseline-wd002-ls01"
 run_evaluation "$RUN" "experiments/configs/baseline.yaml" \
-    "experiments/checkpoints/next_runs_4041/$RUN/baseline_best.pth" "$EVAL_DIR" ""
-append_summary "$RUN" "$TRAIN_DIR" "$EVAL_DIR" "experiments/checkpoints/next_runs_4041/$RUN/baseline_best.pth"
+    "$CHECKPOINT_ROOT/$RUN/baseline_best.pth" "$EVAL_DIR" ""
+append_summary "$RUN" "$TRAIN_DIR" "$EVAL_DIR" "$CHECKPOINT_ROOT/$RUN/baseline_best.pth"
 
 # Run B: KD T6 a0.6
 RUN="kd_t6_a06"
 TRAIN_DIR="$ROOT_DIR/$RUN/train"
 EVAL_DIR="$ROOT_DIR/$RUN/eval"
 run_training "$RUN" "experiments/configs/distillation.yaml" "$TRAIN_DIR" \
-    "distillation.teacher_checkpoint=$TEACHER_CKPT distillation.temperature=6.0 distillation.alpha=0.6 training.lr=0.0006 training.weight_decay=0.01 training.kd_warmup_epochs=5 training.checkpoint_dir=experiments/checkpoints/next_runs_4041/$RUN training.run_log_dir=experiments/logs/next_runs_4041/$RUN/train logging.run_name=kd-t6-a06"
+    "distillation.teacher_checkpoint=$TEACHER_CKPT distillation.temperature=6.0 distillation.alpha=0.6 training.lr=0.0006 training.weight_decay=0.01 training.kd_warmup_epochs=5 training.checkpoint_dir=$CHECKPOINT_ROOT/$RUN logging.run_name=kd-t6-a06"
 run_evaluation "$RUN" "experiments/configs/distillation.yaml" \
-    "experiments/checkpoints/next_runs_4041/$RUN/distillation_best.pth" "$EVAL_DIR" ""
-append_summary "$RUN" "$TRAIN_DIR" "$EVAL_DIR" "experiments/checkpoints/next_runs_4041/$RUN/distillation_best.pth"
+    "$CHECKPOINT_ROOT/$RUN/distillation_best.pth" "$EVAL_DIR" ""
+append_summary "$RUN" "$TRAIN_DIR" "$EVAL_DIR" "$CHECKPOINT_ROOT/$RUN/distillation_best.pth"
 
 # Run C: KD T10 a0.7
 RUN="kd_t10_a07"
 TRAIN_DIR="$ROOT_DIR/$RUN/train"
 EVAL_DIR="$ROOT_DIR/$RUN/eval"
 run_training "$RUN" "experiments/configs/distillation.yaml" "$TRAIN_DIR" \
-    "distillation.teacher_checkpoint=$TEACHER_CKPT distillation.temperature=10.0 distillation.alpha=0.7 training.lr=0.0006 training.weight_decay=0.01 training.kd_warmup_epochs=5 training.checkpoint_dir=experiments/checkpoints/next_runs_4041/$RUN training.run_log_dir=experiments/logs/next_runs_4041/$RUN/train logging.run_name=kd-t10-a07"
+    "distillation.teacher_checkpoint=$TEACHER_CKPT distillation.temperature=10.0 distillation.alpha=0.7 training.lr=0.0006 training.weight_decay=0.01 training.kd_warmup_epochs=5 training.checkpoint_dir=$CHECKPOINT_ROOT/$RUN logging.run_name=kd-t10-a07"
 run_evaluation "$RUN" "experiments/configs/distillation.yaml" \
-    "experiments/checkpoints/next_runs_4041/$RUN/distillation_best.pth" "$EVAL_DIR" ""
-append_summary "$RUN" "$TRAIN_DIR" "$EVAL_DIR" "experiments/checkpoints/next_runs_4041/$RUN/distillation_best.pth"
+    "$CHECKPOINT_ROOT/$RUN/distillation_best.pth" "$EVAL_DIR" ""
+append_summary "$RUN" "$TRAIN_DIR" "$EVAL_DIR" "$CHECKPOINT_ROOT/$RUN/distillation_best.pth"
 
 # Run D: KD T6 a0.6 LR 5e-4 WD 0.02
 RUN="kd_t6_a06_lr5e4_wd002"
 TRAIN_DIR="$ROOT_DIR/$RUN/train"
 EVAL_DIR="$ROOT_DIR/$RUN/eval"
 run_training "$RUN" "experiments/configs/distillation.yaml" "$TRAIN_DIR" \
-    "distillation.teacher_checkpoint=$TEACHER_CKPT distillation.temperature=6.0 distillation.alpha=0.6 training.lr=0.0005 training.weight_decay=0.02 training.kd_warmup_epochs=5 training.checkpoint_dir=experiments/checkpoints/next_runs_4041/$RUN training.run_log_dir=experiments/logs/next_runs_4041/$RUN/train logging.run_name=kd-t6-a06-lr5e4-wd002"
+    "distillation.teacher_checkpoint=$TEACHER_CKPT distillation.temperature=6.0 distillation.alpha=0.6 training.lr=0.0005 training.weight_decay=0.02 training.kd_warmup_epochs=5 training.checkpoint_dir=$CHECKPOINT_ROOT/$RUN logging.run_name=kd-t6-a06-lr5e4-wd002"
 run_evaluation "$RUN" "experiments/configs/distillation.yaml" \
-    "experiments/checkpoints/next_runs_4041/$RUN/distillation_best.pth" "$EVAL_DIR" ""
-append_summary "$RUN" "$TRAIN_DIR" "$EVAL_DIR" "experiments/checkpoints/next_runs_4041/$RUN/distillation_best.pth"
+    "$CHECKPOINT_ROOT/$RUN/distillation_best.pth" "$EVAL_DIR" ""
+append_summary "$RUN" "$TRAIN_DIR" "$EVAL_DIR" "$CHECKPOINT_ROOT/$RUN/distillation_best.pth"
 
 echo ""
 echo "All runs completed in this single SLURM job."
