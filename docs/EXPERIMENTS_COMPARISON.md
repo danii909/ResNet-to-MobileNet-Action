@@ -46,3 +46,18 @@ Student-teacher association:
 - Best student Top-1 so far: `69.47` (`exp_id=4137`, `kd_t10_a07_24f_lightaug`).
 - Best student Top-5 so far: `91.25` (`exp_id=4137`, `kd_t10_a07_24f_lightaug_lr6e4`).
 - `exp_id=3998` has no evaluation folder; eval columns remain empty by design.
+
+## Missing Baseline Counterparts (Same Setup)
+Using a strict matching criterion on non-KD training setup (`num_frames`, `batch_size`, `lr`, `weight_decay`, and run-specific augmentation regime), the following distillation runs currently do **not** have a baseline counterpart with the same configuration in this table:
+
+- `exp_id=3998`, run `run-3` (`distillation`)
+- `exp_id=4041`, run `distillation`
+- `exp_id=4077`, run `kd_t6_a06`
+- `exp_id=4077`, run `kd_t10_a07`
+- `exp_id=4077`, run `kd_t6_a06_lr5e4_wd002`
+- `exp_id=4129`, run `kd_t10_a07_strongaug`
+- `exp_id=4129`, run `kd_t10_a07_strongaug_24f`
+- `exp_id=4129`, run `kdat_t10_a07_strongaug`
+- `exp_id=4137`, run `kd_t10_a07_24f_minaug`
+- `exp_id=4137`, run `kd_t10_a07_24f_lightaug`
+- `exp_id=4137`, run `kd_t10_a07_24f_lightaug_lr6e4`
