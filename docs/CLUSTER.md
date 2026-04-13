@@ -153,6 +153,31 @@ sbatch cluster/train_sequential.sh
 Questo evita submission multiple e rispetta il limite QoS.
 Nota: il tempo totale resta soggetto al wall-time massimo del job (es. 12h).
 
+### 4.2.1 Job unico consigliato (StrongAug KD)
+
+Per i nuovi esperimenti KD (strong augmentation + 24 frame + KD+AT) usa un solo job:
+
+```bash
+sbatch cluster/submit_single_job_strongaug.sh
+```
+
+Questo script esegue in sequenza, dentro lo stesso job SLURM:
+
+- `distillation_t10_a07_strongaug.yaml`
+- `distillation_t10_a07_strongaug_24f.yaml`
+- `distillation_at_t10_a07_strongaug.yaml`
+
+Override checkpoint teacher (opzionale):
+
+```bash
+TEACHER_CKPT=/path/to/teacher_finetune_best.pth sbatch cluster/submit_single_job_strongaug.sh
+```
+
+Output principale:
+
+- log SLURM: `logs/slurm-strongaug-runs-<JOBID>.log`
+- summary pipeline: `experiments/logs/slurm-strongaug-runs-<JOBID>/pipeline_summary.txt`
+
 > Nota: aggirare limiti di slot, QoS o wall-time del cluster (ad esempio eseguendo training GPU fuori scheduler) non è una pratica corretta. Usa sempre `sbatch`/`srun` e le policy ufficiali del corso/cluster.
 
 ### 4.3. Evaluation

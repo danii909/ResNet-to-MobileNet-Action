@@ -85,6 +85,10 @@ class JobInfo:
     tqdm_step: int = 0
     tqdm_total: int = 0
     tqdm_pct: int = 0
+    # Multi-run single-job progress
+    current_run_name: str = ""
+    run_index: int = 0
+    run_total: int = 0
 
 
 # -- Shell helpers ------------------------------------------------------------
@@ -214,6 +218,41 @@ def _infer_pipeline_phase(job_dir: Path) -> tuple[str, str]:
     return "distillation", last_train_meta.get("config", "")
 
 
+def _infer_total_runs_from_context(job: JobInfo, lines: list[str]) -> int:
+    """Infer planned number of trainings for single-job sweep pipelines."""
+    job_dir = job.job_log_dir or ""
+
+    # Known single-job pipeline patterns in this repository.
+    if "slurm-recovery-24f-sweep-" in job_dir:
+        return 3
+    if "slurm-24f-refine3-a-" in job_dir:
+        return 3
+    if "slurm-24f-refine3-b-" in job_dir:
+        return 3
+    if "slurm-24f-refine6-" in job_dir:
+        return 6
+    if "slurm-strongaug-runs-" in job_dir:
+        return 3
+    if "slurm-multiple-runs-" in job_dir:
+        return 4
+    if "slurm-next-runs-4041-" in job_dir:
+        return 4
+
+    # Fallback: parse explicit [i/total] markers when available.
+    for line in reversed(lines[-500:]):
+        m = _SEQ_START_RE.search(line)
+        if m:
+            # _SEQ_START_RE already validates the [i/total] pattern.
+            try:
+                prefix = line.split("]", 1)[0].lstrip("[")
+                _, total = prefix.split("/", 1)
+                return int(total)
+            except (ValueError, IndexError):
+                continue
+
+    return 0
+
+
 # -- SLURM queries ------------------------------------------------------------
 def _get_my_jobs() -> list[JobInfo]:
     """Get all recent SLURM jobs (last 2 days) matching kd-train."""
@@ -304,8 +343,9 @@ _EPOCH_RE = re.compile(
 _CONFIG_RE = re.compile(r"Config:\s+(\S+)")
 _CONFIGS_RE = re.compile(r"Configs:\s+(.+)")
 _SEQ_START_RE = re.compile(r"\[\d+/\d+\]\s+Starting:\s+(\S+)")
-_MULTI_TRAIN_START_RE = re.compile(r"^>>>\s+TRAINING:\s+(\S+)")
+_MULTI_TRAIN_START_RE = re.compile(r">>>\s*TRAINING:\s+([A-Za-z0-9_.-]+)", re.IGNORECASE)
 _MULTI_CONFIG_RE = re.compile(r"^\s*config:\s+(\S+)")
+_RUN_NAME_OVERRIDE_RE = re.compile(r"logging\.run_name=([A-Za-z0-9_.-]+)")
 _MODE_RE = re.compile(r"Training mode:\s+([A-Za-z0-9_]+)")
 _NODE_RE = re.compile(r"^\s*Node:\s+(\S+)")
 _GPU_RE = re.compile(r"\[main\]\s+GPU:\s+(.+)")
@@ -316,6 +356,10 @@ _STARTING_RE = re.compile(r"Starting training.*epochs=(\d+)")
 def _enrich_from_job_artifacts(job: JobInfo) -> None:
     """Enrich a job with metadata saved under experiments/logs."""
     candidate_dirs = [
+        EXP_LOGS_DIR / f"slurm-24f-refine3-a-{job.slurm_id}",
+        EXP_LOGS_DIR / f"slurm-24f-refine3-b-{job.slurm_id}",
+        EXP_LOGS_DIR / f"slurm-24f-refine6-{job.slurm_id}",
+        EXP_LOGS_DIR / f"slurm-strongaug-runs-{job.slurm_id}",
         EXP_LOGS_DIR / f"slurm-multiple-runs-{job.slurm_id}",
         EXP_LOGS_DIR / f"slurm-next-runs-4041-{job.slurm_id}",
         EXP_LOGS_DIR / f"slurm-train-eval-{job.slurm_id}",
@@ -358,11 +402,54 @@ def _enrich_from_job_artifacts(job: JobInfo) -> None:
         job.training_type = _coalesce(job.training_type, latest.get("training_type", ""))
 
 
+def _infer_current_run_from_job_dir(job_dir: Path) -> tuple[str, int, int]:
+    """Infer current run name/index/total from run subfolders and status files."""
+    if not job_dir.exists():
+        return "", 0, 0
+
+    run_dirs: list[Path] = []
+    for child in job_dir.iterdir():
+        if not child.is_dir():
+            continue
+        if (child / "train").exists() or (child / "eval").exists():
+            run_dirs.append(child)
+
+    if not run_dirs:
+        return "", 0, 0
+
+    # Sort by last modification time to keep stable order close to execution order.
+    run_dirs.sort(key=lambda p: p.stat().st_mtime)
+
+    total = len(run_dirs)
+    for idx, run_dir in enumerate(run_dirs, start=1):
+        train_dir = run_dir / "train"
+        eval_dir = run_dir / "eval"
+
+        train_ok = (train_dir / "status_SUCCESS").exists()
+        train_fail = (train_dir / "status_FAILED").exists()
+        eval_ok = (eval_dir / "status_SUCCESS").exists()
+        eval_fail = (eval_dir / "status_FAILED").exists()
+
+        # Current run if training or evaluation is in progress.
+        if not train_ok and not train_fail:
+            return run_dir.name, idx, total
+        if train_ok and not eval_ok and not eval_fail:
+            return run_dir.name, idx, total
+
+    # All completed: point to the last run.
+    return run_dirs[-1].name, total, total
+
+
 def _parse_log(job: JobInfo) -> None:
     """Parse the SLURM log file for a job and populate metrics."""
     _enrich_from_job_artifacts(job)
 
     candidate_paths = [
+        LOGS_DIR / f"slurm-24f-refine3-a-{job.slurm_id}.log",
+        LOGS_DIR / f"slurm-24f-refine3-b-{job.slurm_id}.log",
+        LOGS_DIR / f"slurm-24f-refine6-{job.slurm_id}.log",
+        LOGS_DIR / f"slurm-strongaug-runs-{job.slurm_id}.log",
+        LOGS_DIR / f"slurm-multiple-runs-{job.slurm_id}.log",
         LOGS_DIR / f"slurm-next-4041-{job.slurm_id}.log",
         LOGS_DIR / f"slurm-train-eval-{job.slurm_id}.log",
         LOGS_DIR / f"slurm-train-{job.slurm_id}.log",
@@ -387,6 +474,7 @@ def _parse_log(job: JobInfo) -> None:
 
     seen_mode = ""
     latest_run_name = ""
+    run_markers: list[str] = []
 
     # Parse from end for latest metrics
     for line in reversed(lines):
@@ -423,6 +511,42 @@ def _parse_log(job: JobInfo) -> None:
                 job.config = c.group(1)
                 break
         break
+
+    # Fallback: infer run name from CLI override in logged command line.
+    if not latest_run_name:
+        for line in reversed(tail_lines):
+            m = _RUN_NAME_OVERRIDE_RE.search(line)
+            if m:
+                latest_run_name = m.group(1)
+                break
+
+    # Collect all run markers to estimate current position in multi-run jobs.
+    for line in lines:
+        m = _MULTI_TRAIN_START_RE.search(line)
+        if m:
+            run_markers.append(m.group(1))
+
+    if latest_run_name:
+        job.current_run_name = latest_run_name
+
+    if run_markers:
+        job.run_index = len(run_markers)
+        inferred_total = _infer_total_runs_from_context(job, lines)
+        if inferred_total > 0:
+            job.run_total = inferred_total
+        else:
+            # Best-effort fallback when total is unknown.
+            job.run_total = max(job.run_total, job.run_index)
+
+    # Final fallback: infer current run from job directory status markers.
+    if job.job_log_dir and (not job.current_run_name or job.run_index == 0):
+        fs_run_name, fs_idx, fs_total = _infer_current_run_from_job_dir(Path(job.job_log_dir))
+        if fs_run_name and not job.current_run_name:
+            job.current_run_name = fs_run_name
+        if fs_idx > 0 and job.run_index == 0:
+            job.run_index = fs_idx
+        if fs_total > 0 and job.run_total == 0:
+            job.run_total = fs_total
 
     # Parse config/mode/node/gpu from top section.
     for line in lines[:150]:
@@ -559,7 +683,10 @@ def _display(jobs: list[JobInfo]) -> None:
         icon = _STATE_ICONS.get(job.state, "?")
         sc = _STATE_COLORS.get(job.state, "")
 
-        config_short = _short(Path(job.config).stem if job.config else job.name, 20)
+        if job.state == "RUNNING" and job.current_run_name:
+            config_short = _short(job.current_run_name, 20)
+        else:
+            config_short = _short(Path(job.config).stem if job.config else job.name, 20)
         type_short = _short(job.training_type or _infer_training_type("", job.config), 13)
         node_short = _short(job.node, 14)
         gpu_short = _short(job.gpu_name, 20)
@@ -583,6 +710,16 @@ def _display(jobs: list[JobInfo]) -> None:
         print(f"\n{_CYAN}{'-' * 70}{_RST}")
         print(f"  {_BOLD}{_CYAN}Job attivo:{_RST} {j.slurm_id} ({Path(j.config).stem if j.config else j.name})")
         print(f"  Tipo: {_WHITE}{j.training_type or _infer_training_type('', j.config)}{_RST}")
+        if j.current_run_name:
+            print(f"  Training corrente: {_WHITE}{j.current_run_name}{_RST}")
+        if j.run_total > 0:
+            current_idx = j.run_index if j.run_index > 0 else 1
+            current_idx = min(current_idx, j.run_total)
+            remaining = max(0, j.run_total - current_idx)
+            print(
+                f"  Progresso training: {_WHITE}{current_idx}/{j.run_total} training{_RST} "
+                f"({_DIM}rimanenti: {remaining}{_RST})"
+            )
         print(f"  Nodo: {_WHITE}{j.node or '-'}{_RST}")
         print(f"  GPU: {_WHITE}{j.gpu_name or '-'}{_RST}")
         if j.partition or j.qos:

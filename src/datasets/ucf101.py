@@ -62,28 +62,99 @@ def _sample_temporal_indices(total_frames: int, num_frames: int, train: bool) ->
     return np.linspace(0, total_frames - 1, num_frames, dtype=int)
 
 
+def _sample_temporal_indices_with_stride(
+    total_frames: int,
+    num_frames: int,
+    train: bool,
+    max_stride: int = 1,
+) -> np.ndarray:
+    """Sample temporal indices with optional random stride for training.
+
+    When max_stride > 1, train-time clips can span a longer temporal window,
+    improving temporal coverage without increasing num_frames.
+    """
+    if total_frames <= 0:
+        raise RuntimeError("Cannot sample from an empty video/clip")
+
+    if max_stride <= 1 or not train:
+        return _sample_temporal_indices(total_frames, num_frames, train)
+
+    if total_frames < num_frames:
+        return np.arange(num_frames, dtype=int) % total_frames
+
+    stride = int(np.random.randint(1, max_stride + 1))
+    needed = (num_frames - 1) * stride + 1
+
+    if needed <= total_frames:
+        max_start = total_frames - needed
+        start = int(np.random.randint(0, max_start + 1)) if max_start > 0 else 0
+        return start + np.arange(num_frames, dtype=int) * stride
+
+    # Fallback to the default segmented sampling when window does not fit.
+    return _sample_temporal_indices(total_frames, num_frames, train)
+
+
 def _apply_clip_spatial_transform(
     frames: torch.Tensor,
     train: bool,
     crop_size: int,
+    resize_short_side: int = 128,
+    use_random_resized_crop: bool = False,
+    rrc_scale: tuple[float, float] = (0.6, 1.0),
+    rrc_ratio: tuple[float, float] = (0.75, 1.3333333333),
+    color_jitter_strength: float = 0.0,
+    random_erasing_prob: float = 0.0,
 ) -> torch.Tensor:
     """Apply the same spatial transform to all frames in a clip."""
     resized_frames = torch.stack([
-        F.resize(frame, [128], interpolation=InterpolationMode.BILINEAR)
+        F.resize(frame, [resize_short_side], interpolation=InterpolationMode.BILINEAR)
         for frame in frames
     ])
 
     if train:
-        crop_i, crop_j, crop_h, crop_w = transforms.RandomCrop.get_params(
-            resized_frames[0], output_size=(crop_size, crop_size)
-        )
+        if use_random_resized_crop:
+            crop_i, crop_j, crop_h, crop_w = transforms.RandomResizedCrop.get_params(
+                resized_frames[0], scale=rrc_scale, ratio=rrc_ratio
+            )
+            transformed_frames = [
+                F.resized_crop(
+                    frame,
+                    crop_i,
+                    crop_j,
+                    crop_h,
+                    crop_w,
+                    size=[crop_size, crop_size],
+                    interpolation=InterpolationMode.BILINEAR,
+                )
+                for frame in resized_frames
+            ]
+        else:
+            crop_i, crop_j, crop_h, crop_w = transforms.RandomCrop.get_params(
+                resized_frames[0], output_size=(crop_size, crop_size)
+            )
+            transformed_frames = [
+                F.crop(frame, crop_i, crop_j, crop_h, crop_w)
+                for frame in resized_frames
+            ]
+
         flip = np.random.rand() < 0.5
-        transformed_frames = [
-            F.crop(frame, crop_i, crop_j, crop_h, crop_w)
-            for frame in resized_frames
-        ]
         if flip:
             transformed_frames = [F.hflip(frame) for frame in transformed_frames]
+
+        # Apply the same color jitter factors to every frame in the clip.
+        if color_jitter_strength > 0.0:
+            brightness = max(0.0, 1.0 + float(np.random.uniform(-color_jitter_strength, color_jitter_strength)))
+            contrast = max(0.0, 1.0 + float(np.random.uniform(-color_jitter_strength, color_jitter_strength)))
+            saturation = max(0.0, 1.0 + float(np.random.uniform(-color_jitter_strength, color_jitter_strength)))
+            hue_delta = float(np.random.uniform(-0.08, 0.08))
+            jittered = []
+            for frame in transformed_frames:
+                out = F.adjust_brightness(frame, brightness)
+                out = F.adjust_contrast(out, contrast)
+                out = F.adjust_saturation(out, saturation)
+                out = F.adjust_hue(out, hue_delta)
+                jittered.append(out)
+            transformed_frames = jittered
     else:
         transformed_frames = [
             F.center_crop(frame, [crop_size, crop_size])
@@ -94,6 +165,24 @@ def _apply_clip_spatial_transform(
         F.normalize(frame, mean=KINETICS_MEAN, std=KINETICS_STD)
         for frame in transformed_frames
     ]
+
+    if train and random_erasing_prob > 0.0 and np.random.rand() < random_erasing_prob:
+        h = normalized_frames[0].shape[1]
+        w = normalized_frames[0].shape[2]
+        erase_h = max(1, int(h * np.random.uniform(0.02, 0.20)))
+        erase_w = max(1, int(w * np.random.uniform(0.02, 0.20)))
+        top = int(np.random.randint(0, max(1, h - erase_h + 1)))
+        left = int(np.random.randint(0, max(1, w - erase_w + 1)))
+        for i in range(len(normalized_frames)):
+            normalized_frames[i] = F.erase(
+                normalized_frames[i],
+                i=top,
+                j=left,
+                h=erase_h,
+                w=erase_w,
+                v=0.0,
+            )
+
     return torch.stack(normalized_frames)
 
 
@@ -337,6 +426,11 @@ class UCF101HFDataset(Dataset):
         crop_size: int = 112,
         train: bool = True,
         data_dir: str = "data/ucf101",
+        resize_short_side: int = 128,
+        use_random_resized_crop: bool = False,
+        color_jitter_strength: float = 0.0,
+        random_erasing_prob: float = 0.0,
+        max_temporal_stride: int = 1,
     ):
         from datasets import load_dataset
         from tqdm import tqdm
@@ -344,6 +438,11 @@ class UCF101HFDataset(Dataset):
         self.num_frames = num_frames
         self.crop_size = crop_size
         self.train = train
+        self.resize_short_side = resize_short_side
+        self.use_random_resized_crop = use_random_resized_crop
+        self.color_jitter_strength = color_jitter_strength
+        self.random_erasing_prob = random_erasing_prob
+        self.max_temporal_stride = max(1, int(max_temporal_stride))
 
         # Load dataset from HF cache (downloaded by setup.sh, no network needed
         # if HF_DATASETS_OFFLINE=1 is set)
@@ -384,6 +483,10 @@ class UCF101HFDataset(Dataset):
             frames=frames,
             train=self.train,
             crop_size=self.crop_size,
+            resize_short_side=self.resize_short_side,
+            use_random_resized_crop=self.use_random_resized_crop,
+            color_jitter_strength=self.color_jitter_strength,
+            random_erasing_prob=self.random_erasing_prob,
         )
 
     def __len__(self) -> int:
@@ -394,7 +497,12 @@ class UCF101HFDataset(Dataset):
 
         # Uniformly sample num_frames from the clip
         total = len(row_indices)
-        sample_indices = _sample_temporal_indices(total, self.num_frames, self.train)
+        sample_indices = _sample_temporal_indices_with_stride(
+            total,
+            self.num_frames,
+            self.train,
+            max_stride=self.max_temporal_stride,
+        )
 
         selected = [row_indices[i] for i in sample_indices]
 
@@ -430,6 +538,11 @@ def get_dataloaders(config: dict) -> dict[str, DataLoader]:
     backend = ds_cfg.get("backend", "hf")
     num_frames = ds_cfg.get("num_frames", 16)
     crop_size = ds_cfg.get("crop_size", 112)
+    resize_short_side = ds_cfg.get("resize_short_side", 128)
+    use_random_resized_crop = ds_cfg.get("use_random_resized_crop", False)
+    color_jitter_strength = ds_cfg.get("color_jitter_strength", 0.0)
+    random_erasing_prob = ds_cfg.get("random_erasing_prob", 0.0)
+    max_temporal_stride = ds_cfg.get("max_temporal_stride", 1)
     batch_size = tr_cfg.get("batch_size", 16)
     num_workers = tr_cfg.get("num_workers", 4)
 
@@ -441,12 +554,22 @@ def get_dataloaders(config: dict) -> dict[str, DataLoader]:
             split="train", num_frames=num_frames,
             crop_size=crop_size, train=True,
             data_dir=data_dir,
+            resize_short_side=resize_short_side,
+            use_random_resized_crop=use_random_resized_crop,
+            color_jitter_strength=color_jitter_strength,
+            random_erasing_prob=random_erasing_prob,
+            max_temporal_stride=max_temporal_stride,
         )
         print(f"[DataLoaders] Creating HF test dataset...")
         test_ds = UCF101HFDataset(
             split="test", num_frames=num_frames,
             crop_size=crop_size, train=False,
             data_dir=data_dir,
+            resize_short_side=resize_short_side,
+            use_random_resized_crop=False,
+            color_jitter_strength=0.0,
+            random_erasing_prob=0.0,
+            max_temporal_stride=1,
         )
     else:
         # Video-file based dataset

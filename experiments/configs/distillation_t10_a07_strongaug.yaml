@@ -1,0 +1,46 @@
+# Distillation best variant + stronger augmentation
+# Usage: python -m src.training.train --config experiments/configs/distillation_t10_a07_strongaug.yaml
+
+seed: 42
+
+model:
+  type: student
+  width_mult: 1.0
+
+dataset:
+  data_dir: data/ucf101
+  num_classes: 101
+  num_frames: 16
+  crop_size: 112
+  backend: hf
+  resize_short_side: 128
+  use_random_resized_crop: true
+  color_jitter_strength: 0.2
+  random_erasing_prob: 0.15
+  max_temporal_stride: 2
+
+training:
+  mode: distillation
+  epochs: 60
+  batch_size: 24
+  num_workers: 4
+  optimizer: adamw
+  lr: 0.0006
+  momentum: 0.9
+  weight_decay: 0.01
+  scheduler: cosine
+  grad_clip: 1.0
+  mixed_precision: true
+  label_smoothing: 0.1
+  kd_warmup_epochs: 5
+  checkpoint_dir: experiments/checkpoints
+
+distillation:
+  teacher_checkpoint: experiments/checkpoints/teacher_finetune_best.pth
+  temperature: 10.0
+  alpha: 0.7
+
+logging:
+  enabled: true
+  project: kd-action-recognition
+  run_name: kd-t10-a07-strongaug
