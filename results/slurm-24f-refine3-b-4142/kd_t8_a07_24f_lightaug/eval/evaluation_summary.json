@@ -1,0 +1,16 @@
+{
+  "mode": "distillation",
+  "model_type": "student",
+  "checkpoint": "/home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-24f-refine3-b-4142/kd_t8_a07_24f_lightaug/distillation_best.pth",
+  "device": "cuda",
+  "top1": 70.18239492466297,
+  "top5": 90.40444091990484,
+  "param_count": 2483429,
+  "param_count_trainable": 2483429,
+  "size_mb": 9.473529815673828,
+  "inference_avg_ms": 1.7543437331914902,
+  "inference_std_ms": 0.31385061260902575,
+  "inference_min_ms": 1.5963870100677013,
+  "inference_max_ms": 3.2147252932190895,
+  "finished_at": "2026-04-14T10:10:33"
+}

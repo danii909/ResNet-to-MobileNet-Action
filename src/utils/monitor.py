@@ -231,6 +231,10 @@ def _infer_total_runs_from_context(job: JobInfo, lines: list[str]) -> int:
         return 3
     if "slurm-24f-refine6-" in job_dir:
         return 6
+    if "slurm-baseline-24f-phase2-" in job_dir:
+        return 3
+    if "slurm-baseline-24f-phase3-" in job_dir:
+        return 3
     if "slurm-strongaug-runs-" in job_dir:
         return 3
     if "slurm-multiple-runs-" in job_dir:
@@ -359,6 +363,8 @@ def _enrich_from_job_artifacts(job: JobInfo) -> None:
         EXP_LOGS_DIR / f"slurm-24f-refine3-a-{job.slurm_id}",
         EXP_LOGS_DIR / f"slurm-24f-refine3-b-{job.slurm_id}",
         EXP_LOGS_DIR / f"slurm-24f-refine6-{job.slurm_id}",
+        EXP_LOGS_DIR / f"slurm-baseline-24f-phase2-{job.slurm_id}",
+        EXP_LOGS_DIR / f"slurm-baseline-24f-phase3-{job.slurm_id}",
         EXP_LOGS_DIR / f"slurm-strongaug-runs-{job.slurm_id}",
         EXP_LOGS_DIR / f"slurm-multiple-runs-{job.slurm_id}",
         EXP_LOGS_DIR / f"slurm-next-runs-4041-{job.slurm_id}",
@@ -448,6 +454,8 @@ def _parse_log(job: JobInfo) -> None:
         LOGS_DIR / f"slurm-24f-refine3-a-{job.slurm_id}.log",
         LOGS_DIR / f"slurm-24f-refine3-b-{job.slurm_id}.log",
         LOGS_DIR / f"slurm-24f-refine6-{job.slurm_id}.log",
+        LOGS_DIR / f"slurm-baseline-24f-phase2-{job.slurm_id}.log",
+        LOGS_DIR / f"slurm-baseline-24f-phase3-{job.slurm_id}.log",
         LOGS_DIR / f"slurm-strongaug-runs-{job.slurm_id}.log",
         LOGS_DIR / f"slurm-multiple-runs-{job.slurm_id}.log",
         LOGS_DIR / f"slurm-next-4041-{job.slurm_id}.log",

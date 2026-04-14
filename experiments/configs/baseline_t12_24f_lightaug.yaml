@@ -1,0 +1,39 @@
+# Baseline for temperature sweep T12 study - identical to distillation_t12_a07_24f_lightaug.yaml but without distillation
+
+seed: 42
+
+model:
+  type: student
+  width_mult: 1.0
+
+dataset:
+  data_dir: data/ucf101
+  num_classes: 101
+  num_frames: 24
+  crop_size: 112
+  backend: hf
+  resize_short_side: 128
+  use_random_resized_crop: false
+  color_jitter_strength: 0.1
+  random_erasing_prob: 0.05
+  max_temporal_stride: 1
+
+training:
+  mode: baseline
+  epochs: 60
+  batch_size: 16
+  num_workers: 4
+  optimizer: adamw
+  lr: 0.0005
+  momentum: 0.9
+  weight_decay: 0.01
+  scheduler: cosine
+  grad_clip: 1.0
+  mixed_precision: true
+  label_smoothing: 0.1
+  checkpoint_dir: experiments/checkpoints
+
+logging:
+  enabled: true
+  project: kd-action-recognition
+  run_name: baseline-t12-24f-lightaug
