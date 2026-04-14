@@ -222,25 +222,17 @@ def _infer_total_runs_from_context(job: JobInfo, lines: list[str]) -> int:
     """Infer planned number of trainings for single-job sweep pipelines."""
     job_dir = job.job_log_dir or ""
 
-    # Known single-job pipeline patterns in this repository.
-    if "slurm-recovery-24f-sweep-" in job_dir:
-        return 3
-    if "slurm-24f-refine3-a-" in job_dir:
-        return 3
-    if "slurm-24f-refine3-b-" in job_dir:
-        return 3
-    if "slurm-24f-refine6-" in job_dir:
-        return 6
-    if "slurm-baseline-24f-phase2-" in job_dir:
-        return 3
-    if "slurm-baseline-24f-phase3-" in job_dir:
-        return 3
-    if "slurm-strongaug-runs-" in job_dir:
-        return 3
-    if "slurm-multiple-runs-" in job_dir:
-        return 4
-    if "slurm-next-runs-4041-" in job_dir:
-        return 4
+    # First try: count run subdirectories dynamically from the job directory
+    if job_dir and Path(job_dir).exists():
+        run_count = 0
+        for child in Path(job_dir).iterdir():
+            if not child.is_dir():
+                continue
+            # Count directories that have train or eval subdirectories (run folders)
+            if (child / "train").exists() or (child / "eval").exists():
+                run_count += 1
+        if run_count > 0:
+            return run_count
 
     # Fallback: parse explicit [i/total] markers when available.
     for line in reversed(lines[-500:]):
@@ -359,24 +351,9 @@ _STARTING_RE = re.compile(r"Starting training.*epochs=(\d+)")
 
 def _enrich_from_job_artifacts(job: JobInfo) -> None:
     """Enrich a job with metadata saved under experiments/logs."""
-    candidate_dirs = [
-        EXP_LOGS_DIR / f"slurm-24f-refine3-a-{job.slurm_id}",
-        EXP_LOGS_DIR / f"slurm-24f-refine3-b-{job.slurm_id}",
-        EXP_LOGS_DIR / f"slurm-24f-refine6-{job.slurm_id}",
-        EXP_LOGS_DIR / f"slurm-baseline-24f-phase2-{job.slurm_id}",
-        EXP_LOGS_DIR / f"slurm-baseline-24f-phase3-{job.slurm_id}",
-        EXP_LOGS_DIR / f"slurm-strongaug-runs-{job.slurm_id}",
-        EXP_LOGS_DIR / f"slurm-multiple-runs-{job.slurm_id}",
-        EXP_LOGS_DIR / f"slurm-next-runs-4041-{job.slurm_id}",
-        EXP_LOGS_DIR / f"slurm-train-eval-{job.slurm_id}",
-        EXP_LOGS_DIR / f"slurm-train-{job.slurm_id}",
-        EXP_LOGS_DIR / f"slurm-train-seq-{job.slurm_id}",
-    ]
-    job_dir = next((p for p in candidate_dirs if p.exists()), None)
-    if job_dir is None:
-        # Fallback: accept any job directory suffixing with the SLURM id.
-        wildcard_matches = sorted(EXP_LOGS_DIR.glob(f"*-{job.slurm_id}"))
-        job_dir = wildcard_matches[0] if wildcard_matches else None
+    # Dynamic search: find any directory ending with the SLURM job ID
+    wildcard_matches = sorted(EXP_LOGS_DIR.glob(f"*-{job.slurm_id}"))
+    job_dir = wildcard_matches[0] if wildcard_matches else None
     if job_dir is None:
         return
 
@@ -450,24 +427,9 @@ def _parse_log(job: JobInfo) -> None:
     """Parse the SLURM log file for a job and populate metrics."""
     _enrich_from_job_artifacts(job)
 
-    candidate_paths = [
-        LOGS_DIR / f"slurm-24f-refine3-a-{job.slurm_id}.log",
-        LOGS_DIR / f"slurm-24f-refine3-b-{job.slurm_id}.log",
-        LOGS_DIR / f"slurm-24f-refine6-{job.slurm_id}.log",
-        LOGS_DIR / f"slurm-baseline-24f-phase2-{job.slurm_id}.log",
-        LOGS_DIR / f"slurm-baseline-24f-phase3-{job.slurm_id}.log",
-        LOGS_DIR / f"slurm-strongaug-runs-{job.slurm_id}.log",
-        LOGS_DIR / f"slurm-multiple-runs-{job.slurm_id}.log",
-        LOGS_DIR / f"slurm-next-4041-{job.slurm_id}.log",
-        LOGS_DIR / f"slurm-train-eval-{job.slurm_id}.log",
-        LOGS_DIR / f"slurm-train-{job.slurm_id}.log",
-        LOGS_DIR / f"slurm-train-seq-{job.slurm_id}.log",
-    ]
-    log_path = next((p for p in candidate_paths if p.exists()), None)
-    if log_path is None:
-        # Fallback: pick any SLURM log ending with this job id.
-        wildcard_logs = sorted(LOGS_DIR.glob(f"*{job.slurm_id}.log"))
-        log_path = wildcard_logs[-1] if wildcard_logs else None
+    # Dynamic search: find any log file containing the SLURM job ID
+    wildcard_logs = sorted(LOGS_DIR.glob(f"*{job.slurm_id}.log"))
+    log_path = wildcard_logs[-1] if wildcard_logs else None
     if log_path is None:
         if not job.training_type:
             job.training_type = _infer_training_type("", job.config)
@@ -546,15 +508,27 @@ def _parse_log(job: JobInfo) -> None:
             # Best-effort fallback when total is unknown.
             job.run_total = max(job.run_total, job.run_index)
 
-    # Final fallback: infer current run from job directory status markers.
-    if job.job_log_dir and (not job.current_run_name or job.run_index == 0):
-        fs_run_name, fs_idx, fs_total = _infer_current_run_from_job_dir(Path(job.job_log_dir))
-        if fs_run_name and not job.current_run_name:
-            job.current_run_name = fs_run_name
-        if fs_idx > 0 and job.run_index == 0:
-            job.run_index = fs_idx
-        if fs_total > 0 and job.run_total == 0:
-            job.run_total = fs_total
+    # For RUNNING jobs, filesystem is source of truth (more up-to-date than buffered logs).
+    # For completed jobs, use log-based info.
+    if job.job_log_dir:
+        if job.state == "RUNNING":
+            # Filesystem has priority for running jobs: immediate status updates
+            fs_run_name, fs_idx, fs_total = _infer_current_run_from_job_dir(Path(job.job_log_dir))
+            if fs_run_name:
+                job.current_run_name = fs_run_name
+            if fs_idx > 0:
+                job.run_index = fs_idx
+            if fs_total > 0:
+                job.run_total = fs_total
+        elif not job.current_run_name or job.run_index == 0:
+            # Fallback for completed/pending jobs if log parsing didn't find info
+            fs_run_name, fs_idx, fs_total = _infer_current_run_from_job_dir(Path(job.job_log_dir))
+            if fs_run_name and not job.current_run_name:
+                job.current_run_name = fs_run_name
+            if fs_idx > 0 and job.run_index == 0:
+                job.run_index = fs_idx
+            if fs_total > 0 and job.run_total == 0:
+                job.run_total = fs_total
 
     # Parse config/mode/node/gpu from top section.
     for line in lines[:150]:
@@ -671,6 +645,10 @@ def _display(jobs: list[JobInfo]) -> None:
     """Print the monitor dashboard."""
     os.system("clear")
 
+    def _progress_line(label: str, current: int, total: int, bar: str) -> str:
+        prefix = f"{current}/{total}"
+        return f"  {label:<6s}: {prefix:<11s}  {bar}"
+
     print(f"{_CYAN}{'=' * 70}{_RST}")
     print(f"  {_BOLD}{_CYAN}KD Training Monitor{_RST} -- {_DIM}{time.strftime('%Y-%m-%d %H:%M:%S')}{_RST}")
     print(f"{_CYAN}{'=' * 70}{_RST}")
@@ -741,14 +719,17 @@ def _display(jobs: list[JobInfo]) -> None:
 
         if j.current_epoch > 0:
             epoch_bar = _progress_bar(j.current_epoch, j.total_epochs)
-            print(f"\n  Epoca:     {_WHITE}{j.current_epoch}/{j.total_epochs}{_RST}  {epoch_bar}")
+            print(f"\n{_progress_line('Epoca', j.current_epoch, j.total_epochs, epoch_bar)}")
+            if j.tqdm_step > 0:
+                batch_bar = _progress_bar(j.tqdm_step, j.tqdm_total)
+                print(_progress_line('Batch', j.tqdm_step, j.tqdm_total, batch_bar))
             print(f"  Train Loss: {_WHITE}{j.train_loss}{_RST}")
             print(f"  Train Acc:  {_WHITE}{j.train_acc}%{_RST}")
             print(f"  Test Acc:   {_WHITE}{j.test_acc}%{_RST}  (Best: {_GREEN}{j.best_acc}%{_RST})")
             print(f"  LR:         {_DIM}{j.lr}{_RST}")
         elif j.tqdm_step > 0:
             batch_bar = _progress_bar(j.tqdm_step, j.tqdm_total)
-            print(f"\n  Batch:     {_WHITE}{j.tqdm_step}/{j.tqdm_total}{_RST}  {batch_bar}")
+            print(f"\n{_progress_line('Batch', j.tqdm_step, j.tqdm_total, batch_bar)}")
         else:
             print(f"\n  {_YELLOW}Avvio in corso...{_RST}")
 
