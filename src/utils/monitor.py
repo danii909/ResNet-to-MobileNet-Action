@@ -218,9 +218,34 @@ def _infer_pipeline_phase(job_dir: Path) -> tuple[str, str]:
     return "distillation", last_train_meta.get("config", "")
 
 
+def _planned_total_runs_from_job_dir_name(job_dir_name: str) -> int:
+    """Return planned runs for known single-job sweep naming conventions."""
+    name = (job_dir_name or "").lower()
+
+    known_totals = {
+        "slurm-multiple-runs-": 4,
+        "slurm-strongaug-runs-": 3,
+        "slurm-recovery-24f-sweep-": 3,
+        "slurm-baseline-24f-phase2-": 3,
+        "slurm-baseline-24f-phase3-": 3,
+        "slurm-24f-refine3-a-": 3,
+        "slurm-24f-refine3-b-": 3,
+        "slurm-24f-refine6-": 6,
+    }
+
+    for prefix, total in known_totals.items():
+        if name.startswith(prefix):
+            return total
+    return 0
+
+
 def _infer_total_runs_from_context(job: JobInfo, lines: list[str]) -> int:
     """Infer planned number of trainings for single-job sweep pipelines."""
     job_dir = job.job_log_dir or ""
+
+    planned_total = 0
+    if job_dir:
+        planned_total = _planned_total_runs_from_job_dir_name(Path(job_dir).name)
 
     # First try: count run subdirectories dynamically from the job directory
     if job_dir and Path(job_dir).exists():
@@ -232,7 +257,10 @@ def _infer_total_runs_from_context(job: JobInfo, lines: list[str]) -> int:
             if (child / "train").exists() or (child / "eval").exists():
                 run_count += 1
         if run_count > 0:
-            return run_count
+            return max(run_count, planned_total)
+
+    if planned_total > 0:
+        return planned_total
 
     # Fallback: parse explicit [i/total] markers when available.
     for line in reversed(lines[-500:]):
@@ -519,7 +547,7 @@ def _parse_log(job: JobInfo) -> None:
             if fs_idx > 0:
                 job.run_index = fs_idx
             if fs_total > 0:
-                job.run_total = fs_total
+                job.run_total = max(job.run_total, fs_total)
         elif not job.current_run_name or job.run_index == 0:
             # Fallback for completed/pending jobs if log parsing didn't find info
             fs_run_name, fs_idx, fs_total = _infer_current_run_from_job_dir(Path(job.job_log_dir))
@@ -527,8 +555,8 @@ def _parse_log(job: JobInfo) -> None:
                 job.current_run_name = fs_run_name
             if fs_idx > 0 and job.run_index == 0:
                 job.run_index = fs_idx
-            if fs_total > 0 and job.run_total == 0:
-                job.run_total = fs_total
+            if fs_total > 0:
+                job.run_total = max(job.run_total, fs_total)
 
     # Parse config/mode/node/gpu from top section.
     for line in lines[:150]:

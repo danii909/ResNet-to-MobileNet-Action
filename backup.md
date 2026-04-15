@@ -12,7 +12,7 @@ Comparison across these experiment folders:
 - `slurm-baseline-24f-phase2-4147`
 - `slurm-baseline-24f-phase3-4162`
 
-Rows are grouped by comparison pattern (`teacher -> baseline -> student`) when possible.
+Rows are sorted by `exp_id` (time order).
 Missing fields are intentionally left empty.
 
 ## Teacher Version Mapping
@@ -40,43 +40,34 @@ Student-teacher association:
 | 4077 | slurm-multiple-runs-4077 | kd_t6_a06 | distillation | student | 16 | 24 | 0.0006 | 0.01 |  |  | 6 | 0.6 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 64.84 | 59 | 97.03 | 64.58 | 88.47 | 64.84 | 88.21 |
 | 4077 | slurm-multiple-runs-4077 | kd_t10_a07 | distillation | student | 16 | 24 | 0.0006 | 0.01 |  |  | 10 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 65.66 | 59 | 97.11 | 65.66 | 88.13 | 65.66 | 87.76 |
 | 4077 | slurm-multiple-runs-4077 | kd_t6_a06_lr5e4_wd002 | distillation | student | 16 | 24 | 0.0005 | 0.02 |  |  | 6 | 0.6 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 63.55 | 58 | 97.36 | 63.05 | 88.05 | 63.55 | 87.76 |
-| 4147 | slurm-baseline-24f-phase2-4147 | baseline_for_kd_t8_a07_24f_lightaug | baseline | student | 24 | 16 | 0.0005 | 0.01 | 0.1 |  |  |  |  | v2 (indirect) |  | 66.98 | 57 | 99.77 | 66.38 | 88.13 | 66.98 | 88.00 |
-| 4142 | slurm-24f-refine3-b-4142 | kd_t8_a07_24f_lightaug | distillation | student | 24 | 16 | 0.0005 | 0.01 |  |  | 8 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 70.18 | 58 | 96.51 | 69.71 | 90.46 | 70.18 | 90.40 |
-| 4147 | slurm-baseline-24f-phase2-4147 | baseline_for_kd_t10_a07_24f_lightaug | baseline | student | 24 | 16 | 0.0005 | 0.01 | 0.1 |  |  |  |  | v2 (indirect) |  | 66.98 | 57 | 99.77 | 66.38 | 88.13 | 66.98 | 88.00 |
-| 4137 | slurm-recovery-24f-sweep-4137 | kd_t10_a07_24f_lightaug | distillation | student | 24 | 16 | 0.0005 | 0.01 |  |  | 10 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 69.47 | 57 | 97.55 | 69.05 | 90.25 | 69.47 | 90.33 |
-| 4147 | slurm-baseline-24f-phase2-4147 | baseline_for_kd_t12_a07_24f_lightaug | baseline | student | 24 | 16 | 0.0005 | 0.01 | 0.1 |  |  |  |  | v2 (indirect) |  | 66.98 | 57 | 99.77 | 66.38 | 88.13 | 66.98 | 88.00 |
-| 4142 | slurm-24f-refine3-b-4142 | kd_t12_a07_24f_lightaug | distillation | student | 24 | 16 | 0.0005 | 0.01 |  |  | 12 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 69.87 | 52 | 97.80 | 69.13 | 90.93 | 69.87 | 90.35 |
-| 4162 | slurm-baseline-24f-phase3-4162 | baseline_for_kd_t10_a07_24f_lightaug_warmup8 | baseline | student | 24 | 16 | 0.0005 | 0.01 | 0.1 |  |  |  |  | v2 (indirect) |  | 66.98 | 57 | 99.77 | 66.38 | 88.13 | 66.98 | 88.00 |
-| 4141 | slurm-24f-refine3-a-4141 | kd_t10_a07_24f_lightaug_warmup8 | distillation | student | 24 | 16 | 0.0005 | 0.01 |  | 8 | 10 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 69.71 | 58 | 97.40 | 69.15 | 90.77 | 69.71 | 90.80 |
-| 4162 | slurm-baseline-24f-phase3-4162 | baseline_for_kd_t10_a07_24f_minaug | baseline | student | 24 | 16 | 0.0005 | 0.01 | 0.1 |  |  |  |  | v2 (indirect) |  | 64.95 | 55 | 99.83 | 64.87 | 86.36 | 64.95 | 86.12 |
-| 4137 | slurm-recovery-24f-sweep-4137 | kd_t10_a07_24f_minaug | distillation | student | 24 | 16 | 0.0005 | 0.01 |  |  | 10 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 67.25 | 54 | 97.91 | 66.75 | 89.35 | 67.25 | 89.53 |
-| 4162 | slurm-baseline-24f-phase3-4162 | baseline_for_kd_t10_a07_24f_lightaug_ls005 | baseline | student | 24 | 16 | 0.0005 | 0.01 | 0.05 |  |  |  |  | v2 (indirect) |  | 69.05 | 58 | 99.64 | 68.97 | 88.24 | 69.05 | 88.21 |
-| 4141 | slurm-24f-refine3-a-4141 | kd_t10_a07_24f_lightaug_ls005 | distillation | student | 24 | 16 | 0.0005 | 0.01 | 0.05 |  | 10 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 68.75 | 60 | 97.56 | 68.75 | 90.46 | 68.75 | 90.46 |
-| 4137 | slurm-recovery-24f-sweep-4137 | kd_t10_a07_24f_lightaug_lr6e4 | distillation | student | 24 | 16 | 0.0006 | 0.01 |  |  | 10 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 69.05 | 58 | 96.67 | 68.94 | 91.17 | 69.05 | 91.25 |
-| 4141 | slurm-24f-refine3-a-4141 | kd_t10_a07_24f_lightaug_seed43 | distillation | student | 24 | 16 | 0.0005 | 0.01 |  |  | 10 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 71.03 | 60 | 98.16 | 71.03 | 90.93 | 71.03 | 90.93 |
-| 4142 | slurm-24f-refine3-b-4142 | kd_t10_a07_24f_lightaug_stride2 | distillation | student | 24 | 16 | 0.0005 | 0.01 |  |  | 10 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 58.02 | 51 | 91.45 | 56.54 | 82.32 | 58.02 | 83.00 |
 | 4129 | slurm-strongaug-runs-4129 | kd_t10_a07_strongaug | distillation | student | 16 | 24 | 0.0006 | 0.01 |  |  | 10 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 52.05 | 56 | 90.45 | 51.94 | 80.17 | 52.05 | 80.12 |
 | 4129 | slurm-strongaug-runs-4129 | kd_t10_a07_strongaug_24f | distillation | student | 24 | 16 | 0.0005 | 0.01 |  |  | 10 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 55.83 | 60 | 92.18 | 55.83 | 83.27 | 55.83 | 83.27 |
 | 4129 | slurm-strongaug-runs-4129 | kdat_t10_a07_strongaug | distillation_at | student | 16 | 24 | 0.0006 | 0.01 |  |  | 10 | 0.7 | 0.1 | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 52.23 | 56 | 90.63 | 52.00 | 79.49 | 52.23 | 79.67 |
+| 4137 | slurm-recovery-24f-sweep-4137 | kd_t10_a07_24f_minaug | distillation | student | 24 | 16 | 0.0005 | 0.01 |  |  | 10 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 67.25 | 54 | 97.91 | 66.75 | 89.35 | 67.25 | 89.53 |
+| 4137 | slurm-recovery-24f-sweep-4137 | kd_t10_a07_24f_lightaug | distillation | student | 24 | 16 | 0.0005 | 0.01 |  |  | 10 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 69.47 | 57 | 97.55 | 69.05 | 90.25 | 69.47 | 90.33 |
+| 4137 | slurm-recovery-24f-sweep-4137 | kd_t10_a07_24f_lightaug_lr6e4 | distillation | student | 24 | 16 | 0.0006 | 0.01 |  |  | 10 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 69.05 | 58 | 96.67 | 68.94 | 91.17 | 69.05 | 91.25 |
+| 4141 | slurm-24f-refine3-a-4141 | kd_t10_a07_24f_lightaug_seed43 | distillation | student | 24 | 16 | 0.0005 | 0.01 |  |  | 10 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 71.03 | 60 | 98.16 | 71.03 | 90.93 | 71.03 | 90.93 |
+| 4141 | slurm-24f-refine3-a-4141 | kd_t10_a07_24f_lightaug_ls005 | distillation | student | 24 | 16 | 0.0005 | 0.01 | 0.05 |  | 10 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 68.75 | 60 | 97.56 | 68.75 | 90.46 | 68.75 | 90.46 |
+| 4141 | slurm-24f-refine3-a-4141 | kd_t10_a07_24f_lightaug_warmup8 | distillation | student | 24 | 16 | 0.0005 | 0.01 |  | 8 | 10 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 69.71 | 58 | 97.40 | 69.15 | 90.77 | 69.71 | 90.80 |
+| 4142 | slurm-24f-refine3-b-4142 | kd_t12_a07_24f_lightaug | distillation | student | 24 | 16 | 0.0005 | 0.01 |  |  | 12 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 69.87 | 52 | 97.80 | 69.13 | 90.93 | 69.87 | 90.35 |
+| 4142 | slurm-24f-refine3-b-4142 | kd_t8_a07_24f_lightaug | distillation | student | 24 | 16 | 0.0005 | 0.01 |  |  | 8 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 70.18 | 58 | 96.51 | 69.71 | 90.46 | 70.18 | 90.40 |
+| 4142 | slurm-24f-refine3-b-4142 | kd_t10_a07_24f_lightaug_stride2 | distillation | student | 24 | 16 | 0.0005 | 0.01 |  |  | 10 | 0.7 |  | v2 | /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth | 58.02 | 51 | 91.45 | 56.54 | 82.32 | 58.02 | 83.00 |
+| 4147 | slurm-baseline-24f-phase2-4147 | baseline_t8_24f_lightaug | baseline | student | 24 | 16 | 0.0005 | 0.01 | 0.1 |  |  |  |  | v2 (indirect) |  | 66.98 | 57 | 99.77 | 66.38 | 88.13 | 66.98 | 88.00 |
+| 4147 | slurm-baseline-24f-phase2-4147 | baseline_t10_24f_lightaug | baseline | student | 24 | 16 | 0.0005 | 0.01 | 0.1 |  |  |  |  | v2 (indirect) |  | 66.98 | 57 | 99.77 | 66.38 | 88.13 | 66.98 | 88.00 |
+| 4147 | slurm-baseline-24f-phase2-4147 | baseline_t12_24f_lightaug | baseline | student | 24 | 16 | 0.0005 | 0.01 | 0.1 |  |  |  |  | v2 (indirect) |  | 66.98 | 57 | 99.77 | 66.38 | 88.13 | 66.98 | 88.00 |
+| 4162 | slurm-baseline-24f-phase3-4162 | baseline_warmup8_24f_lightaug | baseline | student | 24 | 16 | 0.0005 | 0.01 | 0.1 |  |  |  |  | v2 (indirect) |  | 66.98 | 57 | 99.77 | 66.38 | 88.13 | 66.98 | 88.00 |
+| 4162 | slurm-baseline-24f-phase3-4162 | baseline_24f_minaug | baseline | student | 24 | 16 | 0.0005 | 0.01 | 0.1 |  |  |  |  | v2 (indirect) |  | 64.95 | 55 | 99.83 | 64.87 | 86.36 | 64.95 | 86.12 |
+| 4162 | slurm-baseline-24f-phase3-4162 | baseline_ls005_24f_lightaug | baseline | student | 24 | 16 | 0.0005 | 0.01 | 0.05 |  |  |  |  | v2 (indirect) |  | 69.05 | 58 | 99.64 | 68.97 | 88.24 | 69.05 | 88.21 |
 
 ## Quick Notes
 - **Best student Top-1 so far: `71.03` (`exp_id=4141`, `kd_t10_a07_24f_lightaug_seed43`).**
-- **Best baseline Top-1 so far: `69.05` (`exp_id=4162`, `baseline_for_kd_t10_a07_24f_lightaug_ls005`).**
+- **Best baseline Top-1 so far: `69.05` (`exp_id=4162`, `baseline_ls005_24f_lightaug`).**
 - Best student Top-5 so far: `91.25` (`exp_id=4137`, `kd_t10_a07_24f_lightaug_lr6e4`).
 - `exp_id=3998` has no evaluation folder; eval columns remain empty by design.
 
 ## Baseline Counterpart Analysis (Completed: exp_id=4147, 4162)
 
 You completed the first 6 planned baseline counterparts (24-frame, seed=42). Below is the direct KD vs baseline comparison using matched settings.
-
-### Mapping 1:1 (Student KD -> Baseline)
-
-- kd_t8_a07_24f_lightaug -> baseline_for_kd_t8_a07_24f_lightaug
-- kd_t10_a07_24f_lightaug -> baseline_for_kd_t10_a07_24f_lightaug
-- kd_t12_a07_24f_lightaug -> baseline_for_kd_t12_a07_24f_lightaug
-- kd_t10_a07_24f_lightaug_warmup8 -> baseline_for_kd_t10_a07_24f_lightaug_warmup8
-- kd_t10_a07_24f_minaug -> baseline_for_kd_t10_a07_24f_minaug
-- kd_t10_a07_24f_lightaug_ls005 -> baseline_for_kd_t10_a07_24f_lightaug_ls005
 
 | Pair | KD run (top1) | Baseline run (top1) | KD lift (top1) | Note |
 |---|---:|---:|---:|---|

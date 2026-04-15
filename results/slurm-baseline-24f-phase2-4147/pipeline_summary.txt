@@ -1,0 +1,79 @@
+Pipeline Summary
+============================================================
+job_tag: slurm-baseline-24f-phase2-4147
+slurm_job_id: 4147
+root_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-baseline-24f-phase2-4147
+note: Phase 2 baseline training (temperature sweep: T8, T10, T12 with seed=42)
+
+[baseline_t8_24f_lightaug]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-baseline-24f-phase2-4147/baseline_t8_24f_lightaug/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-baseline-24f-phase2-4147/baseline_t8_24f_lightaug/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+[config]
+mode: baseline
+model.type: student
+dataset.num_frames: 24
+dataset.max_temporal_stride: 
+training.batch_size: 16
+training.lr: 0.0005
+training.weight_decay: 0.01
+training.label_smoothing: 
+[train results]
+best_acc: 66.98
+best_epoch: 57
+final_train_acc: 99.77
+final_test_acc: 66.38
+final_test_top5: 88.13
+[eval results]
+top1: 66.98387523129792
+top5: 87.9989426381179
+
+[baseline_t10_24f_lightaug]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-baseline-24f-phase2-4147/baseline_t10_24f_lightaug/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-baseline-24f-phase2-4147/baseline_t10_24f_lightaug/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+[config]
+mode: baseline
+model.type: student
+dataset.num_frames: 24
+dataset.max_temporal_stride: 
+training.batch_size: 16
+training.lr: 0.0005
+training.weight_decay: 0.01
+training.label_smoothing: 
+[train results]
+best_acc: 66.98
+best_epoch: 57
+final_train_acc: 99.77
+final_test_acc: 66.38
+final_test_top5: 88.13
+[eval results]
+top1: 66.98387523129792
+top5: 87.9989426381179
+
+[baseline_t12_24f_lightaug]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-baseline-24f-phase2-4147/baseline_t12_24f_lightaug/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-baseline-24f-phase2-4147/baseline_t12_24f_lightaug/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+[config]
+mode: baseline
+model.type: student
+dataset.num_frames: 24
+dataset.max_temporal_stride: 
+training.batch_size: 16
+training.lr: 0.0005
+training.weight_decay: 0.01
+training.label_smoothing: 
+[train results]
+best_acc: 66.98
+best_epoch: 57
+final_train_acc: 99.77
+final_test_acc: 66.38
+final_test_top5: 88.13
+[eval results]
+top1: 66.98387523129792
+top5: 87.9989426381179
+
