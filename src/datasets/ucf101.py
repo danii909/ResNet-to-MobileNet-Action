@@ -1,5 +1,6 @@
 """UCF-101 dataset loader with HF frames and optional video decoding."""
 
+import copy
 import shutil
 import subprocess
 import urllib.request
@@ -403,6 +404,13 @@ class UCF101Dataset(Dataset):
 
         return self.spatial_transform(frames).permute(1, 0, 2, 3), label
 
+    def clone_for_eval(self) -> "UCF101Dataset":
+        """Return a shallow clone that reads the same samples with eval transforms."""
+        ds = copy.copy(self)
+        ds.train = False
+        ds.spatial_transform = ds._build_transforms()
+        return ds
+
 
 class UCF101HFDataset(Dataset):
     """UCF-101 dataset loaded from Hugging Face (flwrlabs/ucf101).
@@ -515,9 +523,65 @@ class UCF101HFDataset(Dataset):
         clip = torch.stack(frames)  # [T, C, H, W]
         return self.spatial_transform(clip).permute(1, 0, 2, 3), label
 
+    def clone_for_eval(self) -> "UCF101HFDataset":
+        """Return a shallow clone that shares frames/clips but uses eval transforms."""
+        ds = copy.copy(self)
+        ds.train = False
+        ds.max_temporal_stride = 1
+        ds.use_random_resized_crop = False
+        ds.color_jitter_strength = 0.0
+        ds.random_erasing_prob = 0.0
+        ds.spatial_transform = ds._build_transforms()
+        return ds
+
+
+def _extract_labels(dataset: Dataset) -> np.ndarray:
+    """Extract per-sample labels from dataset internals for stratified splitting."""
+    if hasattr(dataset, "samples"):
+        # UCF101Dataset: samples = [(path, label), ...]
+        return np.asarray([int(lbl) for _, lbl in dataset.samples], dtype=np.int64)
+    if hasattr(dataset, "clips"):
+        # UCF101HFDataset: clips = [(row_indices, label), ...]
+        return np.asarray([int(lbl) for _, lbl in dataset.clips], dtype=np.int64)
+    raise ValueError(f"Unsupported dataset type for stratified split: {type(dataset)}")
+
+
+def _stratified_split_indices(labels: np.ndarray, eval_ratio: float, seed: int) -> tuple[np.ndarray, np.ndarray]:
+    """Create deterministic stratified train/eval indices.
+
+    Ensures at least one sample per class in eval and train whenever class count allows it.
+    """
+    if not 0.0 < eval_ratio < 1.0:
+        raise ValueError(f"eval_ratio must be in (0, 1), got {eval_ratio}")
+
+    rng = np.random.default_rng(seed)
+    train_idx: list[int] = []
+    eval_idx: list[int] = []
+
+    classes = np.unique(labels)
+    for cls in classes:
+        cls_idx = np.where(labels == cls)[0]
+        if cls_idx.size == 0:
+            continue
+
+        shuffled = cls_idx.copy()
+        rng.shuffle(shuffled)
+
+        # At least 1 eval sample if class has >=2 examples.
+        n_eval = int(round(shuffled.size * eval_ratio))
+        if shuffled.size >= 2:
+            n_eval = max(1, min(n_eval, shuffled.size - 1))
+        else:
+            n_eval = 0
+
+        eval_idx.extend(shuffled[:n_eval].tolist())
+        train_idx.extend(shuffled[n_eval:].tolist())
+
+    return np.asarray(train_idx, dtype=np.int64), np.asarray(eval_idx, dtype=np.int64)
+
 
 def get_dataloaders(config: dict) -> dict[str, DataLoader]:
-    """Create train and test DataLoaders from config.
+    """Create train/eval/test DataLoaders from config.
 
     Expected config keys under 'dataset':
         backend: 'hf', 'decord', or 'torchvision' (default 'hf').
@@ -531,6 +595,11 @@ def get_dataloaders(config: dict) -> dict[str, DataLoader]:
     Expected config keys under 'training':
         batch_size: Batch size.
         num_workers: DataLoader workers (default 4).
+
+    Optional config keys under 'dataset':
+        use_eval_split: if True, split official train set into train/eval (default True).
+        eval_ratio: fraction of official train assigned to eval (default 0.2).
+        split_seed: seed for deterministic stratified split (default: config['seed'] or 42).
     """
     ds_cfg = config["dataset"]
     tr_cfg = config.get("training", {})
@@ -545,6 +614,9 @@ def get_dataloaders(config: dict) -> dict[str, DataLoader]:
     max_temporal_stride = ds_cfg.get("max_temporal_stride", 1)
     batch_size = tr_cfg.get("batch_size", 16)
     num_workers = tr_cfg.get("num_workers", 4)
+    use_eval_split = ds_cfg.get("use_eval_split", True)
+    eval_ratio = float(ds_cfg.get("eval_ratio", 0.2))
+    split_seed = int(ds_cfg.get("split_seed", config.get("seed", 42)))
 
     if backend == "hf":
         # HF dataset (flwrlabs/ucf101) - loaded from local disk
@@ -560,6 +632,7 @@ def get_dataloaders(config: dict) -> dict[str, DataLoader]:
             random_erasing_prob=random_erasing_prob,
             max_temporal_stride=max_temporal_stride,
         )
+        eval_source_ds = train_ds.clone_for_eval()
         print(f"[DataLoaders] Creating HF test dataset...")
         test_ds = UCF101HFDataset(
             split="test", num_frames=num_frames,
@@ -591,7 +664,32 @@ def get_dataloaders(config: dict) -> dict[str, DataLoader]:
             backend=backend,
         )
         train_ds = UCF101Dataset(train=True, **common_kwargs)
+        eval_source_ds = train_ds.clone_for_eval()
         test_ds = UCF101Dataset(train=False, **common_kwargs)
+
+    # Build train/eval split from official train split when requested.
+    if use_eval_split:
+        labels = _extract_labels(train_ds)
+        train_idx, eval_idx = _stratified_split_indices(labels, eval_ratio=eval_ratio, seed=split_seed)
+
+        if eval_idx.size == 0 or train_idx.size == 0:
+            raise RuntimeError(
+                "Invalid train/eval split produced an empty split. "
+                f"train={train_idx.size}, eval={eval_idx.size}, eval_ratio={eval_ratio}"
+            )
+
+        from torch.utils.data import Subset
+
+        train_ds = Subset(train_ds, train_idx.tolist())
+        eval_ds = Subset(eval_source_ds, eval_idx.tolist())
+        print(
+            "[DataLoaders] Stratified split enabled: "
+            f"train={len(train_ds)} clips, eval={len(eval_ds)} clips, "
+            f"ratio={eval_ratio:.2f}, seed={split_seed}"
+        )
+    else:
+        eval_ds = test_ds
+        print("[DataLoaders] Stratified eval split disabled: trainer will validate on official test split.")
 
     print(f"[DataLoaders] Creating DataLoaders (batch_size={batch_size}, workers={num_workers})...")
     train_loader = DataLoader(
@@ -602,6 +700,13 @@ def get_dataloaders(config: dict) -> dict[str, DataLoader]:
         pin_memory=True,
         drop_last=True,
     )
+    eval_loader = DataLoader(
+        eval_ds,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True,
+    )
     test_loader = DataLoader(
         test_ds,
         batch_size=batch_size,
@@ -610,5 +715,8 @@ def get_dataloaders(config: dict) -> dict[str, DataLoader]:
         pin_memory=True,
     )
 
-    print(f"[DataLoaders] Ready: {len(train_loader)} train batches, {len(test_loader)} test batches.")
-    return {"train": train_loader, "test": test_loader}
+    print(
+        f"[DataLoaders] Ready: {len(train_loader)} train batches, "
+        f"{len(eval_loader)} eval batches, {len(test_loader)} test batches."
+    )
+    return {"train": train_loader, "eval": eval_loader, "test": test_loader}

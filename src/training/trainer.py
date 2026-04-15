@@ -3,6 +3,7 @@
 import csv
 import json
 import os
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -29,7 +30,7 @@ class Trainer:
         config: Full experiment configuration dict.
         model: The model to train (student in distillation modes).
         train_loader: Training DataLoader.
-        test_loader: Test/validation DataLoader.
+        eval_loader: Evaluation DataLoader.
         teacher: Optional teacher model (required for distillation modes).
         device: Torch device.
     """
@@ -39,7 +40,7 @@ class Trainer:
         config: dict,
         model: nn.Module,
         train_loader: DataLoader,
-        test_loader: DataLoader,
+        eval_loader: DataLoader,
         teacher: Optional[nn.Module] = None,
         device: torch.device = torch.device("cuda"),
     ):
@@ -47,7 +48,7 @@ class Trainer:
         self.model = model.to(device)
         self.teacher = teacher
         self.train_loader = train_loader
-        self.test_loader = test_loader
+        self.eval_loader = eval_loader
         self.device = device
 
         tr_cfg = config["training"]
@@ -135,11 +136,11 @@ class Trainer:
                 "epoch",
                 "train_loss",
                 "train_acc",
-                "test_loss",
-                "test_acc",
-                "test_acc_top5",
+                "eval_loss",
+                "eval_acc",
+                "eval_acc_top5",
                 "lr",
-                "best_acc",
+                "best_eval_acc",
             ])
 
     def _append_epoch_metrics(self, metrics: dict) -> None:
@@ -150,11 +151,11 @@ class Trainer:
                 metrics["epoch"],
                 metrics["train_loss"],
                 metrics["train_acc"],
-                metrics["test_loss"],
-                metrics["test_acc"],
-                metrics["test_acc_top5"],
+                metrics["eval_loss"],
+                metrics["eval_acc"],
+                metrics["eval_acc_top5"],
                 metrics["lr"],
-                metrics["best_acc"],
+                metrics["best_eval_acc"],
             ])
 
         with open(self.metrics_jsonl_path, "a", encoding="utf-8") as f:
@@ -195,6 +196,9 @@ class Trainer:
                 "num_frames": data_cfg.get("num_frames"),
                 "crop_size": data_cfg.get("crop_size"),
                 "backend": data_cfg.get("backend"),
+                "use_eval_split": data_cfg.get("use_eval_split"),
+                "eval_ratio": data_cfg.get("eval_ratio"),
+                "split_seed": data_cfg.get("split_seed"),
             },
             "training": {
                 "epochs": tr_cfg.get("epochs"),
@@ -245,6 +249,9 @@ class Trainer:
             f"num_frames: {summary['dataset']['num_frames']}",
             f"crop_size: {summary['dataset']['crop_size']}",
             f"backend: {summary['dataset']['backend']}",
+            f"use_eval_split: {summary['dataset']['use_eval_split']}",
+            f"eval_ratio: {summary['dataset']['eval_ratio']}",
+            f"split_seed: {summary['dataset']['split_seed']}",
             "",
             "[training]",
             f"epochs: {summary['training']['epochs']}",
@@ -286,11 +293,11 @@ class Trainer:
             old_file.unlink(missing_ok=True)
 
         marker_names = [
-            f"metric_best_acc_{self.best_acc:.2f}",
+            f"metric_best_eval_acc_{self.best_acc:.2f}",
             f"metric_best_epoch_{self.best_epoch + 1}",
             f"metric_final_train_acc_{final_metrics['train_acc']:.2f}",
-            f"metric_final_test_acc_{final_metrics['test_acc']:.2f}",
-            f"metric_final_test_top5_{final_metrics['test_acc_top5']:.2f}",
+            f"metric_final_eval_acc_{final_metrics['eval_acc']:.2f}",
+            f"metric_final_eval_top5_{final_metrics['eval_acc_top5']:.2f}",
         ]
         for name in marker_names:
             (self.run_log_dir / name).touch(exist_ok=True)
@@ -306,13 +313,13 @@ class Trainer:
             f"mode: {self.mode}",
             f"device: {self.device}",
             f"epochs_completed: {self.epochs - self.start_epoch}",
-            f"best_acc: {self.best_acc:.2f}",
+            f"best_eval_acc: {self.best_acc:.2f}",
             f"best_epoch: {self.best_epoch + 1}",
             f"final_train_acc: {final_metrics['train_acc']:.2f}",
-            f"final_test_acc: {final_metrics['test_acc']:.2f}",
-            f"final_test_top5: {final_metrics['test_acc_top5']:.2f}",
+            f"final_eval_acc: {final_metrics['eval_acc']:.2f}",
+            f"final_eval_top5: {final_metrics['eval_acc_top5']:.2f}",
             f"final_train_loss: {final_metrics['train_loss']:.6f}",
-            f"final_test_loss: {final_metrics['test_loss']:.6f}",
+            f"final_eval_loss: {final_metrics['eval_loss']:.6f}",
             f"started_at: {self.run_started_at.isoformat(timespec='seconds')}",
             f"finished_at: {finished_at.isoformat(timespec='seconds')}",
             f"elapsed_seconds: {elapsed_sec}",
@@ -424,7 +431,7 @@ class Trainer:
         for epoch in range(self.start_epoch, self.epochs):
             self.current_epoch = epoch
             train_metrics = self._train_epoch(epoch)
-            test_metrics = self._evaluate(epoch)
+            eval_metrics = self._evaluate(epoch)
 
             # LR scheduler step
             current_lr = self.optimizer.param_groups[0]["lr"]
@@ -432,9 +439,9 @@ class Trainer:
                 self.scheduler.step()
 
             # Check best
-            is_best = test_metrics["test_acc"] > self.best_acc
+            is_best = eval_metrics["eval_acc"] > self.best_acc
             if is_best:
-                self.best_acc = test_metrics["test_acc"]
+                self.best_acc = eval_metrics["eval_acc"]
                 self.best_epoch = epoch
             self._save_checkpoint(epoch, is_best=is_best)
 
@@ -442,8 +449,9 @@ class Trainer:
             metrics = {
                 "epoch": epoch,
                 **train_metrics,
-                **test_metrics,
+                **eval_metrics,
                 "lr": current_lr,
+                "best_eval_acc": self.best_acc,
                 "best_acc": self.best_acc,
             }
             logger.log_metrics(metrics, step=epoch)
@@ -454,8 +462,8 @@ class Trainer:
                 f"Epoch {epoch+1}/{self.epochs} | "
                 f"Train Loss: {train_metrics['train_loss']:.4f} | "
                 f"Train Acc: {train_metrics['train_acc']:.2f}% | "
-                f"Test Acc: {test_metrics['test_acc']:.2f}% | "
-                f"Best: {self.best_acc:.2f}% | "
+                f"Eval Acc: {eval_metrics['eval_acc']:.2f}% | "
+                f"Best Eval: {self.best_acc:.2f}% | "
                 f"LR: {current_lr:.6f}"
             )
 
@@ -463,7 +471,7 @@ class Trainer:
             self._write_training_summary(last_metrics)
             self._write_ls_markers(last_metrics)
 
-        print(f"Training complete. Best test accuracy: {self.best_acc:.2f}%")
+        print(f"Training complete. Best eval accuracy: {self.best_acc:.2f}%")
         return {
             "best_acc": self.best_acc,
             "best_epoch": self.best_epoch,
@@ -548,7 +556,8 @@ class Trainer:
         running_loss = 0.0
         ce_criterion = nn.CrossEntropyLoss()
 
-        for clips, labels in self.test_loader:
+        pbar = tqdm(self.eval_loader, desc=f"Eval {epoch+1}", leave=True, file=sys.stdout)
+        for clips, labels in pbar:
             clips = clips.to(self.device, non_blocking=True)
             labels = labels.to(self.device, non_blocking=True)
 
@@ -567,8 +576,13 @@ class Trainer:
             _, top5_preds = logits.topk(5, dim=1)
             correct_top5 += (top5_preds == labels.unsqueeze(1)).any(dim=1).sum().item()
 
+            pbar.set_postfix(
+                acc=f"{(100.0 * correct / total):.2f}",
+                top5=f"{(100.0 * correct_top5 / total):.2f}",
+            )
+
         acc = 100.0 * correct / total
         acc_top5 = 100.0 * correct_top5 / total
         avg_loss = running_loss / total
 
-        return {"test_acc": acc, "test_acc_top5": acc_top5, "test_loss": avg_loss}
+        return {"eval_acc": acc, "eval_acc_top5": acc_top5, "eval_loss": avg_loss}

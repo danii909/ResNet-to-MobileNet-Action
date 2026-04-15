@@ -1,0 +1,16 @@
+Evaluation Summary
+========================================
+mode: teacher_finetune
+model_type: teacher
+checkpoint: experiments/checkpoints/teacher_finetune_best.pth
+device: cuda
+top1: 89.27
+top5: 98.68
+param_count: 31841445
+param_count_trainable: 31841445
+size_mb: 121.47
+inference_avg_ms: 2.73
+inference_std_ms: 0.17
+inference_min_ms: 2.68
+inference_max_ms: 3.82
+finished_at: 2026-04-15T17:39:59

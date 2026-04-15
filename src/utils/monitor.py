@@ -20,6 +20,9 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+
+_RUN_TOTAL_CACHE: dict[str, int] = {}
+
 # -- Config -------------------------------------------------------------------
 PROJ_DIR = Path(os.environ.get("HOME", "~")) / "dl26-projects"
 LOGS_DIR = PROJ_DIR / "logs"
@@ -78,8 +81,8 @@ class JobInfo:
     total_epochs: int = 0
     train_loss: str = ""
     train_acc: str = ""
-    test_acc: str = ""
-    best_acc: str = ""
+    eval_acc: str = ""
+    best_eval_acc: str = ""
     lr: str = ""
     # Progress bar (tqdm)
     tqdm_step: int = 0
@@ -218,49 +221,179 @@ def _infer_pipeline_phase(job_dir: Path) -> tuple[str, str]:
     return "distillation", last_train_meta.get("config", "")
 
 
-def _planned_total_runs_from_job_dir_name(job_dir_name: str) -> int:
-    """Return planned runs for known single-job sweep naming conventions."""
-    name = (job_dir_name or "").lower()
+def _count_run_dirs(job_dir: Path) -> int:
+    """Count run directories that expose train/eval subfolders."""
+    if not job_dir.exists():
+        return 0
+    run_count = 0
+    for child in job_dir.iterdir():
+        if not child.is_dir():
+            continue
+        if (child / "train").exists() or (child / "eval").exists():
+            run_count += 1
+    return run_count
 
-    known_totals = {
-        "slurm-multiple-runs-": 4,
-        "slurm-strongaug-runs-": 3,
-        "slurm-recovery-24f-sweep-": 3,
-        "slurm-baseline-24f-phase2-": 3,
-        "slurm-baseline-24f-phase3-": 3,
-        "slurm-24f-refine3-a-": 3,
-        "slurm-24f-refine3-b-": 3,
-        "slurm-24f-refine6-": 6,
-    }
 
-    for prefix, total in known_totals.items():
-        if name.startswith(prefix):
-            return total
-    return 0
+def _infer_total_runs_from_job_summary(job_dir: Path) -> int:
+    """Read total_runs from job summary if available."""
+    summary = _read_json_file(job_dir / "job_training_summary.json")
+    total_runs = summary.get("total_runs")
+    try:
+        val = int(total_runs)
+        return val if val > 0 else 0
+    except (TypeError, ValueError):
+        return 0
+
+
+def _infer_total_runs_from_pipeline_summary(job_dir: Path) -> int:
+    """Count planned runs from pipeline_summary.txt when present.
+
+    Only top-level run blocks are counted (headers followed by train_dir).
+    Nested detail blocks like [config], [train results], [eval results]
+    are not separate trainings and must not increase the total.
+    """
+    summary_path = job_dir / "pipeline_summary.txt"
+    if not summary_path.exists():
+        return 0
+    try:
+        lines = summary_path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return 0
+
+    count = 0
+    for idx, line in enumerate(lines):
+        s = line.strip()
+        if not (len(s) >= 3 and s.startswith("[") and s.endswith("]")):
+            continue
+
+        # A real run section is immediately followed by train/eval paths.
+        # Detail sections do not have this layout.
+        is_run_section = False
+        for probe in lines[idx + 1 : idx + 7]:
+            p = probe.strip()
+            if not p:
+                continue
+            if p.startswith("[") and p.endswith("]"):
+                break
+            if p.startswith("train_dir:"):
+                is_run_section = True
+                break
+        if is_run_section:
+            count += 1
+    return count
+
+
+def _get_job_command_path(slurm_id: str) -> str:
+    """Resolve submitted SLURM script path from scontrol output."""
+    out = _run(f"scontrol show job -o {slurm_id} 2>/dev/null")
+    if not out:
+        return ""
+    m = re.search(r"\bCommand=(\S+)", out)
+    if not m:
+        return ""
+    cmd = m.group(1)
+    # scontrol escapes spaces as '\x20'
+    return cmd.replace("\\x20", " ")
+
+
+def _infer_total_runs_from_script(script_path: str) -> int:
+    """Best-effort static estimate of planned runs from a submit script."""
+    if not script_path:
+        return 0
+    p = Path(script_path)
+    if not p.exists() or not p.is_file():
+        return 0
+
+    try:
+        lines = p.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return 0
+
+    candidates: list[int] = []
+
+    # Heuristic 1: CONFIGS=( ... ) style arrays
+    in_configs = False
+    cfg_count = 0
+    for raw in lines:
+        line = raw.strip()
+        if not in_configs:
+            if re.match(r"^CONFIGS\s*=\s*\(", line):
+                in_configs = True
+                cfg_count = 0
+            continue
+        if line.startswith("#") or line == "":
+            continue
+        if ")" in line:
+            in_configs = False
+            if cfg_count > 0:
+                candidates.append(cfg_count)
+            continue
+        cfg_count += 1
+
+    # Heuristic 2: run_one*/run_eval* top-level calls used by many submit scripts.
+    run_call_count = 0
+    for raw in lines:
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        # Exclude function definitions.
+        if re.match(r"^\w+\s*\(\)\s*\{", line):
+            continue
+        if re.match(r"^run_one(?:_[A-Za-z0-9_]+)?\b", line):
+            run_call_count += 1
+    if run_call_count > 0:
+        candidates.append(run_call_count)
+
+    # Heuristic 3: explicit RUN="..." blocks (submit_multiple_runs style)
+    run_names: set[str] = set()
+    for raw in lines:
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        m = re.match(r'^RUN="([^"]+)"', line)
+        if m:
+            run_names.add(m.group(1))
+    if run_names:
+        candidates.append(len(run_names))
+
+    return max(candidates) if candidates else 0
+
+
+def _infer_total_runs_from_slurm_job(job: JobInfo) -> int:
+    """Infer total planned runs from submitted script path (cached by job id)."""
+    if not job.slurm_id:
+        return 0
+    cached = _RUN_TOTAL_CACHE.get(job.slurm_id)
+    if cached is not None:
+        return cached
+
+    cmd_path = _get_job_command_path(job.slurm_id)
+    total = _infer_total_runs_from_script(cmd_path)
+    _RUN_TOTAL_CACHE[job.slurm_id] = total
+    return total
 
 
 def _infer_total_runs_from_context(job: JobInfo, lines: list[str]) -> int:
     """Infer planned number of trainings for single-job sweep pipelines."""
-    job_dir = job.job_log_dir or ""
+    candidates: list[int] = []
 
-    planned_total = 0
-    if job_dir:
-        planned_total = _planned_total_runs_from_job_dir_name(Path(job_dir).name)
-
-    # First try: count run subdirectories dynamically from the job directory
-    if job_dir and Path(job_dir).exists():
-        run_count = 0
-        for child in Path(job_dir).iterdir():
-            if not child.is_dir():
-                continue
-            # Count directories that have train or eval subdirectories (run folders)
-            if (child / "train").exists() or (child / "eval").exists():
-                run_count += 1
+    if job.job_log_dir:
+        job_dir = Path(job.job_log_dir)
+        run_count = _count_run_dirs(job_dir)
         if run_count > 0:
-            return max(run_count, planned_total)
+            candidates.append(run_count)
 
-    if planned_total > 0:
-        return planned_total
+        summary_total = _infer_total_runs_from_job_summary(job_dir)
+        if summary_total > 0:
+            candidates.append(summary_total)
+
+        pipeline_total = _infer_total_runs_from_pipeline_summary(job_dir)
+        if pipeline_total > 0:
+            candidates.append(pipeline_total)
+
+    script_total = _infer_total_runs_from_slurm_job(job)
+    if script_total > 0:
+        candidates.append(script_total)
 
     # Fallback: parse explicit [i/total] markers when available.
     for line in reversed(lines[-500:]):
@@ -270,11 +403,14 @@ def _infer_total_runs_from_context(job: JobInfo, lines: list[str]) -> int:
             try:
                 prefix = line.split("]", 1)[0].lstrip("[")
                 _, total = prefix.split("/", 1)
-                return int(total)
+                parsed_total = int(total)
+                if parsed_total > 0:
+                    candidates.append(parsed_total)
+                    break
             except (ValueError, IndexError):
                 continue
 
-    return 0
+    return max(candidates) if candidates else 0
 
 
 # -- SLURM queries ------------------------------------------------------------
@@ -360,8 +496,8 @@ _EPOCH_RE = re.compile(
     r"Epoch (\d+)/(\d+) \| "
     r"Train Loss: ([\d.]+) \| "
     r"Train Acc: ([\d.]+)% \| "
-    r"Test Acc: ([\d.]+)% \| "
-    r"Best: ([\d.]+)% \| "
+    r"(?:Eval|Test) Acc: ([\d.]+)% \| "
+    r"Best(?: Eval)?: ([\d.]+)% \| "
     r"LR: ([\d.]+)"
 )
 _CONFIG_RE = re.compile(r"Config:\s+(\S+)")
@@ -482,8 +618,8 @@ def _parse_log(job: JobInfo) -> None:
             job.total_epochs = int(m.group(2))
             job.train_loss = m.group(3)
             job.train_acc = m.group(4)
-            job.test_acc = m.group(5)
-            job.best_acc = m.group(6)
+            job.eval_acc = m.group(5)
+            job.best_eval_acc = m.group(6)
             job.lr = m.group(7)
             break
 
@@ -753,7 +889,7 @@ def _display(jobs: list[JobInfo]) -> None:
                 print(_progress_line('Batch', j.tqdm_step, j.tqdm_total, batch_bar))
             print(f"  Train Loss: {_WHITE}{j.train_loss}{_RST}")
             print(f"  Train Acc:  {_WHITE}{j.train_acc}%{_RST}")
-            print(f"  Test Acc:   {_WHITE}{j.test_acc}%{_RST}  (Best: {_GREEN}{j.best_acc}%{_RST})")
+            print(f"  Eval Acc:   {_WHITE}{j.eval_acc}%{_RST}  (Best Eval: {_GREEN}{j.best_eval_acc}%{_RST})")
             print(f"  LR:         {_DIM}{j.lr}{_RST}")
         elif j.tqdm_step > 0:
             batch_bar = _progress_bar(j.tqdm_step, j.tqdm_total)

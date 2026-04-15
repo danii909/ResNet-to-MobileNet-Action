@@ -60,7 +60,11 @@ def main() -> None:
     t0 = time.time()
     dataloaders = get_dataloaders(config)
     print(f"[main] Dataset loaded in {time.time()-t0:.1f}s.")
-    print(f"[main] Train batches: {len(dataloaders['train'])}, Test batches: {len(dataloaders['test'])}")
+    eval_loader = dataloaders.get("eval", dataloaders["test"])
+    print(
+        f"[main] Train batches: {len(dataloaders['train'])}, "
+        f"Eval batches: {len(eval_loader)}, Test batches: {len(dataloaders['test'])}"
+    )
     num_classes = config["dataset"].get("num_classes", 101)
 
     # Mode
@@ -119,7 +123,7 @@ def main() -> None:
         config=config,
         model=model,
         train_loader=dataloaders["train"],
-        test_loader=dataloaders["test"],
+        eval_loader=eval_loader,
         teacher=teacher,
         device=device,
     )
@@ -127,7 +131,7 @@ def main() -> None:
 
     # Finish logging
     logger.finish()
-    print(f"Done. Best accuracy: {results['best_acc']:.2f}%")
+    print(f"Done. Best eval accuracy: {results['best_acc']:.2f}%")
     if "best_epoch" in results:
         print(f"Best epoch: {results['best_epoch'] + 1}")
     if "run_log_dir" in results:

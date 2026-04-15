@@ -144,6 +144,7 @@ def main() -> None:
     print(f"Model type: {model_type}")
     print(f"Checkpoint: {checkpoint}")
     print(f"Inference target: {model.__class__.__name__}")
+    print(f"Official test batches: {len(dataloaders['test'])}")
 
     # --- Accuracy ---
     print("\nComputing accuracy...")

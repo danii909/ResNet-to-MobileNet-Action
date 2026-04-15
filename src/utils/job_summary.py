@@ -183,10 +183,10 @@ def _extract_run_summary(job_dir: Path, run_dir: Path) -> dict[str, Any]:
     model_cfg = config_summary.get("model", {}) if isinstance(config_summary.get("model"), dict) else {}
     dist_cfg = config_summary.get("distillation", {}) if isinstance(config_summary.get("distillation"), dict) else {}
 
-    best_acc = _to_float(_coalesce(training_summary.get("best_acc"), training_summary_txt.get("best_acc")))
+    best_eval_acc = _to_float(_coalesce(training_summary.get("best_eval_acc"), training_summary_txt.get("best_eval_acc"), training_summary.get("best_acc"), training_summary_txt.get("best_acc")))
     final_train_acc = _to_float(_coalesce(training_summary.get("final_train_acc"), training_summary_txt.get("final_train_acc")))
-    final_test_acc = _to_float(_coalesce(training_summary.get("final_test_acc"), training_summary_txt.get("final_test_acc")))
-    final_test_top5 = _to_float(_coalesce(training_summary.get("final_test_top5"), training_summary_txt.get("final_test_top5")))
+    final_eval_acc = _to_float(_coalesce(training_summary.get("final_eval_acc"), training_summary_txt.get("final_eval_acc"), training_summary.get("final_test_acc"), training_summary_txt.get("final_test_acc")))
+    final_eval_top5 = _to_float(_coalesce(training_summary.get("final_eval_top5"), training_summary_txt.get("final_eval_top5"), training_summary.get("final_test_top5"), training_summary_txt.get("final_test_top5")))
     best_epoch = _to_int(_coalesce(training_summary.get("best_epoch"), training_summary_txt.get("best_epoch")))
     epochs_completed = _to_int(_coalesce(training_summary.get("epochs_completed"), training_summary_txt.get("epochs_completed")))
     elapsed_seconds = _to_int(_coalesce(training_summary.get("elapsed_seconds"), training_summary_txt.get("elapsed_seconds")))
@@ -209,13 +209,13 @@ def _extract_run_summary(job_dir: Path, run_dir: Path) -> dict[str, Any]:
         "started_at": _coalesce(run_meta.get("started_at"), training_summary.get("started_at"), training_summary_txt.get("started_at")),
         "finished_at": _coalesce(run_meta.get("finished_at"), training_summary.get("finished_at"), training_summary_txt.get("finished_at")),
         "exit_code": _coalesce(run_meta.get("exit_code"), ""),
-        "best_acc": best_acc,
+        "best_eval_acc": best_eval_acc,
         "best_epoch": best_epoch,
         "final_train_acc": final_train_acc,
-        "final_test_acc": final_test_acc,
-        "final_test_top5": final_test_top5,
+        "final_eval_acc": final_eval_acc,
+        "final_eval_top5": final_eval_top5,
         "final_train_loss": _to_float(_coalesce(training_summary.get("final_train_loss"), training_summary_txt.get("final_train_loss"))),
-        "final_test_loss": _to_float(_coalesce(training_summary.get("final_test_loss"), training_summary_txt.get("final_test_loss"))),
+        "final_eval_loss": _to_float(_coalesce(training_summary.get("final_eval_loss"), training_summary_txt.get("final_eval_loss"), training_summary.get("final_test_loss"), training_summary_txt.get("final_test_loss"))),
         "epochs_completed": epochs_completed,
         "elapsed_seconds": elapsed_seconds,
         "model": {
@@ -253,8 +253,8 @@ def build_job_summary(job_dir: Path) -> dict[str, Any]:
     failed_runs = sum(1 for r in runs if r["status"] == "FAILED")
     unknown_runs = len(runs) - success_runs - failed_runs
 
-    final_test_vals = [r["final_test_acc"] for r in runs if isinstance(r["final_test_acc"], float)]
-    best_acc_vals = [r["best_acc"] for r in runs if isinstance(r["best_acc"], float)]
+    final_eval_vals = [r["final_eval_acc"] for r in runs if isinstance(r["final_eval_acc"], float)]
+    best_eval_vals = [r["best_eval_acc"] for r in runs if isinstance(r["best_eval_acc"], float)]
 
     slurm_job_id = root_meta.get("slurm_job_id")
     if not slurm_job_id:
@@ -278,8 +278,8 @@ def build_job_summary(job_dir: Path) -> dict[str, Any]:
         "success_runs": success_runs,
         "failed_runs": failed_runs,
         "unknown_runs": unknown_runs,
-        "best_test_acc_max": max(best_acc_vals) if best_acc_vals else None,
-        "avg_final_test_acc": (sum(final_test_vals) / len(final_test_vals)) if final_test_vals else None,
+        "best_eval_acc_max": max(best_eval_vals) if best_eval_vals else None,
+        "avg_final_eval_acc": (sum(final_eval_vals) / len(final_eval_vals)) if final_eval_vals else None,
         "runs": runs,
     }
 
@@ -305,8 +305,8 @@ def _render_text(summary: dict[str, Any]) -> str:
         f"success_runs: {summary.get('success_runs', 0)}",
         f"failed_runs: {summary.get('failed_runs', 0)}",
         f"unknown_runs: {summary.get('unknown_runs', 0)}",
-        f"best_test_acc_max: {_fmt_metric(_to_float(summary.get('best_test_acc_max')))}",
-        f"avg_final_test_acc: {_fmt_metric(_to_float(summary.get('avg_final_test_acc')))}",
+        f"best_eval_acc_max: {_fmt_metric(_to_float(summary.get('best_eval_acc_max')))}",
+        f"avg_final_eval_acc: {_fmt_metric(_to_float(summary.get('avg_final_eval_acc')))}",
         "",
         "Runs",
         "-" * 60,
@@ -327,13 +327,13 @@ def _render_text(summary: dict[str, Any]) -> str:
             f"finished_at: {run.get('finished_at', '')}",
             f"elapsed_seconds: {run.get('elapsed_seconds', '')}",
             f"exit_code: {run.get('exit_code', '')}",
-            f"best_acc: {_fmt_metric(_to_float(run.get('best_acc')))}",
+            f"best_eval_acc: {_fmt_metric(_to_float(run.get('best_eval_acc')))}",
             f"best_epoch: {run.get('best_epoch', '')}",
             f"final_train_acc: {_fmt_metric(_to_float(run.get('final_train_acc')))}",
-            f"final_test_acc: {_fmt_metric(_to_float(run.get('final_test_acc')))}",
-            f"final_test_top5: {_fmt_metric(_to_float(run.get('final_test_top5')))}",
+            f"final_eval_acc: {_fmt_metric(_to_float(run.get('final_eval_acc')))}",
+            f"final_eval_top5: {_fmt_metric(_to_float(run.get('final_eval_top5')))}",
             f"final_train_loss: {_fmt_metric(_to_float(run.get('final_train_loss')), digits=6)}",
-            f"final_test_loss: {_fmt_metric(_to_float(run.get('final_test_loss')), digits=6)}",
+            f"final_eval_loss: {_fmt_metric(_to_float(run.get('final_eval_loss')), digits=6)}",
             f"epochs_completed: {run.get('epochs_completed', '')}",
             "",
             "[model]",
