@@ -385,6 +385,25 @@ class Trainer:
                 step_size=tr_cfg.get("step_size", 15),
                 gamma=tr_cfg.get("gamma", 0.1),
             )
+        elif sched_name == "cosine_warmup":
+            # Linear warmup from start_factor*lr → lr over warmup_epochs,
+            # then cosine annealing for the remaining epochs.
+            warmup_epochs = int(tr_cfg.get("warmup_epochs", 5))
+            warmup_sched = torch.optim.lr_scheduler.LinearLR(
+                self.optimizer,
+                start_factor=tr_cfg.get("warmup_start_factor", 0.1),
+                end_factor=1.0,
+                total_iters=warmup_epochs,
+            )
+            cosine_sched = torch.optim.lr_scheduler.CosineAnnealingLR(
+                self.optimizer,
+                T_max=max(1, self.epochs - warmup_epochs),
+            )
+            return torch.optim.lr_scheduler.SequentialLR(
+                self.optimizer,
+                schedulers=[warmup_sched, cosine_sched],
+                milestones=[warmup_epochs],
+            )
         elif sched_name == "none":
             return None
         else:
