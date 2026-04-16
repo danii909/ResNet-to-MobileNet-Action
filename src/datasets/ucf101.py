@@ -469,6 +469,7 @@ class UCF101HFDataset(Dataset):
 
         df = pd.DataFrame({
             "clip_id": self.hf_dataset["clip_id"],
+            "video_id": self.hf_dataset["video_id"],
             "frame": self.hf_dataset["frame"],
             "label": self.hf_dataset["label"],
             "idx": range(n_total),
@@ -476,8 +477,10 @@ class UCF101HFDataset(Dataset):
         df.sort_values(["clip_id", "frame"], inplace=True)
 
         self.clips = []
+        self.clip_groups = []
         for clip_id, group in df.groupby("clip_id", sort=False):
             self.clips.append((group["idx"].tolist(), int(group["label"].iloc[0])))
+            self.clip_groups.append(str(group["video_id"].iloc[0]))
 
         self.num_classes = df["label"].nunique()
         print(f"[Dataset] Clip index ready in {time.time()-t0:.1f}s: "
@@ -546,11 +549,21 @@ def _extract_labels(dataset: Dataset) -> np.ndarray:
     raise ValueError(f"Unsupported dataset type for stratified split: {type(dataset)}")
 
 
-def _stratified_split_indices(labels: np.ndarray, eval_ratio: float, seed: int) -> tuple[np.ndarray, np.ndarray]:
-    """Create deterministic stratified train/eval indices.
+def _extract_groups(dataset: Dataset) -> np.ndarray | None:
+    """Extract per-sample group ids to avoid train/eval leakage.
 
-    Ensures at least one sample per class in eval and train whenever class count allows it.
+    For HF clips, groups map to source video_id.
+    For file-based UCF101Dataset, each sample is already one video so group==path.
     """
+    if hasattr(dataset, "clip_groups"):
+        return np.asarray(dataset.clip_groups, dtype=object)
+    if hasattr(dataset, "samples"):
+        return np.asarray([str(path) for path, _ in dataset.samples], dtype=object)
+    return None
+
+
+def _stratified_sample_split_indices(labels: np.ndarray, eval_ratio: float, seed: int) -> tuple[np.ndarray, np.ndarray]:
+    """Create deterministic stratified train/eval indices at sample level."""
     if not 0.0 < eval_ratio < 1.0:
         raise ValueError(f"eval_ratio must be in (0, 1), got {eval_ratio}")
 
@@ -578,6 +591,101 @@ def _stratified_split_indices(labels: np.ndarray, eval_ratio: float, seed: int) 
         train_idx.extend(shuffled[n_eval:].tolist())
 
     return np.asarray(train_idx, dtype=np.int64), np.asarray(eval_idx, dtype=np.int64)
+
+
+def _stratified_group_split_indices(
+    labels: np.ndarray,
+    groups: np.ndarray,
+    eval_ratio: float,
+    seed: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Create deterministic stratified split while keeping groups disjoint.
+
+    Samples in the same group (video_id) are kept entirely in train or eval.
+    """
+    if not 0.0 < eval_ratio < 1.0:
+        raise ValueError(f"eval_ratio must be in (0, 1), got {eval_ratio}")
+    if labels.shape[0] != groups.shape[0]:
+        raise ValueError(
+            f"labels/groups size mismatch: {labels.shape[0]} vs {groups.shape[0]}"
+        )
+
+    rng = np.random.default_rng(seed)
+    train_idx: list[int] = []
+    eval_idx: list[int] = []
+
+    for cls in np.unique(labels):
+        cls_idx = np.where(labels == cls)[0]
+        if cls_idx.size == 0:
+            continue
+
+        cls_groups = groups[cls_idx]
+        unique_groups = np.unique(cls_groups)
+
+        # If a class has just one group, we cannot make a disjoint group split.
+        if unique_groups.size <= 1:
+            cls_train, cls_eval = _stratified_sample_split_indices(
+                labels[cls_idx], eval_ratio=eval_ratio, seed=seed + int(cls),
+            )
+            train_idx.extend(cls_idx[cls_train].tolist())
+            eval_idx.extend(cls_idx[cls_eval].tolist())
+            continue
+
+        group_to_idx: dict[object, np.ndarray] = {}
+        for g in unique_groups:
+            group_to_idx[g] = cls_idx[cls_groups == g]
+
+        group_order = unique_groups.copy()
+        rng.shuffle(group_order)
+
+        target_eval = int(round(cls_idx.size * eval_ratio))
+        target_eval = max(1, min(target_eval, cls_idx.size - 1))
+
+        selected_eval_groups: list[object] = []
+        eval_count = 0
+        remaining = int(cls_idx.size)
+
+        for g in group_order:
+            g_count = int(group_to_idx[g].size)
+            # Keep at least one sample in train for this class.
+            if remaining - g_count < 1:
+                continue
+            selected_eval_groups.append(g)
+            eval_count += g_count
+            remaining -= g_count
+            if eval_count >= target_eval:
+                break
+
+        if eval_count == 0:
+            # Last-resort fallback for pathological group distributions.
+            cls_train, cls_eval = _stratified_sample_split_indices(
+                labels[cls_idx], eval_ratio=eval_ratio, seed=seed + int(cls),
+            )
+            train_idx.extend(cls_idx[cls_train].tolist())
+            eval_idx.extend(cls_idx[cls_eval].tolist())
+            continue
+
+        eval_groups_set = set(selected_eval_groups)
+        cls_eval_idx = []
+        cls_train_idx = []
+        for g, g_idx in group_to_idx.items():
+            if g in eval_groups_set:
+                cls_eval_idx.extend(g_idx.tolist())
+            else:
+                cls_train_idx.extend(g_idx.tolist())
+
+        train_idx.extend(cls_train_idx)
+        eval_idx.extend(cls_eval_idx)
+
+    return np.asarray(train_idx, dtype=np.int64), np.asarray(eval_idx, dtype=np.int64)
+
+
+def _stratified_split_indices(labels: np.ndarray, eval_ratio: float, seed: int) -> tuple[np.ndarray, np.ndarray]:
+    """Create deterministic stratified train/eval indices.
+
+    Ensures at least one sample per class in eval and train whenever class count allows it.
+    """
+    return _stratified_sample_split_indices(labels, eval_ratio=eval_ratio, seed=seed)
 
 
 def get_dataloaders(config: dict) -> dict[str, DataLoader]:
@@ -670,7 +778,16 @@ def get_dataloaders(config: dict) -> dict[str, DataLoader]:
     # Build train/eval split from official train split when requested.
     if use_eval_split:
         labels = _extract_labels(train_ds)
-        train_idx, eval_idx = _stratified_split_indices(labels, eval_ratio=eval_ratio, seed=split_seed)
+        groups = _extract_groups(train_ds)
+
+        if groups is not None:
+            train_idx, eval_idx = _stratified_group_split_indices(
+                labels, groups, eval_ratio=eval_ratio, seed=split_seed,
+            )
+        else:
+            train_idx, eval_idx = _stratified_split_indices(
+                labels, eval_ratio=eval_ratio, seed=split_seed,
+            )
 
         if eval_idx.size == 0 or train_idx.size == 0:
             raise RuntimeError(
@@ -682,6 +799,17 @@ def get_dataloaders(config: dict) -> dict[str, DataLoader]:
 
         train_ds = Subset(train_ds, train_idx.tolist())
         eval_ds = Subset(eval_source_ds, eval_idx.tolist())
+
+        if groups is not None:
+            train_groups = set(groups[train_idx].tolist())
+            eval_groups = set(groups[eval_idx].tolist())
+            overlap = len(train_groups.intersection(eval_groups))
+            print(
+                "[DataLoaders] Group split check: "
+                f"train_groups={len(train_groups)}, eval_groups={len(eval_groups)}, "
+                f"overlap={overlap}"
+            )
+
         print(
             "[DataLoaders] Stratified split enabled: "
             f"train={len(train_ds)} clips, eval={len(eval_ds)} clips, "

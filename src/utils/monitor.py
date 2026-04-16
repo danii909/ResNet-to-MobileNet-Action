@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Live monitor for KD training jobs on the DMI cluster.
 
-Displays SLURM job status, training progress (epoch, loss, accuracy),
-GPU usage, and disk quota in a compact refreshing view.
+Displays SLURM job status and robust training progress data
+(epoch/batch bars and latest metrics) in a compact refreshing view.
 
 Usage:
     python3 -m src.utils.monitor              # default poll 15s
@@ -281,6 +281,108 @@ def _infer_total_runs_from_pipeline_summary(job_dir: Path) -> int:
         if is_run_section:
             count += 1
     return count
+
+
+def _is_training_done(train_dir: Path) -> bool:
+    """Return True when a training has finished (success or fail)."""
+    return (train_dir / "status_SUCCESS").exists() or (train_dir / "status_FAILED").exists()
+
+
+def _collect_run_train_dirs(job_dir: Path) -> list[Path]:
+    """Collect train directories for run-like jobs (run-1, baseline_x, ...)."""
+    out: list[Path] = []
+    if not job_dir.exists():
+        return out
+
+    for child in sorted(job_dir.iterdir()):
+        if not child.is_dir():
+            continue
+        train_dir = child / "train"
+        if train_dir.exists():
+            out.append(train_dir)
+    return out
+
+
+def _get_training_progress_from_artifacts(job: JobInfo) -> tuple[int, int]:
+    """Return (completed_trainings, total_trainings) from reliable job artifacts.
+
+    total_trainings is 0 when a reliable total is not available yet.
+    """
+    if not job.job_log_dir:
+        return 0, 0
+
+    job_dir = Path(job.job_log_dir)
+
+    # Known fixed pipeline: teacher -> baseline -> distillation (exactly 3 trainings).
+    phase_names = ("teacher", "baseline", "distillation")
+    if "slurm-train-eval-" in job_dir.name or any((job_dir / p).exists() for p in phase_names):
+        completed = 0
+        for phase in phase_names:
+            train_dir = job_dir / phase / "train"
+            if _is_training_done(train_dir):
+                completed += 1
+        return completed, 3
+
+    # Multi-run jobs with reliable total declared by summary.
+    declared_total = _infer_total_runs_from_job_summary(job_dir)
+    if declared_total > 0:
+        run_train_dirs = _collect_run_train_dirs(job_dir)
+        completed = sum(1 for d in run_train_dirs if _is_training_done(d))
+        return min(completed, declared_total), declared_total
+
+    # Fallback: completed count only (total unknown => remaining cannot be trusted).
+    run_train_dirs = _collect_run_train_dirs(job_dir)
+    completed = sum(1 for d in run_train_dirs if _is_training_done(d))
+    return completed, 0
+
+
+def _get_reliable_training_type_label(job: JobInfo) -> str:
+    """Return a reliable training type label for the active job.
+
+    The label is returned only when inferred from stable artifacts/layout.
+    Returns empty string when the type cannot be trusted.
+    """
+    if not job.job_log_dir:
+        return ""
+
+    job_dir = Path(job.job_log_dir)
+
+    # Fixed teacher->baseline->distillation pipeline: phase is deterministic.
+    phase_names = ("teacher", "baseline", "distillation")
+    if "slurm-train-eval-" in job_dir.name or any((job_dir / p).exists() for p in phase_names):
+        for phase in phase_names:
+            train_dir = job_dir / phase / "train"
+            eval_dir = job_dir / phase / "eval"
+
+            train_done = _is_training_done(train_dir)
+            eval_done = _is_training_done(eval_dir)
+
+            if not train_done:
+                return phase
+            if train_done and not eval_done:
+                return phase
+        return "completed"
+
+    # Generic multi-run: rely only on explicit training_type metadata.
+    run_dirs: list[Path] = []
+    for child in sorted(job_dir.iterdir()):
+        if child.is_dir() and ((child / "train").exists() or (child / "eval").exists()):
+            run_dirs.append(child)
+
+    for run_dir in run_dirs:
+        train_dir = run_dir / "train"
+        if _is_training_done(train_dir):
+            continue
+
+        meta = _read_kv_file(train_dir / "job_meta.txt")
+        if not meta:
+            meta = _read_kv_file(run_dir / "job_meta.txt")
+
+        t = meta.get("training_type", "").strip().lower()
+        if t:
+            return t
+
+    return ""
 
 
 def _get_job_command_path(slurm_id: str) -> str:
@@ -823,21 +925,17 @@ def _display(jobs: list[JobInfo]) -> None:
 
     # -- Job table
     print(
-        f"\n  {_BOLD}{'ID':<10s} {'Type':<13s} {'Config':<20s} "
+        f"\n  {_BOLD}{'ID':<10s} {'JobName':<22s} "
         f"{'Node':<14s} {'GPU':<20s} {'Stato':<10s} {'Tempo':<10s}{_RST}"
     )
-    print(f"  {'-' * 108}")
+    print(f"  {'-' * 95}")
 
     for job in jobs[:10]:  # Show last 10 jobs max
         _parse_log(job)
         icon = _STATE_ICONS.get(job.state, "?")
         sc = _STATE_COLORS.get(job.state, "")
 
-        if job.state == "RUNNING" and job.current_run_name:
-            config_short = _short(job.current_run_name, 20)
-        else:
-            config_short = _short(Path(job.config).stem if job.config else job.name, 20)
-        type_short = _short(job.training_type or _infer_training_type("", job.config), 13)
+        job_name_short = _short(job.name, 22)
         node_short = _short(job.node, 14)
         gpu_short = _short(job.gpu_name, 20)
         state_str = f"{sc}{_short(job.state, 10)}{_RST}"
@@ -847,7 +945,7 @@ def _display(jobs: list[JobInfo]) -> None:
             detail = f" {_RED}(exit {job.exit_code}){_RST}"
 
         print(
-            f"  {icon} {job.slurm_id:<8s} {type_short:<13s} {config_short:<20s} "
+            f"  {icon} {job.slurm_id:<8s} {job_name_short:<22s} "
             f"{node_short:<14s} {gpu_short:<20s} {state_str:<19s} "
             f"{_DIM}{_short(job.elapsed, 10)}{_RST}{detail}"
         )
@@ -858,18 +956,11 @@ def _display(jobs: list[JobInfo]) -> None:
         j = active[0]
         _parse_log(j)
         print(f"\n{_CYAN}{'-' * 70}{_RST}")
-        print(f"  {_BOLD}{_CYAN}Job attivo:{_RST} {j.slurm_id} ({Path(j.config).stem if j.config else j.name})")
-        print(f"  Tipo: {_WHITE}{j.training_type or _infer_training_type('', j.config)}{_RST}")
-        if j.current_run_name:
-            print(f"  Training corrente: {_WHITE}{j.current_run_name}{_RST}")
-        if j.run_total > 0:
-            current_idx = j.run_index if j.run_index > 0 else 1
-            current_idx = min(current_idx, j.run_total)
-            remaining = max(0, j.run_total - current_idx)
-            print(
-                f"  Progresso training: {_WHITE}{current_idx}/{j.run_total} training{_RST} "
-                f"({_DIM}rimanenti: {remaining}{_RST})"
-            )
+        print(f"  {_BOLD}{_CYAN}Job attivo:{_RST} {j.slurm_id} ({j.name})")
+        print(f"  Stato: {_WHITE}{j.state}{_RST}")
+        reliable_type = _get_reliable_training_type_label(j)
+        if reliable_type:
+            print(f"  Tipo training: {_WHITE}{reliable_type}{_RST}")
         print(f"  Nodo: {_WHITE}{j.node or '-'}{_RST}")
         print(f"  GPU: {_WHITE}{j.gpu_name or '-'}{_RST}")
         if j.partition or j.qos:
@@ -879,6 +970,21 @@ def _display(jobs: list[JobInfo]) -> None:
             summary_path = Path(j.job_log_dir) / "job_training_summary.txt"
             if summary_path.exists():
                 print(f"  Job summary: {_DIM}{summary_path}{_RST}")
+
+            completed_trainings, total_trainings = _get_training_progress_from_artifacts(j)
+            if total_trainings > 0:
+                remaining_trainings = max(0, total_trainings - completed_trainings)
+                print(
+                    f"  Training completati: {_WHITE}{completed_trainings}/{total_trainings}{_RST}"
+                    f"  ({_DIM}rimanenti: {remaining_trainings}{_RST})"
+                )
+                train_bar = _progress_bar(completed_trainings, total_trainings)
+                print(_progress_line('Train', completed_trainings, total_trainings, train_bar))
+            elif completed_trainings > 0:
+                print(
+                    f"  Training completati: {_WHITE}{completed_trainings}{_RST}"
+                    f"  ({_DIM}rimanenti: n/d, totale non affidabile{_RST})"
+                )
         print(f"  Tempo: {_WHITE}{j.elapsed}{_RST}")
 
         if j.current_epoch > 0:

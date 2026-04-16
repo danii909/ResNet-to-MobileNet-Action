@@ -12,8 +12,15 @@ Comparison across these experiment folders:
 - `slurm-baseline-24f-phase2-4147`
 - `slurm-baseline-24f-phase3-4162`
 
+For the protocol-level split classification of these runs, see [docs/SPLIT_PROTOCOL_AUDIT.md](docs/SPLIT_PROTOCOL_AUDIT.md).
+
 Rows are grouped by comparison pattern (`teacher -> baseline -> student`) when possible.
 Missing fields are intentionally left empty.
+
+Split protocol note:
+- Most of the rows below are train/test-only historical runs.
+- `exp_id=4168` and `exp_id=4184` belong to the non-group-aware internal-eval family.
+- `exp_id=4201` is the corrected group-aware family and is listed in [docs/EXPERIMENTS_COMPARISON_EXTENDED.md](docs/EXPERIMENTS_COMPARISON_EXTENDED.md).
 
 ## Teacher Version Mapping
 Teacher performance is not unique across all experiments, so student runs are mapped to teacher versions:
