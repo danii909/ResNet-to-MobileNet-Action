@@ -178,6 +178,24 @@ def _infer_training_type_from_run_name(run_name: str) -> str:
     return "unknown"
 
 
+def _normalize_training_type_label(label: str) -> str:
+    """Normalize a training label to teacher/baseline/distillation when possible."""
+    value = (label or "").strip().lower()
+    if not value:
+        return ""
+
+    if value in ("teacher", "teacher_finetune") or value.startswith("teacher"):
+        return "teacher"
+    if value == "baseline" or value.startswith("baseline"):
+        return "baseline"
+    if value in ("distillation", "distillation_at"):
+        return "distillation"
+    if value.startswith("distill") or value.startswith("kd") or value.startswith("kdat"):
+        return "distillation"
+
+    return ""
+
+
 def _default_config_for_type(training_type: str) -> str:
     """Return the canonical config path for a known training type."""
     if training_type == "teacher":
@@ -303,37 +321,54 @@ def _collect_run_train_dirs(job_dir: Path) -> list[Path]:
     return out
 
 
-def _get_training_progress_from_artifacts(job: JobInfo) -> tuple[int, int]:
-    """Return (completed_trainings, total_trainings) from reliable job artifacts.
-
-    total_trainings is 0 when a reliable total is not available yet.
-    """
+def _get_completed_training_names_from_artifacts(job: JobInfo) -> list[str]:
+    """Return completed training names for the active job."""
     if not job.job_log_dir:
-        return 0, 0
+        return []
 
     job_dir = Path(job.job_log_dir)
 
-    # Known fixed pipeline: teacher -> baseline -> distillation (exactly 3 trainings).
+    # Known fixed pipeline order.
     phase_names = ("teacher", "baseline", "distillation")
     if "slurm-train-eval-" in job_dir.name or any((job_dir / p).exists() for p in phase_names):
-        completed = 0
+        completed_names: list[str] = []
         for phase in phase_names:
             train_dir = job_dir / phase / "train"
             if _is_training_done(train_dir):
-                completed += 1
-        return completed, 3
+                completed_names.append(phase)
+        return completed_names
 
-    # Multi-run jobs with reliable total declared by summary.
-    declared_total = _infer_total_runs_from_job_summary(job_dir)
-    if declared_total > 0:
-        run_train_dirs = _collect_run_train_dirs(job_dir)
-        completed = sum(1 for d in run_train_dirs if _is_training_done(d))
-        return min(completed, declared_total), declared_total
+    run_dirs: list[Path] = []
+    for child in job_dir.iterdir():
+        if not child.is_dir():
+            continue
+        train_dir = child / "train"
+        if train_dir.exists():
+            run_dirs.append(child)
 
-    # Fallback: completed count only (total unknown => remaining cannot be trusted).
-    run_train_dirs = _collect_run_train_dirs(job_dir)
-    completed = sum(1 for d in run_train_dirs if _is_training_done(d))
-    return completed, 0
+    try:
+        run_dirs.sort(key=lambda p: p.stat().st_mtime)
+    except OSError:
+        run_dirs.sort(key=lambda p: p.name)
+
+    completed_names = []
+    for run_dir in run_dirs:
+        train_dir = run_dir / "train"
+        if not _is_training_done(train_dir):
+            continue
+
+        meta = _read_kv_file(train_dir / "job_meta.txt")
+        if not meta:
+            meta = _read_kv_file(run_dir / "job_meta.txt")
+
+        run_name = _coalesce(
+            meta.get("run_name", ""),
+            meta.get("training_type", ""),
+            run_dir.name,
+        )
+        completed_names.append(run_name)
+
+    return completed_names
 
 
 def _get_reliable_training_type_label(job: JobInfo) -> str:
@@ -342,6 +377,10 @@ def _get_reliable_training_type_label(job: JobInfo) -> str:
     The label is returned only when inferred from stable artifacts/layout.
     Returns empty string when the type cannot be trusted.
     """
+    parsed_label = _normalize_training_type_label(job.training_type)
+    if parsed_label:
+        return parsed_label
+
     if not job.job_log_dir:
         return ""
 
@@ -609,6 +648,7 @@ _MULTI_TRAIN_START_RE = re.compile(r">>>\s*TRAINING:\s+([A-Za-z0-9_.-]+)", re.IG
 _MULTI_CONFIG_RE = re.compile(r"^\s*config:\s+(\S+)")
 _RUN_NAME_OVERRIDE_RE = re.compile(r"logging\.run_name=([A-Za-z0-9_.-]+)")
 _MODE_RE = re.compile(r"Training mode:\s+([A-Za-z0-9_]+)")
+_TYPE_RE = re.compile(r"Type:\s+([A-Za-z0-9_.-]+)")
 _NODE_RE = re.compile(r"^\s*Node:\s+(\S+)")
 _GPU_RE = re.compile(r"\[main\]\s+GPU:\s+(.+)")
 _TQDM_RE = re.compile(r"(\d+)%\|.*\|\s*(\d+)/(\d+)")
@@ -709,6 +749,7 @@ def _parse_log(job: JobInfo) -> None:
         return
 
     seen_mode = ""
+    seen_type = ""
     latest_run_name = ""
     run_markers: list[str] = []
 
@@ -812,6 +853,10 @@ def _parse_log(job: JobInfo) -> None:
         if m:
             seen_mode = m.group(1)
 
+        m = _TYPE_RE.search(line)
+        if m:
+            seen_type = m.group(1)
+
         m = _NODE_RE.search(line)
         if m and (not job.node or job.node in ("Unknown", "None assigned")):
             job.node = m.group(1)
@@ -825,6 +870,12 @@ def _parse_log(job: JobInfo) -> None:
         m = _MODE_RE.search(line)
         if m:
             seen_mode = m.group(1)
+            break
+
+    for line in reversed(lines[-400:]):
+        m = _TYPE_RE.search(line)
+        if m:
+            seen_type = m.group(1)
             break
 
     # If no epoch found yet, check for starting message
@@ -844,13 +895,18 @@ def _parse_log(job: JobInfo) -> None:
             job.tqdm_total = int(m.group(3))
             break
 
-    if latest_run_name and job.state == "RUNNING":
-        # For active multi-run jobs, the latest marker is the source of truth.
-        run_type = _infer_training_type_from_run_name(latest_run_name)
-        if run_type != "unknown":
-            job.training_type = run_type
-            if not job.config:
-                job.config = _default_config_for_type(run_type)
+    marker_type = _normalize_training_type_label(latest_run_name)
+    if marker_type and job.state == "RUNNING":
+        # Keep this aligned with what users see in `lastlog` (>>> TRAINING: ...).
+        job.training_type = marker_type
+        if not job.config:
+            job.config = _default_config_for_type(marker_type)
+
+    shell_type = _normalize_training_type_label(seen_type)
+    if shell_type and (not job.training_type or job.training_type == "unknown"):
+        job.training_type = shell_type
+        if not job.config:
+            job.config = _default_config_for_type(shell_type)
 
     if not job.training_type or job.training_type == "unknown":
         job.training_type = _infer_training_type(seen_mode, job.config)
@@ -971,20 +1027,10 @@ def _display(jobs: list[JobInfo]) -> None:
             if summary_path.exists():
                 print(f"  Job summary: {_DIM}{summary_path}{_RST}")
 
-            completed_trainings, total_trainings = _get_training_progress_from_artifacts(j)
-            if total_trainings > 0:
-                remaining_trainings = max(0, total_trainings - completed_trainings)
-                print(
-                    f"  Training completati: {_WHITE}{completed_trainings}/{total_trainings}{_RST}"
-                    f"  ({_DIM}rimanenti: {remaining_trainings}{_RST})"
-                )
-                train_bar = _progress_bar(completed_trainings, total_trainings)
-                print(_progress_line('Train', completed_trainings, total_trainings, train_bar))
-            elif completed_trainings > 0:
-                print(
-                    f"  Training completati: {_WHITE}{completed_trainings}{_RST}"
-                    f"  ({_DIM}rimanenti: n/d, totale non affidabile{_RST})"
-                )
+            completed_names = _get_completed_training_names_from_artifacts(j)
+            print(f"  Training completati: {_WHITE}{len(completed_names)}{_RST}")
+            for idx, name in enumerate(completed_names):
+                print(f"    {_DIM}{idx}{_RST} {_WHITE}{name}{_RST}")
         print(f"  Tempo: {_WHITE}{j.elapsed}{_RST}")
 
         if j.current_epoch > 0:
