@@ -104,10 +104,21 @@ function Download {
             New-Item -ItemType Directory -Force -Path "experiments/logs" | Out-Null
             New-Item -ItemType Directory -Force -Path "experiments/checkpoints" | Out-Null
             New-Item -ItemType Directory -Force -Path "figures" | Out-Null
+            New-Item -ItemType Directory -Force -Path "experiments/logs/wandb" | Out-Null
             scp -r "${RemotePath}/experiments/logs/*" "experiments/logs/" 2>$null
             scp -r "${RemotePath}/experiments/checkpoints/*" "experiments/checkpoints/" 2>$null
             scp -r "${RemotePath}/figures/*" "figures/" 2>$null
             scp -r "${RemotePath}/logs/*" "logs/" 2>$null
+
+            # W&B offline runs: support both current and legacy remote layouts.
+            $hasRootWandb = ssh $Remote "find $RemoteDir/wandb -maxdepth 1 -type d -name 'offline-run-*' | head -n 1" 2>$null
+            if ($hasRootWandb) {
+                scp -r "${RemotePath}/wandb/offline-run-*" "experiments/logs/wandb/" 2>$null
+            }
+            $hasNestedWandb = ssh $Remote "find $RemoteDir/experiments/logs -maxdepth 4 -type d -name 'offline-run-*' | head -n 1" 2>$null
+            if ($hasNestedWandb) {
+                scp -r "${RemotePath}/experiments/logs/*/wandb/offline-run-*" "experiments/logs/wandb/" 2>$null
+            }
         }
         "logs" {
             Write-Host "[DOWNLOAD] Download logs e figure..." -ForegroundColor Cyan
@@ -125,8 +136,28 @@ function Download {
         }
         "wandb" {
             Write-Host "[DOWNLOAD] Download wandb offline runs..." -ForegroundColor Cyan
-            New-Item -ItemType Directory -Force -Path "experiments/logs" | Out-Null
-            scp -r "${RemotePath}/experiments/logs/*/wandb" "experiments/logs/" 2>$null
+            New-Item -ItemType Directory -Force -Path "experiments/logs/wandb" | Out-Null
+
+            $copied = $false
+
+            # Current layout on cluster: ~/dl26-projects/wandb/offline-run-*
+            $hasRootWandb = ssh $Remote "find $RemoteDir/wandb -maxdepth 1 -type d -name 'offline-run-*' | head -n 1" 2>$null
+            if ($hasRootWandb) {
+                scp -r "${RemotePath}/wandb/offline-run-*" "experiments/logs/wandb/" 2>$null
+                $copied = $true
+            }
+
+            # Legacy layout fallback: ~/dl26-projects/experiments/logs/*/wandb/offline-run-*
+            $hasNestedWandb = ssh $Remote "find $RemoteDir/experiments/logs -maxdepth 4 -type d -name 'offline-run-*' | head -n 1" 2>$null
+            if ($hasNestedWandb) {
+                scp -r "${RemotePath}/experiments/logs/*/wandb/offline-run-*" "experiments/logs/wandb/" 2>$null
+                $copied = $true
+            }
+
+            if (-not $copied) {
+                Write-Warning "Nessuna run W&B trovata sul cluster in '$RemoteDir/wandb' o '$RemoteDir/experiments/logs/*/wandb'."
+            }
+
             Write-Host ""
             Write-Host "Per sincronizzare con W`&B cloud:" -ForegroundColor Yellow
             Write-Host "  wandb sync experiments\logs\wandb\offline-run-*"
