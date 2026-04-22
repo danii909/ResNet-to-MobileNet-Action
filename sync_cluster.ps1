@@ -104,10 +104,15 @@ function Download {
             New-Item -ItemType Directory -Force -Path "experiments/logs" | Out-Null
             New-Item -ItemType Directory -Force -Path "experiments/checkpoints" | Out-Null
             New-Item -ItemType Directory -Force -Path "figures" | Out-Null
+            New-Item -ItemType Directory -Force -Path "wandb" | Out-Null
             scp -r "${RemotePath}/experiments/logs/*" "experiments/logs/" 2>$null
             scp -r "${RemotePath}/experiments/checkpoints/*" "experiments/checkpoints/" 2>$null
             scp -r "${RemotePath}/figures/*" "figures/" 2>$null
             scp -r "${RemotePath}/logs/*" "logs/" 2>$null
+            # Layout corrente: offline runs in ~/dl26-projects/wandb
+            scp -r "${RemotePath}/wandb/offline-run-*" "wandb/" 2>$null
+            # Fallback legacy: alcuni job salvavano wandb sotto experiments/logs/*/wandb
+            scp -r "${RemotePath}/experiments/logs/*/wandb/offline-run-*" "wandb/" 2>$null
         }
         "logs" {
             Write-Host "[DOWNLOAD] Download logs e figure..." -ForegroundColor Cyan
@@ -125,11 +130,14 @@ function Download {
         }
         "wandb" {
             Write-Host "[DOWNLOAD] Download wandb offline runs..." -ForegroundColor Cyan
-            New-Item -ItemType Directory -Force -Path "experiments/logs" | Out-Null
-            scp -r "${RemotePath}/experiments/logs/*/wandb" "experiments/logs/" 2>$null
+            New-Item -ItemType Directory -Force -Path "wandb" | Out-Null
+            # Layout corrente: offline runs in ~/dl26-projects/wandb
+            scp -r "${RemotePath}/wandb/offline-run-*" "wandb/" 2>$null
+            # Fallback legacy: alcuni job salvavano wandb sotto experiments/logs/*/wandb
+            scp -r "${RemotePath}/experiments/logs/*/wandb/offline-run-*" "wandb/" 2>$null
             Write-Host ""
             Write-Host "Per sincronizzare con W`&B cloud:" -ForegroundColor Yellow
-            Write-Host "  wandb sync experiments\logs\wandb\offline-run-*"
+            Write-Host "  wandb sync wandb\offline-run-*"
         }
     }
 

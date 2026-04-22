@@ -1,0 +1,28 @@
+# Generated from environment.yml and repository imports
+# Note: install a CUDA-compatible build of PyTorch separately, e.g.:
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+# Core PyTorch
+torch
+torchvision
+torchaudio
+
+# Scientific / data
+numpy
+pandas
+matplotlib
+seaborn
+scikit-learn
+
+# Video / I/O
+pytorchvideo
+decord
+av
+rarfile
+datasets
+
+# Utilities
+pyyaml
+tensorboard
+tqdm
+wandb

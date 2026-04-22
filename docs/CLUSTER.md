@@ -244,8 +244,12 @@ Per sincronizzare dopo il training:
 ```powershell
 # Da Windows:
 .\sync_cluster.ps1 -Action download-wandb -User <CF>
-wandb sync experiments\logs\wandb\offline-run-*
+wandb login
+wandb sync wandb\offline-run-*
 ```
+
+Nota: i run offline vengono salvati principalmente in `~/dl26-projects/wandb` sul cluster.
+Lo script `download-wandb` prova anche un path legacy sotto `experiments/logs/*/wandb` per compatibilita'.
 
 ---
 
