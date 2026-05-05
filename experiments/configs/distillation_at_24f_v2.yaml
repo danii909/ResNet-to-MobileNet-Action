@@ -6,9 +6,10 @@
 # AT loss: L = α * T² * KL(student || teacher) + (1-α) * CE + β * Σ_i MSE(A_t_i, A_s_i)
 #
 # Feature pairs (teacher_block → student_stage):
-#   block 3  →  stage 2  (mid-level spatial features)
-#   block 4  →  stage 4  (abstract spatial features)
-#   block 5  →  stage 6  (high-level semantic features)
+#   block 2  ->  stage 2  (mid-level spatial features)
+#   block 3  ->  stage 4  (abstract spatial features)
+#   block 4  ->  stage 6  (high-level semantic features)
+# NOTE: block 5 is the classifier head (2D output) and must be excluded.
 #
 # β=0.05: conservative weight; AT is a sum of 3 MSE terms each in [0,2], so
 # total AT contribution ≤ 0.05 * 6 = 0.30, comparable to the CE component.
@@ -64,8 +65,8 @@ distillation:
   teacher_checkpoint: experiments/checkpoints/teacher_finetune_best.pth
   temperature: 8.0
   alpha: 0.7
-  at_beta: 0.05                   # Conservative β: 0.1 in old config caused instability
-  teacher_keys: [3, 4, 5]         # Teacher residual block indices
+  at_beta: 0.05                   # Conservative beta: 0.1 in old config caused instability
+  teacher_keys: [2, 3, 4]         # Teacher residual block indices (block 5 = head, excluded)
   student_keys: [2, 4, 6]         # Student inverted-residual stage indices
 
 logging:

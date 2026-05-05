@@ -35,7 +35,7 @@ distillation:
   temperature: 8.0
   alpha: 0.7
   at_beta: 0.1
-  teacher_keys: [3, 4, 5]
+  teacher_keys: [2, 3, 4]
   student_keys: [2, 4, 6]
 
 logging:

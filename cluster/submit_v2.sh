@@ -324,16 +324,16 @@ fi
 append_summary "distillation" "$kd_train_dir" "$kd_eval_dir" "$kd_ckpt"
 
 # ---------------------------------------------------------------------------
-# 3) KD + ATTENTION TRANSFER v2  (Extra Objective)
+# 3) KD + SPATIAL & TEMPORAL ATTENTION TRANSFER  (Extra Objective)
 # ---------------------------------------------------------------------------
-at_cfg="experiments/configs/distillation_at_24f_v2.yaml"
+at_cfg="experiments/configs/distillation_at_temporal.yaml"
 at_train_dir="$ROOT_DIR/distillation_at/train"
 at_eval_dir="$ROOT_DIR/distillation_at/eval"
 at_ckpt_dir="$CHECKPOINT_ROOT/distillation_at"
 at_ckpt="$at_ckpt_dir/distillation_at_best.pth"
 
 run_training "distillation_at" "$at_cfg" "$at_train_dir" \
-    "$COMMON_OVERRIDES training.mode=distillation_at training.label_smoothing=0.05 training.checkpoint_dir=$at_ckpt_dir distillation.teacher_checkpoint=$TEACHER_CKPT distillation.temperature=8.0 distillation.alpha=0.7 distillation.at_beta=0.05 logging.run_name=kd_at_t8_a07_b005_24f_v2"
+    "$COMMON_OVERRIDES training.mode=distillation_at training.label_smoothing=0.05 training.checkpoint_dir=$at_ckpt_dir distillation.teacher_checkpoint=$TEACHER_CKPT distillation.temperature=8.0 distillation.alpha=0.7 distillation.at_beta_spatial=0.05 distillation.at_beta_temporal=0.05 logging.run_name=kd_at_spatial_temporal_sym_24f"
 
 if [ -f "$at_ckpt" ]; then
     run_evaluation "distillation_at" "$at_cfg" "$at_ckpt" "$at_eval_dir"
