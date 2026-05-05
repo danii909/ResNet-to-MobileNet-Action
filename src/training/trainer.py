@@ -216,7 +216,8 @@ class Trainer:
                 "teacher_checkpoint": kd_cfg.get("teacher_checkpoint"),
                 "temperature": kd_cfg.get("temperature"),
                 "alpha": kd_cfg.get("alpha"),
-                "at_beta": kd_cfg.get("at_beta"),
+                "at_beta_spatial": kd_cfg.get("at_beta_spatial", kd_cfg.get("at_beta")),
+                "at_beta_temporal": kd_cfg.get("at_beta_temporal", kd_cfg.get("at_beta")),
                 "teacher_keys": kd_cfg.get("teacher_keys"),
                 "student_keys": kd_cfg.get("student_keys"),
             },
@@ -276,7 +277,8 @@ class Trainer:
             ])
             if self.mode == "distillation_at":
                 lines.extend([
-                    f"at_beta: {summary['distillation']['at_beta']}",
+                    f"at_beta_spatial: {summary['distillation']['at_beta_spatial']}",
+                    f"at_beta_temporal: {summary['distillation']['at_beta_temporal']}",
                     f"teacher_keys: {summary['distillation']['teacher_keys']}",
                     f"student_keys: {summary['distillation']['student_keys']}",
                 ])
@@ -344,10 +346,14 @@ class Trainer:
                 label_smoothing=self.label_smoothing,
             )
         elif self.mode == "distillation_at":
+            # Backward compatible: at_beta is used as fallback if
+            # at_beta_spatial / at_beta_temporal are not in config.
+            at_beta_fallback = kd_cfg.get("at_beta", 0.05)
             return CombinedKDATLoss(
                 temperature=kd_cfg.get("temperature", 5.0),
                 alpha=kd_cfg.get("alpha", 0.7),
-                beta=kd_cfg.get("at_beta", 0.1),
+                beta_spatial=kd_cfg.get("at_beta_spatial", at_beta_fallback),
+                beta_temporal=kd_cfg.get("at_beta_temporal", at_beta_fallback),
                 label_smoothing=self.label_smoothing,
                 teacher_keys=kd_cfg.get("teacher_keys", [3, 4, 5]),
                 student_keys=kd_cfg.get("student_keys", [2, 4, 6]),

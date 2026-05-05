@@ -121,7 +121,7 @@ class MobileNet3D(nn.Module):
         (6, 320, 1, 1),
     ]
 
-    # Stage indices to capture for attention transfer (matching teacher blocks 3,4,5)
+    # Stage indices to capture for attention transfer (matching teacher blocks 2,3,4)
     FEATURE_STAGES = [2, 4, 6]
 
     def __init__(
