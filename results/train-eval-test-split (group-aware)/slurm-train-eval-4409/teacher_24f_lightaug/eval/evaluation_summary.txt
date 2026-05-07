@@ -1,0 +1,16 @@
+Evaluation Summary
+========================================
+mode: teacher_finetune
+model_type: teacher
+checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4409/teacher_24f_lightaug/teacher_finetune_best.pth
+device: cuda
+top1: 88.79
+top5: 98.18
+param_count: 31841445
+param_count_trainable: 31841445
+size_mb: 121.47
+inference_avg_ms: 4.58
+inference_std_ms: 1.40
+inference_min_ms: 3.00
+inference_max_ms: 7.46
+finished_at: 2026-05-07T01:52:08
