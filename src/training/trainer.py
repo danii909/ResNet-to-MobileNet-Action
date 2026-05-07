@@ -213,6 +213,7 @@ class Trainer:
                 "mixed_precision": tr_cfg.get("mixed_precision"),
             },
             "distillation": {
+                "teacher_type": kd_cfg.get("teacher_type"),
                 "teacher_checkpoint": kd_cfg.get("teacher_checkpoint"),
                 "temperature": kd_cfg.get("temperature"),
                 "alpha": kd_cfg.get("alpha"),
@@ -234,7 +235,8 @@ class Trainer:
             f"type: {summary['model']['type']}",
         ]
 
-        if profile == "teacher":
+        model_type = summary["model"]["type"]
+        if model_type in ("teacher", "assistant"):
             lines.extend([
                 f"pretrained: {summary['model']['pretrained']}",
                 f"freeze_backbone: {summary['model']['freeze_backbone']}",
@@ -271,6 +273,7 @@ class Trainer:
             lines.extend([
                 "",
                 "[distillation]",
+                f"teacher_type: {summary['distillation']['teacher_type']}",
                 f"teacher_checkpoint: {summary['distillation']['teacher_checkpoint']}",
                 f"temperature: {summary['distillation']['temperature']}",
                 f"alpha: {summary['distillation']['alpha']}",

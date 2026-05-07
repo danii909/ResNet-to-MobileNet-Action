@@ -14,6 +14,7 @@ import torch
 
 from src.datasets.ucf101 import get_dataloaders
 from src.evaluation.metrics import compute_accuracy, compute_inference_time, compute_model_size
+from src.models.assistant import get_assistant
 from src.models.student import get_student
 from src.models.teacher import get_teacher
 from src.utils import logger
@@ -126,6 +127,12 @@ def main() -> None:
 
     if model_type == "teacher":
         model = get_teacher(
+            num_classes=num_classes,
+            pretrained=False,
+            checkpoint_path=checkpoint,
+        )
+    elif model_type == "assistant":
+        model = get_assistant(
             num_classes=num_classes,
             pretrained=False,
             checkpoint_path=checkpoint,
