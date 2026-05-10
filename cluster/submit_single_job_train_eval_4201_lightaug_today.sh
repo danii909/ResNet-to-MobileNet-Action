@@ -301,6 +301,40 @@ fi
 
 append_summary "$kd_phase" "$kd_train_dir" "$kd_eval_dir" "$kd_ckpt"
 
+# 4) Latent Space t-SNE Visualization
+echo ""
+echo ">>> GENERATING t-SNE VISUALIZATION"
+if [ "$overall_status" != "FAILED" ] && [ -f "$teacher_ckpt" ] && [ -f "$kd_ckpt" ]; then
+    tsne_output_dir="$ROOT_DIR/tsne_plots"
+    mkdir -p "$tsne_output_dir"
+    
+    set +e
+    apptainer run --nv \
+        --env WANDB_MODE=offline \
+        --env HF_DATASETS_OFFLINE=1 \
+        ${HF_TOKEN:+--env HF_TOKEN="$HF_TOKEN"} \
+        --env PYTORCH_ALLOC_CONF=garbage_collection_threshold:0.8 \
+        --env PYTHONUNBUFFERED=1 \
+        /shared/sifs/latest.sif \
+        python -u -m src.evaluation.tsne_visualizer \
+            --config "$kd_cfg" \
+            --teacher-ckpt "$teacher_ckpt" \
+            --student-ckpt "$kd_ckpt" \
+            --num-classes 10 \
+            --output-dir "$tsne_output_dir" \
+            --output-filename "tsne_comparison_${SLURM_JOB_ID:-local}"
+    tsne_rc=$?
+    set -e
+    
+    if [ "$tsne_rc" -eq 0 ]; then
+        echo "t-SNE visualization generated in $tsne_output_dir"
+    else
+        echo "Warning: t-SNE visualization failed with exit code $tsne_rc"
+    fi
+else
+    echo "Skipping t-SNE visualization because previous steps failed or checkpoints are missing."
+fi
+
 echo ""
 echo "Pipeline completed in one SLURM job."
 echo "Summary: $SUMMARY_FILE"
