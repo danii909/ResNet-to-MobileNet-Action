@@ -91,6 +91,7 @@ def _spatial_attention_map(features: torch.Tensor) -> torch.Tensor:
     Returns:
         Normalized spatial attention map [B, H*W].
     """
+    features = features.float()
     if features.dim() == 5:
         # 3D: aggregate over channels (1) and time (2)
         attn = (features ** 2).mean(dim=(1, 2))  # [B, H, W]
@@ -121,6 +122,7 @@ def _temporal_attention_map(features: torch.Tensor) -> torch.Tensor:
     Returns:
         Normalized temporal attention map [B, T].
     """
+    features = features.float()
     if features.dim() != 5:
         raise ValueError(
             f"Temporal attention requires 5D features [B, C, T, H, W], got {features.dim()}D"
