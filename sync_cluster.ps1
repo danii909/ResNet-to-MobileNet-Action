@@ -79,7 +79,7 @@ function Upload {
 
     # Pesi pretrained (solo se non gia' presenti sul cluster)
     $weightsDir = "experiments/checkpoints"
-    $weightsFiles = Get-ChildItem -Path $weightsDir -Filter "*.pyth" -ErrorAction SilentlyContinue
+    $weightsFiles = Get-ChildItem -Path $weightsDir -ErrorAction SilentlyContinue | Where-Object { $_.Extension -in ".pyth", ".pth" }
     foreach ($w in $weightsFiles) {
         $remotePath_w = "${RemoteDir}/experiments/checkpoints/$($w.Name)"
         $exists = ssh $Remote "test -f $remotePath_w && echo yes || echo no"

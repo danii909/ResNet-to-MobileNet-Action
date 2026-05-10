@@ -1,10 +1,16 @@
 #!/bin/bash
 # ============================================================================
-# Single SLURM job: teacher -> baseline -> distillation (lightaug 24f), with
-# eval after each phase. Re-run of the old refine3-b setup in current conditions.
+# Single SLURM job: 3 Independent Distillation Experiments
+#
+# Layout:
+#   experiments/logs/slurm-train-eval-<JOBID>/
+#     exp1_warmup10_t10/train, exp1_warmup10_t10/eval
+#     exp2_at_temporal_only/train, exp2_at_temporal_only/eval
+#     exp3_at_latestage_semantico/train, exp3_at_latestage_semantico/eval
+#     pipeline_summary.txt
 # ============================================================================
 
-#SBATCH --job-name=repro-4142-lightaug-teacher
+#SBATCH --job-name=kd-3-experiments
 #SBATCH --account=dl-course-q2
 #SBATCH --partition=dl-course-q2
 #SBATCH --qos=gpu-xlarge
@@ -12,17 +18,16 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:1 --gres=shard:22528
 #SBATCH --mail-type=END,FAIL
-#SBATCH --mail-user=your@email.com
 #SBATCH --output=logs/slurm-train-eval-%j.log
 
 set -euo pipefail
 
 PROJECT_DIR="${PROJECT_DIR:-$HOME/dl26-projects}"
-
 if [ ! -d "$PROJECT_DIR" ]; then
     echo "Project directory not found: $PROJECT_DIR"
     exit 1
 fi
+
 cd "$PROJECT_DIR"
 mkdir -p logs
 
@@ -136,7 +141,6 @@ import json
 import sys
 from pathlib import Path
 
-
 def read_json(path: Path) -> dict:
     if not path.exists():
         return {}
@@ -146,7 +150,6 @@ def read_json(path: Path) -> dict:
         return data if isinstance(data, dict) else {}
     except Exception:
         return {}
-
 
 def read_colon_kv(path: Path) -> dict[str, str]:
     out: dict[str, str] = {}
@@ -165,14 +168,12 @@ def read_colon_kv(path: Path) -> dict[str, str]:
         return {}
     return out
 
-
 def coalesce(d: dict[str, str], *keys: str, default: str = "n/a") -> str:
     for k in keys:
         v = d.get(k)
         if v is not None and str(v).strip() != "":
             return str(v)
     return default
-
 
 phase = sys.argv[1]
 train_dir = Path(sys.argv[2])
@@ -186,7 +187,6 @@ train = read_colon_kv(train_dir / "training_summary.txt")
 ev = read_json(eval_dir / "evaluation_summary.json")
 
 model_cfg = cfg.get("model", {}) if isinstance(cfg.get("model"), dict) else {}
-data_cfg = cfg.get("dataset", {}) if isinstance(cfg.get("dataset"), dict) else {}
 tr_cfg = cfg.get("training", {}) if isinstance(cfg.get("training"), dict) else {}
 kd_cfg = cfg.get("distillation", {}) if isinstance(cfg.get("distillation"), dict) else {}
 
@@ -198,24 +198,20 @@ print(f"eval_status: {eval_status}")
 print("[config]")
 print(f"mode: {cfg.get('mode', '')}")
 print(f"model.type: {model_cfg.get('type', '')}")
-print(f"dataset.use_eval_split: {data_cfg.get('use_eval_split', '')}")
-print(f"dataset.eval_ratio: {data_cfg.get('eval_ratio', '')}")
-print(f"dataset.split_seed: {data_cfg.get('split_seed', '')}")
-print(f"dataset.max_temporal_stride: {data_cfg.get('max_temporal_stride', '')}")
 print(f"training.batch_size: {tr_cfg.get('batch_size', '')}")
 print(f"training.lr: {tr_cfg.get('lr', '')}")
 print(f"training.weight_decay: {tr_cfg.get('weight_decay', '')}")
-print(f"training.label_smoothing: {tr_cfg.get('label_smoothing', '')}")
 print(f"training.kd_warmup_epochs: {tr_cfg.get('kd_warmup_epochs', '')}")
-print(f"distillation.teacher_checkpoint: {kd_cfg.get('teacher_checkpoint', '')}")
 print(f"distillation.temperature: {kd_cfg.get('temperature', '')}")
 print(f"distillation.alpha: {kd_cfg.get('alpha', '')}")
+print(f"distillation.at_beta_spatial: {kd_cfg.get('at_beta_spatial', '')}")
+print(f"distillation.at_beta_temporal: {kd_cfg.get('at_beta_temporal', '')}")
+print(f"distillation.teacher_keys: {kd_cfg.get('teacher_keys', '')}")
+print(f"distillation.student_keys: {kd_cfg.get('student_keys', '')}")
 print("[train results]")
 print(f"best_eval_acc: {coalesce(train, 'best_eval_acc', 'best_acc')}")
 print(f"best_epoch: {coalesce(train, 'best_epoch')}")
 print(f"final_train_acc: {coalesce(train, 'final_train_acc')}")
-print(f"final_eval_acc: {coalesce(train, 'final_eval_acc', 'final_test_acc')}")
-print(f"final_eval_top5: {coalesce(train, 'final_eval_top5', 'final_test_top5')}")
 print("[eval results]")
 print(f"checkpoint: {ev.get('checkpoint', checkpoint)}")
 print(f"top1: {ev.get('top1', 'n/a')}")
@@ -225,89 +221,73 @@ PY
 }
 
 {
-    echo "Pipeline Summary"
+    echo "Pipeline Summary - 3 KD Experiments"
     echo "============================================================"
     echo "job_tag: slurm-train-eval-${SLURM_JOB_ID:-local}"
-    echo "slurm_job_id: ${SLURM_JOB_ID:-}"
     echo "root_dir: $ROOT_DIR"
     echo ""
 } > "$SUMMARY_FILE"
 
-shared_overrides="dataset.use_eval_split=true dataset.eval_ratio=0.2 dataset.split_seed=42"
+# # --- Experiment 1: KD Warmup 10, T=10 ---
+# exp1_cfg="experiments/configs/exp1_kd_warmup10_t10.yaml"
+# exp1_train_dir="$ROOT_DIR/exp1_warmup10_t10/train"
+# exp1_eval_dir="$ROOT_DIR/exp1_warmup10_t10/eval"
+# exp1_ckpt_dir="$CHECKPOINT_ROOT/exp1_warmup10_t10"
+# exp1_ckpt="$exp1_ckpt_dir/distillation_best.pth"
+# 
+# run_training "exp1_warmup10_t10" "$exp1_cfg" "$exp1_train_dir" \
+#     "training.checkpoint_dir=$exp1_ckpt_dir"
+# 
+# if [ -f "$exp1_ckpt" ]; then
+#     run_evaluation "exp1_warmup10_t10" "$exp1_cfg" "$exp1_ckpt" "$exp1_eval_dir"
+# else
+#     mkdir -p "$exp1_eval_dir"
+#     touch "$exp1_eval_dir/status_FAILED"
+#     printf 'exit_code=%s\n' 99 > "$exp1_eval_dir/status.txt"
+# fi
+# 
+# append_summary "exp1_warmup10_t10" "$exp1_train_dir" "$exp1_eval_dir" "$exp1_ckpt"
 
-# 1) Teacher (lightaug)
-teacher_cfg="experiments/configs/teacher_24f_evalsplit.yaml"
-teacher_phase="teacher_24f_lightaug"
-teacher_train_dir="$ROOT_DIR/$teacher_phase/train"
-teacher_eval_dir="$ROOT_DIR/$teacher_phase/eval"
-teacher_ckpt_dir="$CHECKPOINT_ROOT/$teacher_phase"
-teacher_ckpt="$teacher_ckpt_dir/teacher_finetune_best.pth"
+# --- Experiment 2: AT Temporal Only ---
+exp2_cfg="experiments/configs/exp2_at_temporal_only.yaml"
+exp2_train_dir="$ROOT_DIR/exp2_at_temporal_only/train"
+exp2_eval_dir="$ROOT_DIR/exp2_at_temporal_only/eval"
+exp2_ckpt_dir="$CHECKPOINT_ROOT/exp2_at_temporal_only"
+exp2_ckpt="$exp2_ckpt_dir/distillation_best.pth"
 
-run_training "$teacher_phase" "$teacher_cfg" "$teacher_train_dir" \
-    "$shared_overrides training.checkpoint_dir=$teacher_ckpt_dir logging.run_name=$teacher_phase"
+run_training "exp2_at_temporal_only" "$exp2_cfg" "$exp2_train_dir" \
+    "training.checkpoint_dir=$exp2_ckpt_dir"
 
-if [ -f "$teacher_ckpt" ]; then
-    run_evaluation "$teacher_phase" "$teacher_cfg" "$teacher_ckpt" "$teacher_eval_dir"
+if [ -f "$exp2_ckpt" ]; then
+    run_evaluation "exp2_at_temporal_only" "$exp2_cfg" "$exp2_ckpt" "$exp2_eval_dir"
 else
-    overall_status="FAILED"
-    mkdir -p "$teacher_eval_dir"
-    touch "$teacher_eval_dir/status_FAILED"
-    printf 'exit_code=%s\n' 99 > "$teacher_eval_dir/status.txt"
+    mkdir -p "$exp2_eval_dir"
+    touch "$exp2_eval_dir/status_FAILED"
+    printf 'exit_code=%s\n' 99 > "$exp2_eval_dir/status.txt"
 fi
 
-append_summary "$teacher_phase" "$teacher_train_dir" "$teacher_eval_dir" "$teacher_ckpt"
+append_summary "exp2_at_temporal_only" "$exp2_train_dir" "$exp2_eval_dir" "$exp2_ckpt"
 
-# 2) Baseline (lightaug)
-baseline_cfg="experiments/configs/baseline_ls005_24f_lightaug.yaml"
-baseline_phase="baseline_ls005_24f_lightaug"
-baseline_train_dir="$ROOT_DIR/$baseline_phase/train"
-baseline_eval_dir="$ROOT_DIR/$baseline_phase/eval"
-baseline_ckpt_dir="$CHECKPOINT_ROOT/$baseline_phase"
-baseline_ckpt="$baseline_ckpt_dir/baseline_best.pth"
+# --- Experiment 3: Late-Stage AT Semantico ---
+exp3_cfg="experiments/configs/exp3_at_latestage_semantico.yaml"
+exp3_train_dir="$ROOT_DIR/exp3_at_latestage_semantico/train"
+exp3_eval_dir="$ROOT_DIR/exp3_at_latestage_semantico/eval"
+exp3_ckpt_dir="$CHECKPOINT_ROOT/exp3_at_latestage_semantico"
+exp3_ckpt="$exp3_ckpt_dir/distillation_best.pth"
 
-run_training "$baseline_phase" "$baseline_cfg" "$baseline_train_dir" \
-    "$shared_overrides training.checkpoint_dir=$baseline_ckpt_dir logging.run_name=$baseline_phase"
+run_training "exp3_at_latestage_semantico" "$exp3_cfg" "$exp3_train_dir" \
+    "training.checkpoint_dir=$exp3_ckpt_dir"
 
-if [ -f "$baseline_ckpt" ]; then
-    run_evaluation "$baseline_phase" "$baseline_cfg" "$baseline_ckpt" "$baseline_eval_dir"
+if [ -f "$exp3_ckpt" ]; then
+    run_evaluation "exp3_at_latestage_semantico" "$exp3_cfg" "$exp3_ckpt" "$exp3_eval_dir"
 else
-    overall_status="FAILED"
-    mkdir -p "$baseline_eval_dir"
-    touch "$baseline_eval_dir/status_FAILED"
-    printf 'exit_code=%s\n' 99 > "$baseline_eval_dir/status.txt"
+    mkdir -p "$exp3_eval_dir"
+    touch "$exp3_eval_dir/status_FAILED"
+    printf 'exit_code=%s\n' 99 > "$exp3_eval_dir/status.txt"
 fi
 
-append_summary "$baseline_phase" "$baseline_train_dir" "$baseline_eval_dir" "$baseline_ckpt"
-
-# 3) Distillation (lightaug, T=8, alpha=0.7)
-kd_cfg="experiments/configs/distillation_t8_a07_24f_lightaug.yaml"
-kd_phase="kd_t8_a07_24f_lightaug"
-kd_train_dir="$ROOT_DIR/$kd_phase/train"
-kd_eval_dir="$ROOT_DIR/$kd_phase/eval"
-kd_ckpt_dir="$CHECKPOINT_ROOT/$kd_phase"
-kd_ckpt="$kd_ckpt_dir/distillation_best.pth"
-
-run_training "$kd_phase" "$kd_cfg" "$kd_train_dir" \
-    "$shared_overrides training.checkpoint_dir=$kd_ckpt_dir distillation.teacher_checkpoint=$teacher_ckpt logging.run_name=$kd_phase"
-
-if [ -f "$kd_ckpt" ]; then
-    run_evaluation "$kd_phase" "$kd_cfg" "$kd_ckpt" "$kd_eval_dir"
-else
-    overall_status="FAILED"
-    mkdir -p "$kd_eval_dir"
-    touch "$kd_eval_dir/status_FAILED"
-    printf 'exit_code=%s\n' 99 > "$kd_eval_dir/status.txt"
-fi
-
-append_summary "$kd_phase" "$kd_train_dir" "$kd_eval_dir" "$kd_ckpt"
+append_summary "exp3_at_latestage_semantico" "$exp3_train_dir" "$exp3_eval_dir" "$exp3_ckpt"
 
 echo ""
-echo "Pipeline completed in one SLURM job."
-echo "Summary: $SUMMARY_FILE"
-
-if [ "$overall_status" = "FAILED" ]; then
-    echo "Overall status: FAILED"
-    exit 1
-fi
-
-echo "Overall status: SUCCESS"
+echo "Pipeline completed."
+if [ "$overall_status" = "FAILED" ]; then exit 1; fi

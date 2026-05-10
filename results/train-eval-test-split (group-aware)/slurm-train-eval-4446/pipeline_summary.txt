@@ -1,0 +1,88 @@
+Born Again Distillation Pipeline
+============================================================
+job_tag: slurm-train-eval-4446
+slurm_job_id: 4446
+root_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4446
+strategy: Student_0 (from 4201) -> Student_1 -> Student_2 -> Student_3
+
+[Gen1]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4446/born_again_gen1/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4446/born_again_gen1/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+[config]
+mode: distillation
+model.type: student
+dataset.use_eval_split: True
+dataset.eval_ratio: 0.2
+dataset.split_seed: 42
+training.batch_size: 16
+training.lr: 0.0005
+distillation.temperature: 8.0
+distillation.alpha: 0.7
+distillation.teacher_checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4446/4201_distillation_teacher.pth
+[train results]
+best_eval_acc: 62.23
+best_epoch: 51
+final_train_acc: 96.09
+final_eval_acc: 61.95
+[eval results]
+checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4446/born_again_gen1/distillation_best.pth
+top1: 61.82923605604018
+top5: 86.38646576790907
+
+[Gen2]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4446/born_again_gen2/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4446/born_again_gen2/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+[config]
+mode: distillation
+model.type: student
+dataset.use_eval_split: True
+dataset.eval_ratio: 0.2
+dataset.split_seed: 42
+training.batch_size: 16
+training.lr: 0.0005
+distillation.temperature: 8.0
+distillation.alpha: 0.7
+distillation.teacher_checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4446/born_again_gen1/distillation_best.pth
+[train results]
+best_eval_acc: 60.03
+best_epoch: 58
+final_train_acc: 92.97
+final_eval_acc: 59.37
+[eval results]
+checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4446/born_again_gen2/distillation_best.pth
+top1: 58.207771609833465
+top5: 84.80042294475284
+
+[Gen3]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4446/born_again_gen3/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4446/born_again_gen3/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+[config]
+mode: distillation
+model.type: student
+dataset.use_eval_split: True
+dataset.eval_ratio: 0.2
+dataset.split_seed: 42
+training.batch_size: 16
+training.lr: 0.0005
+distillation.temperature: 8.0
+distillation.alpha: 0.7
+distillation.teacher_checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4446/born_again_gen2/distillation_best.pth
+[train results]
+best_eval_acc: 57.59
+best_epoch: 60
+final_train_acc: 88.51
+final_eval_acc: 57.59
+[eval results]
+checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4446/born_again_gen3/distillation_best.pth
+top1: 55.74940523394132
+top5: 82.26275442770289
+
+
+Pipeline completed.
+Overall status: SUCCESS

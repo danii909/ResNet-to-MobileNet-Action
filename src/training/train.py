@@ -142,6 +142,14 @@ def main() -> None:
                 extract_features=extract_feats,
                 checkpoint_path=teacher_ckpt,
             )
+        elif teacher_type == "student":
+            # Allow student architecture to act as teacher (student->student distillation)
+            teacher = get_student(
+                num_classes=num_classes,
+                width_mult=dist_cfg.get("teacher_width_mult", 1.0),
+                extract_features=extract_feats,
+                checkpoint_path=teacher_ckpt,
+            )
         else:
             raise ValueError(f"Unknown distillation teacher type: {teacher_type}")
     else:

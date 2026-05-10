@@ -36,91 +36,42 @@ class AssistantModel(nn.Module):
         self._hooks: list = []
 
         print("[Assistant] Creating ResNet-18 model...")
-        slow_r18 = None
-        try:
-            from pytorchvideo.models.hub import slow_r18 as _slow_r18
-            slow_r18 = _slow_r18
-        except ImportError:
-            slow_r18 = None
+        self._backend = "torchvision"
+        from torchvision.models.video import r3d_18
 
-        if slow_r18 is not None:
-            self._backend = "pytorchvideo"
-            self.model = slow_r18(pretrained=False)
-
-            if pretrained:
-                print("[Assistant] Loading pretrained weights from local cache...")
-                import os
-                from pathlib import Path
-
-                cache_paths = [
-                    Path("experiments/checkpoints/SLOW_8x8_R18.pyth"),
-                    Path.home() / "dl26-projects" / "experiments" / "checkpoints" / "SLOW_8x8_R18.pyth",
-                    Path.home() / ".cache" / "torch" / "hub" / "checkpoints" / "SLOW_8x8_R18.pyth",
-                ]
-                env_weights = os.environ.get("SLOW_R18_WEIGHTS", "")
-                if env_weights:
-                    cache_paths.insert(0, Path(env_weights))
-
-                weights_path = None
-                for path in cache_paths:
-                    if path.is_file():
-                        weights_path = path
-                        break
-
-                if weights_path is not None:
-                    print(f"[Assistant] Found weights at: {weights_path}")
-                    state_dict = torch.load(str(weights_path), map_location="cpu", weights_only=False)
-                    if "model_state" in state_dict:
-                        state_dict = state_dict["model_state"]
-                    self.model.load_state_dict(state_dict, strict=False)
-                    print("[Assistant] Pretrained weights loaded.")
-                else:
-                    print("[Assistant] WARNING: Pretrained weights not found!")
-                    print("[Assistant]   Expected at: experiments/checkpoints/SLOW_8x8_R18.pyth")
-                    print("[Assistant] Continuing with random initialization.")
-
-            print("[Assistant] slow_r18 ready.")
-
-            head_idx = None
-            for i in range(len(self.model.blocks) - 1, -1, -1):
-                if hasattr(self.model.blocks[i], "proj") and isinstance(
-                    self.model.blocks[i].proj, nn.Linear
-                ):
-                    head_idx = i
-                    break
-            if head_idx is None:
-                raise RuntimeError(
-                    f"[Assistant] Cannot find head block with .proj in model.blocks "
-                    f"(len={len(self.model.blocks)}). "
-                    f"Blocks: {[type(b).__name__ for b in self.model.blocks]}"
-                )
-            self._head_idx = head_idx
-            print(f"[Assistant] Head block found at index {head_idx} "
-                  f"(total blocks: {len(self.model.blocks)})")
-
-            in_features = self.model.blocks[head_idx].proj.in_features
-            self.model.blocks[head_idx].proj = nn.Linear(in_features, num_classes)
-
-            if hasattr(self.model.blocks[head_idx], "pool"):
-                self.model.blocks[head_idx].pool = nn.AdaptiveAvgPool3d((1, 1, 1))
-        else:
-            print("[Assistant] slow_r18 not available; using torchvision r3d_18.")
-            self._backend = "torchvision"
-            from torchvision.models.video import r3d_18
-
-            if pretrained:
-                try:
-                    self.model = r3d_18(weights="DEFAULT")
-                except TypeError:
-                    self.model = r3d_18(pretrained=True)
-            else:
+        if pretrained:
+            print("[Assistant] Loading pretrained Kinetics-400 weights for r3d_18...")
+            import os
+            import torch
+            from pathlib import Path
+            
+            offline_path = Path("experiments/checkpoints/r3d_18-b3b3357e.pth")
+            if offline_path.is_file():
+                print(f"[Assistant] Found offline weights at: {offline_path}")
                 try:
                     self.model = r3d_18(weights=None)
                 except TypeError:
                     self.model = r3d_18(pretrained=False)
+                state_dict = torch.load(str(offline_path), map_location="cpu")
+                self.model.load_state_dict(state_dict)
+                print("[Assistant] Offline weights loaded successfully.")
+            else:
+                print(f"[Assistant] WARNING: Offline weights not found at {offline_path}")
+                print("[Assistant] Attempting to download via torchvision...")
+                try:
+                    self.model = r3d_18(weights="DEFAULT")
+                except TypeError:
+                    self.model = r3d_18(pretrained=True)
+        else:
+            try:
+                self.model = r3d_18(weights=None)
+            except TypeError:
+                self.model = r3d_18(pretrained=False)
 
-            in_features = self.model.fc.in_features
-            self.model.fc = nn.Linear(in_features, num_classes)
+        print("[Assistant] torchvision r3d_18 ready.")
+
+        in_features = self.model.fc.in_features
+        self.model.fc = nn.Linear(in_features, num_classes)
 
         if freeze_backbone:
             self._freeze_backbone()
