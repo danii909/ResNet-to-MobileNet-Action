@@ -1,0 +1,16 @@
+Evaluation Summary
+========================================
+mode: baseline
+model_type: student
+checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4211/baseline/baseline_best.pth
+device: cuda
+top1: 48.03
+top5: 70.45
+param_count: 2483429
+param_count_trainable: 2483429
+size_mb: 9.47
+inference_avg_ms: 1.78
+inference_std_ms: 0.32
+inference_min_ms: 1.61
+inference_max_ms: 3.21
+finished_at: 2026-04-16T19:48:00

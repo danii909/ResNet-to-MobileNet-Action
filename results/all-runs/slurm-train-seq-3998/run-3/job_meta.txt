@@ -1,0 +1,4 @@
+run_config=experiments/configs/distillation.yaml
+started_at=2026-04-08T02:13:21+02:00
+finished_at=2026-04-08T03:30:36+02:00
+exit_code=0

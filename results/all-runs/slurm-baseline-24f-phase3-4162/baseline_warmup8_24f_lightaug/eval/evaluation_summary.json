@@ -1,0 +1,16 @@
+{
+  "mode": "baseline",
+  "model_type": "student",
+  "checkpoint": "/home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-baseline-24f-phase3-4162/baseline_warmup8_24f_lightaug/baseline_best.pth",
+  "device": "cuda",
+  "top1": 66.98387523129792,
+  "top5": 87.9989426381179,
+  "param_count": 2483429,
+  "param_count_trainable": 2483429,
+  "size_mb": 9.473529815673828,
+  "inference_avg_ms": 1.8432806711643934,
+  "inference_std_ms": 0.3447894982621723,
+  "inference_min_ms": 1.6332189552485943,
+  "inference_max_ms": 3.357863985002041,
+  "finished_at": "2026-04-15T04:27:28"
+}

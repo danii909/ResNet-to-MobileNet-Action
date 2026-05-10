@@ -1,0 +1,20 @@
+Training Summary
+========================================
+mode: distillation
+device: cuda
+epochs_completed: 60
+best_acc: 69.05
+best_epoch: 58
+final_train_acc: 96.67
+final_test_acc: 68.94
+final_test_top5: 91.17
+final_train_loss: 0.703518
+final_test_loss: 1.198628
+started_at: 2026-04-13T07:49:20
+finished_at: 2026-04-13T11:07:05
+elapsed_seconds: 11864
+run_log_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-recovery-24f-sweep-4137/kd_t10_a07_24f_lightaug_lr6e4/train
+metrics_csv: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-recovery-24f-sweep-4137/kd_t10_a07_24f_lightaug_lr6e4/train/metrics_epoch.csv
+metrics_jsonl: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-recovery-24f-sweep-4137/kd_t10_a07_24f_lightaug_lr6e4/train/metrics_epoch.jsonl
+config_summary: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-recovery-24f-sweep-4137/kd_t10_a07_24f_lightaug_lr6e4/train/config_summary.txt
+config_summary_json: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-recovery-24f-sweep-4137/kd_t10_a07_24f_lightaug_lr6e4/train/config_summary.json

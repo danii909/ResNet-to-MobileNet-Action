@@ -1,0 +1,59 @@
+Pipeline Summary - 3 KD Experiments
+============================================================
+job_tag: slurm-train-eval-4431
+root_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4431
+
+[exp2_at_temporal_only]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4431/exp2_at_temporal_only/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4431/exp2_at_temporal_only/eval
+train_status: SUCCESS
+eval_status: FAILED
+[config]
+mode: distillation_at
+model.type: student
+training.batch_size: 16
+training.lr: 0.0005
+training.weight_decay: 0.01
+training.kd_warmup_epochs: 
+distillation.temperature: 8.0
+distillation.alpha: 0.7
+distillation.at_beta_spatial: 0.0
+distillation.at_beta_temporal: 0.1
+distillation.teacher_keys: [2, 3, 4]
+distillation.student_keys: [2, 4, 6]
+[train results]
+best_eval_acc: 63.17
+best_epoch: 57
+final_train_acc: 93.29
+[eval results]
+checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4431/exp2_at_temporal_only/distillation_best.pth
+top1: n/a
+top5: n/a
+
+[exp3_at_latestage_semantico]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4431/exp3_at_latestage_semantico/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4431/exp3_at_latestage_semantico/eval
+train_status: SUCCESS
+eval_status: FAILED
+[config]
+mode: distillation_at
+model.type: student
+training.batch_size: 16
+training.lr: 0.0005
+training.weight_decay: 0.01
+training.kd_warmup_epochs: 
+distillation.temperature: 8.0
+distillation.alpha: 0.7
+distillation.at_beta_spatial: 0.05
+distillation.at_beta_temporal: 0.05
+distillation.teacher_keys: [4]
+distillation.student_keys: [6]
+[train results]
+best_eval_acc: 62.37
+best_epoch: 57
+final_train_acc: 93.30
+[eval results]
+checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4431/exp3_at_latestage_semantico/distillation_best.pth
+top1: n/a
+top5: n/a
+

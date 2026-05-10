@@ -1,0 +1,4 @@
+run_config=experiments/configs/teacher.yaml
+started_at=2026-04-07T23:59:52+02:00
+finished_at=2026-04-08T01:00:23+02:00
+exit_code=0

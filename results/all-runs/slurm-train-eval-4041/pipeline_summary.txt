@@ -1,0 +1,148 @@
+Pipeline Summary
+============================================================
+job_tag: slurm-train-eval-4041
+slurm_job_id: 
+started_at: 
+finished_at: 
+overall_status: 
+root_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4041
+slurm_stdout: 
+
+[teacher]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4041/teacher/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4041/teacher/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+[config]
+mode: teacher_finetune
+seed: 42
+model.type: teacher
+model.width_mult: None
+model.pretrained: True
+model.freeze_backbone: False
+dataset.data_dir: data/ucf101
+dataset.num_classes: 101
+dataset.num_frames: 16
+dataset.crop_size: 112
+dataset.backend: hf
+training.epochs: 40
+training.batch_size: 12
+training.num_workers: 4
+training.optimizer: sgd
+training.lr: 0.0005
+training.momentum: 0.9
+training.weight_decay: 0.001
+training.scheduler: cosine
+training.grad_clip: 1.0
+training.mixed_precision: True
+distillation.teacher_checkpoint: None
+distillation.temperature: None
+distillation.alpha: None
+distillation.at_beta: None
+[train results]
+best_acc: 88.21
+best_epoch: 33
+final_train_acc: 91.96
+final_test_acc: 88.21
+final_test_top5: 98.12
+elapsed_seconds: 3712
+[eval results]
+model_type: teacher
+checkpoint: experiments/checkpoints/teacher_finetune_best.pth
+top1: 88.21
+top5: 98.26
+size_mb: 121.47
+inference_avg_ms: 2.32
+
+[baseline]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4041/baseline/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4041/baseline/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+[config]
+mode: baseline
+seed: 42
+model.type: student
+model.width_mult: 1.0
+model.pretrained: None
+model.freeze_backbone: None
+dataset.data_dir: data/ucf101
+dataset.num_classes: 101
+dataset.num_frames: 16
+dataset.crop_size: 112
+dataset.backend: hf
+training.epochs: 60
+training.batch_size: 24
+training.num_workers: 4
+training.optimizer: adamw
+training.lr: 0.0008
+training.momentum: 0.9
+training.weight_decay: 0.01
+training.scheduler: cosine
+training.grad_clip: 1.0
+training.mixed_precision: True
+distillation.teacher_checkpoint: None
+distillation.temperature: None
+distillation.alpha: None
+distillation.at_beta: None
+[train results]
+best_acc: 62.54
+best_epoch: 56
+final_train_acc: 99.69
+final_test_acc: 62.15
+final_test_top5: 84.35
+elapsed_seconds: 5385
+[eval results]
+model_type: student
+checkpoint: experiments/checkpoints/baseline_best.pth
+top1: 62.54
+top5: 84.38
+size_mb: 9.47
+inference_avg_ms: 1.74
+
+[distillation]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4041/distillation/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4041/distillation/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+[config]
+mode: distillation
+seed: 42
+model.type: student
+model.width_mult: 1.0
+model.pretrained: None
+model.freeze_backbone: None
+dataset.data_dir: data/ucf101
+dataset.num_classes: 101
+dataset.num_frames: 16
+dataset.crop_size: 112
+dataset.backend: hf
+training.epochs: 60
+training.batch_size: 24
+training.num_workers: 4
+training.optimizer: adamw
+training.lr: 0.0006
+training.momentum: 0.9
+training.weight_decay: 0.01
+training.scheduler: cosine
+training.grad_clip: 1.0
+training.mixed_precision: True
+distillation.teacher_checkpoint: experiments/checkpoints/teacher_finetune_best.pth
+distillation.temperature: 8.0
+distillation.alpha: 0.7
+distillation.at_beta: None
+[train results]
+best_acc: 65.11
+best_epoch: 56
+final_train_acc: 95.96
+final_test_acc: 64.47
+final_test_top5: 88.47
+elapsed_seconds: 5430
+[eval results]
+model_type: student
+checkpoint: experiments/checkpoints/distillation_best.pth
+top1: 65.11
+top5: 88.37
+size_mb: 9.47
+inference_avg_ms: 1.72
+

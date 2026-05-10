@@ -1,0 +1,4 @@
+parent_log_dir=/home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-seq-3998
+started_at=2026-04-07T23:59:52+02:00
+finished_at=2026-04-08T03:30:36+02:00
+overall_status=SUCCESS

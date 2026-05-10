@@ -1,0 +1,29 @@
+Config Summary
+========================================
+profile: teacher
+mode: teacher_finetune
+seed: 42
+
+[model]
+type: teacher
+pretrained: True
+freeze_backbone: False
+
+[dataset]
+data_dir: data/ucf101
+num_classes: 101
+num_frames: 16
+crop_size: 112
+backend: hf
+
+[training]
+epochs: 40
+batch_size: 12
+num_workers: 4
+optimizer: sgd
+lr: 0.0005
+momentum: 0.9
+weight_decay: 0.001
+scheduler: cosine
+grad_clip: 1.0
+mixed_precision: True
