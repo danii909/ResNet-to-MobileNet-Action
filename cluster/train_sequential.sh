@@ -28,6 +28,23 @@ set -euo pipefail
 CONFIGS="${CONFIGS:-}"
 EXTRA_ARGS="${EXTRA_ARGS:-}"
 
+infer_training_type() {
+    local cfg_lower
+    cfg_lower=$(basename "$1" | tr '[:upper:]' '[:lower:]')
+    if [[ "$cfg_lower" == *"teacher"* ]]; then
+        echo "teacher"
+    elif [[ "$cfg_lower" == *"baseline"* ]]; then
+        echo "baseline"
+    elif [[ "$cfg_lower" == *"distill"* ]]; then
+        echo "distillation"
+    else
+        echo "unknown"
+    fi
+}
+
+GPU_NAME="$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1 || true)"
+GPU_NAME="${GPU_NAME:-unknown}"
+
 if [ -z "$CONFIGS" ]; then
     echo "CONFIGS is empty. Example:"
     echo "  CONFIGS=\"experiments/configs/teacher.yaml experiments/configs/baseline.yaml\" sbatch cluster/train_sequential.sh"
@@ -38,6 +55,7 @@ echo "============================================"
 echo "  KD Sequential Training - Cluster DMI"
 echo "  Job ID:    ${SLURM_JOB_ID}"
 echo "  Node:      $(hostname)"
+echo "  GPU:       ${GPU_NAME}"
 echo "  Date:      $(date)"
 echo "  Configs:   ${CONFIGS}"
 echo "  Extra:     ${EXTRA_ARGS}"
@@ -57,6 +75,14 @@ PARENT_DIR="$HOME/dl26-projects/experiments/logs/${PARENT_TAG}"
 mkdir -p "$PARENT_DIR"
 
 echo "parent_log_dir=${PARENT_DIR}" > "$PARENT_DIR/job_meta.txt"
+echo "job_tag=${PARENT_TAG}" >> "$PARENT_DIR/job_meta.txt"
+echo "slurm_job_id=${SLURM_JOB_ID}" >> "$PARENT_DIR/job_meta.txt"
+echo "partition=${SLURM_JOB_PARTITION:-}" >> "$PARENT_DIR/job_meta.txt"
+echo "qos=${SLURM_JOB_QOS:-}" >> "$PARENT_DIR/job_meta.txt"
+echo "hostname=$(hostname)" >> "$PARENT_DIR/job_meta.txt"
+echo "gpu_name=${GPU_NAME}" >> "$PARENT_DIR/job_meta.txt"
+echo "configs=${CONFIGS}" >> "$PARENT_DIR/job_meta.txt"
+echo "extra_args=${EXTRA_ARGS}" >> "$PARENT_DIR/job_meta.txt"
 echo "started_at=$(date --iso-8601=seconds)" >> "$PARENT_DIR/job_meta.txt"
 
 idx=1
@@ -71,11 +97,18 @@ for cfg in $CONFIGS; do
     run_tag="run-${idx}"
     run_dir="$PARENT_DIR/$run_tag"
     mkdir -p "$run_dir"
+    training_type="$(infer_training_type "$cfg")"
     export TRAIN_LOG_DIR="$run_dir"
+    export TRAIN_CONFIG_PATH="$cfg"
+    export TRAINING_TYPE="$training_type"
 
     echo ""
     echo "[${idx}/${total}] Starting: $cfg"
     echo "run_config=${cfg}" > "$run_dir/job_meta.txt"
+    echo "run_index=${idx}" >> "$run_dir/job_meta.txt"
+    echo "training_type=${training_type}" >> "$run_dir/job_meta.txt"
+    echo "hostname=$(hostname)" >> "$run_dir/job_meta.txt"
+    echo "gpu_name=${GPU_NAME}" >> "$run_dir/job_meta.txt"
     echo "started_at=$(date --iso-8601=seconds)" >> "$run_dir/job_meta.txt"
 
     set +e
@@ -97,16 +130,27 @@ for cfg in $CONFIGS; do
         echo "[${idx}/${total}] FAILED: $cfg (exit code ${rc})"
         echo "finished_at=$(date --iso-8601=seconds)" >> "$PARENT_DIR/job_meta.txt"
         echo "overall_status=FAILED" >> "$PARENT_DIR/job_meta.txt"
+        touch "$PARENT_DIR/status_FAILED"
+        python3 -u -m src.utils.job_summary --job-log-dir "$PARENT_DIR" --quiet || true
         exit "$rc"
     fi
 
     touch "$run_dir/status_SUCCESS"
+    python3 -u -m src.utils.job_summary --job-log-dir "$PARENT_DIR" --quiet || true
     echo "[${idx}/${total}] SUCCESS: $cfg"
     idx=$((idx + 1))
 done
 
 echo "finished_at=$(date --iso-8601=seconds)" >> "$PARENT_DIR/job_meta.txt"
 echo "overall_status=SUCCESS" >> "$PARENT_DIR/job_meta.txt"
+touch "$PARENT_DIR/status_SUCCESS"
+
+SLURM_STDOUT_FILE="${SLURM_SUBMIT_DIR}/logs/slurm-train-seq-${SLURM_JOB_ID}.log"
+if [ -f "$SLURM_STDOUT_FILE" ]; then
+    cp "$SLURM_STDOUT_FILE" "$PARENT_DIR/slurm-stdout.log"
+fi
+
+python3 -u -m src.utils.job_summary --job-log-dir "$PARENT_DIR" --quiet || true
 
 echo ""
 echo "============================================"

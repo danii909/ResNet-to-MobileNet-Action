@@ -1,0 +1,51 @@
+# Baseline v2 — matched settings for fair comparison with distillation v2
+#
+# Changes vs v1 (slurm-train-eval-4201/baseline):
+#   - 75 epochs  (v1: 60) — model had not converged (best at epoch 57/60)
+#   - max_temporal_stride: 2  (v1: 1) — same augmentation as distillation v2
+#   - cosine_warmup scheduler  (v1: cosine)
+#   - label_smoothing: 0.1  (v1: 0.05) — stronger regularisation fights overfitting
+#     (v1 baseline: train_acc=99.8% vs eval_acc=59.2% → 40pp gap; smoothing should help)
+
+seed: 42
+
+model:
+  type: student
+  width_mult: 1.0
+
+dataset:
+  data_dir: data/ucf101
+  num_classes: 101
+  num_frames: 24
+  crop_size: 112
+  backend: hf
+  resize_short_side: 128
+  use_random_resized_crop: false
+  color_jitter_strength: 0.1
+  random_erasing_prob: 0.05
+  max_temporal_stride: 2
+  use_eval_split: true
+  eval_ratio: 0.2
+  split_seed: 42
+
+training:
+  mode: baseline
+  epochs: 75
+  batch_size: 16
+  num_workers: 4
+  optimizer: adamw
+  lr: 0.0005
+  momentum: 0.9
+  weight_decay: 0.01
+  scheduler: cosine_warmup
+  warmup_epochs: 5
+  warmup_start_factor: 0.1
+  grad_clip: 1.0
+  mixed_precision: true
+  label_smoothing: 0.1            # increased from 0.05 to fight overfitting
+  checkpoint_dir: experiments/checkpoints
+
+logging:
+  enabled: true
+  project: kd-action-recognition
+  run_name: baseline-24f-v2

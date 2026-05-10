@@ -166,6 +166,83 @@ train() {
     cd "$PROJ_DIR" && CONFIG="$config" EXTRA_ARGS="$*" sbatch cluster/train.sh
 }
 
+# Lancia evaluation (uso: evaluate CONFIG CHECKPOINT [extra args...])
+# Esempio: evaluate teacher.yaml experiments/checkpoints/teacher_finetune_best.pth
+evaluate() {
+    local default_checkpoint_for_config
+    default_checkpoint_for_config() {
+        local cfg_name
+        cfg_name=$(basename "$1" | tr '[:upper:]' '[:lower:]')
+        if [[ "$cfg_name" == *"teacher"* ]]; then
+            echo "experiments/checkpoints/teacher_finetune_best.pth"
+        elif [[ "$cfg_name" == *"baseline"* ]]; then
+            echo "experiments/checkpoints/baseline_best.pth"
+        elif [[ "$cfg_name" == *"distill"* ]]; then
+            echo "experiments/checkpoints/distillation_best.pth"
+        else
+            echo ""
+        fi
+    }
+
+    local normalize_config
+    normalize_config() {
+        local cfg="$1"
+        if [[ "$cfg" != */* ]]; then
+            cfg="experiments/configs/$cfg"
+        fi
+        echo "$cfg"
+    }
+
+    if [ "$#" -lt 1 ]; then
+        echo "Uso: evaluate CONFIG [CHECKPOINT]"
+        echo "       evaluate CONFIG1 CONFIG2 CONFIG3 ..."
+        echo ""
+        configs
+        return 1
+    fi
+
+    # Caso 1: singola evaluation con checkpoint esplicito.
+    if [ "$#" -ge 2 ] && [[ "$2" == *.pth || "$2" == *.pt || "$2" == *.pyth ]]; then
+        local config checkpoint extra_args
+        config=$(normalize_config "$1")
+        checkpoint="$2"
+        shift 2
+        extra_args="$*"
+
+        if [ ! -f "$PROJ_DIR/$config" ]; then
+            echo "Config non trovato: $config"
+            echo ""
+            configs
+            return 1
+        fi
+
+        cd "$PROJ_DIR" && CONFIG="$config" CHECKPOINT="$checkpoint" EXTRA_ARGS="$extra_args" sbatch cluster/eval.sh
+        return $?
+    fi
+
+    # Caso 2: una o più config senza checkpoint esplicito -> usa i checkpoint di default.
+    local cfg checkpoint job_id
+    for cfg in "$@"; do
+        cfg=$(normalize_config "$cfg")
+        if [ ! -f "$PROJ_DIR/$cfg" ]; then
+            echo "Config non trovato: $cfg"
+            echo ""
+            configs
+            return 1
+        fi
+
+        checkpoint=$(default_checkpoint_for_config "$cfg")
+        if [ -z "$checkpoint" ]; then
+            echo "Checkpoint di default non riconosciuto per: $cfg"
+            echo "Usa: evaluate CONFIG CHECKPOINT"
+            return 1
+        fi
+
+        job_id=$(cd "$PROJ_DIR" && CONFIG="$cfg" CHECKPOINT="$checkpoint" sbatch --parsable cluster/eval.sh)
+        echo "Submitted eval job: $(basename "$cfg") -> $job_id"
+    done
+}
+
 # Setup ambiente (uso: setup)
 alias setup='cd "$PROJ_DIR" && bash cluster/setup.sh'
 
@@ -174,6 +251,11 @@ alias setup='cd "$PROJ_DIR" && bash cluster/setup.sh'
 # Monitor live del training (uso: monitor [--poll N])
 monitor() {
     cd "$PROJ_DIR" && python3 -u -m src.utils.monitor "$@"
+}
+
+# Alias corto del monitor (uso: monito [--poll N])
+monito() {
+    monitor "$@"
 }
 
 # -- Pip / Environment --------------------------------------------------------
@@ -236,9 +318,9 @@ clean() {
 
 # -- Meta ---------------------------------------------------------------------
 
-_KD_ALIASES="myjobs jobinfo killjob killalljobs trainlog lastlog metrics tree gpu quota diskusage proj ckpts configs train setup monitor pip-clean pip-setup pip-reset clean daniele unload-aliases install-aliases uninstall-aliases"
+_KD_ALIASES="myjobs jobinfo killjob killalljobs trainlog lastlog metrics tree gpu quota diskusage proj ckpts configs train evaluate setup monitor monito pip-clean pip-setup pip-reset clean train-and-eval daniele unload-aliases install-aliases uninstall-aliases"
 
-# Submit multiple training configs in sequence (one active job at a time)
+# Submit multiple training configs as a dependency chain (one active job at a time)
 train-chain() {
     if [ "$#" -lt 1 ]; then
         echo "Uso: train-chain CONFIG1 [CONFIG2 ...]"
@@ -290,8 +372,21 @@ train-seq() {
     cd "$PROJ_DIR" && CONFIGS="$cfgs_string" sbatch cluster/train_sequential.sh
 }
 
+# Train teacher, baseline, distillation AND evaluate all in one go (~3-4 hours)
+train-and-eval() {
+    echo "Launching complete training + evaluation pipeline as a single SLURM job..."
+    echo "  Teacher      (40 epochs) + eval"
+    echo "  Baseline     (60 epochs) + eval"
+    echo "  Distillation (60 epochs) + eval"
+    echo ""
+    echo "Expected runtime: ~3-4 hours"
+    echo ""
+
+    cd "$PROJ_DIR" && sbatch --parsable cluster/train_and_eval.sh
+}
+
 # Mostra i comandi disponibili
-daniele() {
+sas() {
     echo "Comandi KD disponibili:"
     echo ""
     echo "-- Job management --"
@@ -308,13 +403,18 @@ daniele() {
     echo "-- Training --"
     echo "   train CONFIG [extra args...]"
     echo "                     -- lancia training"
+    echo "   evaluate CONFIG [CKPT]"
+    echo "                     -- lancia evaluation"
     echo "   train-chain C1 [C2 ...]"
     echo "                     -- lancia una catena di training (afterok)"
     echo "   train-seq C1 [C2 ...]"
-    echo "                     -- un solo job SLURM con training sequenziali"
+    echo "                     -- un solo job SLURM con training sequenziali (usa train_sequential.sh)"
+    echo "   train-and-eval    -- job SLURM unico: teacher + baseline + distillation + evals (~3-4h)"
     echo "   setup             -- (ri)lancia cluster/setup.sh"
     echo "   configs           -- mostra config disponibili"
+    echo "   evaluate CONFIG [CKPT] -- lancia evaluation sul cluster"
     echo "   monitor [--poll N] -- monitor live del training"
+    echo "   monito  [--poll N] -- alias corto di monitor"
     echo ""
     echo "-- Utilita' --"
     echo "   proj              -- cd al progetto"
@@ -331,7 +431,7 @@ daniele() {
     echo "   pip-reset         -- pip-clean + pip-setup"
     echo ""
     echo "-- Meta --"
-    echo "   daniele           -- mostra questo messaggio"
+    echo "   sas               -- mostra questo messaggio"
     echo "   install-aliases   -- aggiungi alias al .bashrc"
     echo "   uninstall-aliases -- rimuovi alias dal .bashrc"
 }
@@ -369,4 +469,4 @@ uninstall-aliases() {
     unload-aliases
 }
 
-echo "Alias KD caricati. Digita 'daniele' per la lista comandi."
+echo "Alias KD caricati. Digita 'sas' per la lista comandi."

@@ -3,6 +3,7 @@
 import csv
 import json
 import os
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -29,7 +30,7 @@ class Trainer:
         config: Full experiment configuration dict.
         model: The model to train (student in distillation modes).
         train_loader: Training DataLoader.
-        test_loader: Test/validation DataLoader.
+        eval_loader: Evaluation DataLoader.
         teacher: Optional teacher model (required for distillation modes).
         device: Torch device.
     """
@@ -39,7 +40,7 @@ class Trainer:
         config: dict,
         model: nn.Module,
         train_loader: DataLoader,
-        test_loader: DataLoader,
+        eval_loader: DataLoader,
         teacher: Optional[nn.Module] = None,
         device: torch.device = torch.device("cuda"),
     ):
@@ -47,7 +48,7 @@ class Trainer:
         self.model = model.to(device)
         self.teacher = teacher
         self.train_loader = train_loader
-        self.test_loader = test_loader
+        self.eval_loader = eval_loader
         self.device = device
 
         tr_cfg = config["training"]
@@ -59,6 +60,13 @@ class Trainer:
         # Mixed precision
         self.use_amp = tr_cfg.get("mixed_precision", True)
         self.scaler = torch.amp.GradScaler("cuda", enabled=self.use_amp)
+        self.label_smoothing = tr_cfg.get("label_smoothing", 0.0)
+        self.kd_warmup_epochs = tr_cfg.get(
+            "kd_warmup_epochs",
+            5 if self.mode in ("distillation", "distillation_at") else 0,
+        )
+        self.current_epoch = 0
+        self.hard_criterion = nn.CrossEntropyLoss(label_smoothing=self.label_smoothing)
 
         # Setup teacher for distillation
         if self.mode in ("distillation", "distillation_at") and self.teacher is not None:
@@ -128,11 +136,11 @@ class Trainer:
                 "epoch",
                 "train_loss",
                 "train_acc",
-                "test_loss",
-                "test_acc",
-                "test_acc_top5",
+                "eval_loss",
+                "eval_acc",
+                "eval_acc_top5",
                 "lr",
-                "best_acc",
+                "best_eval_acc",
             ])
 
     def _append_epoch_metrics(self, metrics: dict) -> None:
@@ -143,11 +151,11 @@ class Trainer:
                 metrics["epoch"],
                 metrics["train_loss"],
                 metrics["train_acc"],
-                metrics["test_loss"],
-                metrics["test_acc"],
-                metrics["test_acc_top5"],
+                metrics["eval_loss"],
+                metrics["eval_acc"],
+                metrics["eval_acc_top5"],
                 metrics["lr"],
-                metrics["best_acc"],
+                metrics["best_eval_acc"],
             ])
 
         with open(self.metrics_jsonl_path, "a", encoding="utf-8") as f:
@@ -188,6 +196,9 @@ class Trainer:
                 "num_frames": data_cfg.get("num_frames"),
                 "crop_size": data_cfg.get("crop_size"),
                 "backend": data_cfg.get("backend"),
+                "use_eval_split": data_cfg.get("use_eval_split"),
+                "eval_ratio": data_cfg.get("eval_ratio"),
+                "split_seed": data_cfg.get("split_seed"),
             },
             "training": {
                 "epochs": tr_cfg.get("epochs"),
@@ -202,10 +213,12 @@ class Trainer:
                 "mixed_precision": tr_cfg.get("mixed_precision"),
             },
             "distillation": {
+                "teacher_type": kd_cfg.get("teacher_type"),
                 "teacher_checkpoint": kd_cfg.get("teacher_checkpoint"),
                 "temperature": kd_cfg.get("temperature"),
                 "alpha": kd_cfg.get("alpha"),
-                "at_beta": kd_cfg.get("at_beta"),
+                "at_beta_spatial": kd_cfg.get("at_beta_spatial", kd_cfg.get("at_beta")),
+                "at_beta_temporal": kd_cfg.get("at_beta_temporal", kd_cfg.get("at_beta")),
                 "teacher_keys": kd_cfg.get("teacher_keys"),
                 "student_keys": kd_cfg.get("student_keys"),
             },
@@ -222,7 +235,8 @@ class Trainer:
             f"type: {summary['model']['type']}",
         ]
 
-        if profile == "teacher":
+        model_type = summary["model"]["type"]
+        if model_type in ("teacher", "assistant"):
             lines.extend([
                 f"pretrained: {summary['model']['pretrained']}",
                 f"freeze_backbone: {summary['model']['freeze_backbone']}",
@@ -238,6 +252,9 @@ class Trainer:
             f"num_frames: {summary['dataset']['num_frames']}",
             f"crop_size: {summary['dataset']['crop_size']}",
             f"backend: {summary['dataset']['backend']}",
+            f"use_eval_split: {summary['dataset']['use_eval_split']}",
+            f"eval_ratio: {summary['dataset']['eval_ratio']}",
+            f"split_seed: {summary['dataset']['split_seed']}",
             "",
             "[training]",
             f"epochs: {summary['training']['epochs']}",
@@ -256,13 +273,15 @@ class Trainer:
             lines.extend([
                 "",
                 "[distillation]",
+                f"teacher_type: {summary['distillation']['teacher_type']}",
                 f"teacher_checkpoint: {summary['distillation']['teacher_checkpoint']}",
                 f"temperature: {summary['distillation']['temperature']}",
                 f"alpha: {summary['distillation']['alpha']}",
             ])
             if self.mode == "distillation_at":
                 lines.extend([
-                    f"at_beta: {summary['distillation']['at_beta']}",
+                    f"at_beta_spatial: {summary['distillation']['at_beta_spatial']}",
+                    f"at_beta_temporal: {summary['distillation']['at_beta_temporal']}",
                     f"teacher_keys: {summary['distillation']['teacher_keys']}",
                     f"student_keys: {summary['distillation']['student_keys']}",
                 ])
@@ -279,11 +298,11 @@ class Trainer:
             old_file.unlink(missing_ok=True)
 
         marker_names = [
-            f"metric_best_acc_{self.best_acc:.2f}",
+            f"metric_best_eval_acc_{self.best_acc:.2f}",
             f"metric_best_epoch_{self.best_epoch + 1}",
             f"metric_final_train_acc_{final_metrics['train_acc']:.2f}",
-            f"metric_final_test_acc_{final_metrics['test_acc']:.2f}",
-            f"metric_final_test_top5_{final_metrics['test_acc_top5']:.2f}",
+            f"metric_final_eval_acc_{final_metrics['eval_acc']:.2f}",
+            f"metric_final_eval_top5_{final_metrics['eval_acc_top5']:.2f}",
         ]
         for name in marker_names:
             (self.run_log_dir / name).touch(exist_ok=True)
@@ -299,13 +318,13 @@ class Trainer:
             f"mode: {self.mode}",
             f"device: {self.device}",
             f"epochs_completed: {self.epochs - self.start_epoch}",
-            f"best_acc: {self.best_acc:.2f}",
+            f"best_eval_acc: {self.best_acc:.2f}",
             f"best_epoch: {self.best_epoch + 1}",
             f"final_train_acc: {final_metrics['train_acc']:.2f}",
-            f"final_test_acc: {final_metrics['test_acc']:.2f}",
-            f"final_test_top5: {final_metrics['test_acc_top5']:.2f}",
+            f"final_eval_acc: {final_metrics['eval_acc']:.2f}",
+            f"final_eval_top5: {final_metrics['eval_acc_top5']:.2f}",
             f"final_train_loss: {final_metrics['train_loss']:.6f}",
-            f"final_test_loss: {final_metrics['test_loss']:.6f}",
+            f"final_eval_loss: {final_metrics['eval_loss']:.6f}",
             f"started_at: {self.run_started_at.isoformat(timespec='seconds')}",
             f"finished_at: {finished_at.isoformat(timespec='seconds')}",
             f"elapsed_seconds: {elapsed_sec}",
@@ -322,17 +341,23 @@ class Trainer:
         kd_cfg = config.get("distillation", {})
 
         if self.mode in ("teacher_finetune", "baseline"):
-            return nn.CrossEntropyLoss()
+            return self.hard_criterion
         elif self.mode == "distillation":
             return KDLoss(
                 temperature=kd_cfg.get("temperature", 5.0),
                 alpha=kd_cfg.get("alpha", 0.7),
+                label_smoothing=self.label_smoothing,
             )
         elif self.mode == "distillation_at":
+            # Backward compatible: at_beta is used as fallback if
+            # at_beta_spatial / at_beta_temporal are not in config.
+            at_beta_fallback = kd_cfg.get("at_beta", 0.05)
             return CombinedKDATLoss(
                 temperature=kd_cfg.get("temperature", 5.0),
                 alpha=kd_cfg.get("alpha", 0.7),
-                beta=kd_cfg.get("at_beta", 0.1),
+                beta_spatial=kd_cfg.get("at_beta_spatial", at_beta_fallback),
+                beta_temporal=kd_cfg.get("at_beta_temporal", at_beta_fallback),
+                label_smoothing=self.label_smoothing,
                 teacher_keys=kd_cfg.get("teacher_keys", [3, 4, 5]),
                 student_keys=kd_cfg.get("student_keys", [2, 4, 6]),
             )
@@ -368,6 +393,25 @@ class Trainer:
                 self.optimizer,
                 step_size=tr_cfg.get("step_size", 15),
                 gamma=tr_cfg.get("gamma", 0.1),
+            )
+        elif sched_name == "cosine_warmup":
+            # Linear warmup from start_factor*lr → lr over warmup_epochs,
+            # then cosine annealing for the remaining epochs.
+            warmup_epochs = int(tr_cfg.get("warmup_epochs", 5))
+            warmup_sched = torch.optim.lr_scheduler.LinearLR(
+                self.optimizer,
+                start_factor=tr_cfg.get("warmup_start_factor", 0.1),
+                end_factor=1.0,
+                total_iters=warmup_epochs,
+            )
+            cosine_sched = torch.optim.lr_scheduler.CosineAnnealingLR(
+                self.optimizer,
+                T_max=max(1, self.epochs - warmup_epochs),
+            )
+            return torch.optim.lr_scheduler.SequentialLR(
+                self.optimizer,
+                schedulers=[warmup_sched, cosine_sched],
+                milestones=[warmup_epochs],
             )
         elif sched_name == "none":
             return None
@@ -413,8 +457,9 @@ class Trainer:
 
         last_metrics = None
         for epoch in range(self.start_epoch, self.epochs):
+            self.current_epoch = epoch
             train_metrics = self._train_epoch(epoch)
-            test_metrics = self._evaluate(epoch)
+            eval_metrics = self._evaluate(epoch)
 
             # LR scheduler step
             current_lr = self.optimizer.param_groups[0]["lr"]
@@ -422,9 +467,9 @@ class Trainer:
                 self.scheduler.step()
 
             # Check best
-            is_best = test_metrics["test_acc"] > self.best_acc
+            is_best = eval_metrics["eval_acc"] > self.best_acc
             if is_best:
-                self.best_acc = test_metrics["test_acc"]
+                self.best_acc = eval_metrics["eval_acc"]
                 self.best_epoch = epoch
             self._save_checkpoint(epoch, is_best=is_best)
 
@@ -432,8 +477,9 @@ class Trainer:
             metrics = {
                 "epoch": epoch,
                 **train_metrics,
-                **test_metrics,
+                **eval_metrics,
                 "lr": current_lr,
+                "best_eval_acc": self.best_acc,
                 "best_acc": self.best_acc,
             }
             logger.log_metrics(metrics, step=epoch)
@@ -444,8 +490,8 @@ class Trainer:
                 f"Epoch {epoch+1}/{self.epochs} | "
                 f"Train Loss: {train_metrics['train_loss']:.4f} | "
                 f"Train Acc: {train_metrics['train_acc']:.2f}% | "
-                f"Test Acc: {test_metrics['test_acc']:.2f}% | "
-                f"Best: {self.best_acc:.2f}% | "
+                f"Eval Acc: {eval_metrics['eval_acc']:.2f}% | "
+                f"Best Eval: {self.best_acc:.2f}% | "
                 f"LR: {current_lr:.6f}"
             )
 
@@ -453,7 +499,7 @@ class Trainer:
             self._write_training_summary(last_metrics)
             self._write_ls_markers(last_metrics)
 
-        print(f"Training complete. Best test accuracy: {self.best_acc:.2f}%")
+        print(f"Training complete. Best eval accuracy: {self.best_acc:.2f}%")
         return {
             "best_acc": self.best_acc,
             "best_epoch": self.best_epoch,
@@ -474,7 +520,7 @@ class Trainer:
             self.optimizer.zero_grad()
 
             with torch.amp.autocast("cuda", enabled=self.use_amp):
-                loss = self._compute_loss(clips, labels)
+                loss, logits = self._compute_loss(clips, labels)
 
             self.scaler.scale(loss).backward()
 
@@ -487,12 +533,8 @@ class Trainer:
 
             running_loss += loss.item() * clips.size(0)
 
-            # Accuracy (use student logits for distillation modes)
+            # Accuracy from the logits already computed for the loss
             with torch.no_grad():
-                if self.mode in ("teacher_finetune", "baseline"):
-                    logits = self.model(clips)
-                else:
-                    logits = self.model(clips)
                 preds = logits.argmax(dim=1)
                 correct += (preds == labels).sum().item()
                 total += labels.size(0)
@@ -503,20 +545,24 @@ class Trainer:
         acc = 100.0 * correct / total
         return {"train_loss": avg_loss, "train_acc": acc}
 
-    def _compute_loss(self, clips: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+    def _compute_loss(self, clips: torch.Tensor, labels: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute loss depending on training mode."""
         if self.mode in ("teacher_finetune", "baseline"):
             logits = self.model(clips)
-            return self.criterion(logits, labels)
+            return self.criterion(logits, labels), logits
 
         elif self.mode == "distillation":
             student_logits = self.model(clips)
+            if self.current_epoch < self.kd_warmup_epochs:
+                return self.hard_criterion(student_logits, labels), student_logits
             with torch.no_grad():
                 teacher_logits = self.teacher(clips)
-            return self.criterion(student_logits, teacher_logits, labels)
+            return self.criterion(student_logits, teacher_logits, labels), student_logits
 
         elif self.mode == "distillation_at":
             student_logits = self.model(clips)
+            if self.current_epoch < self.kd_warmup_epochs:
+                return self.hard_criterion(student_logits, labels), student_logits
             with torch.no_grad():
                 teacher_logits = self.teacher(clips)
             teacher_feats = self.teacher.get_intermediate_features()
@@ -525,7 +571,7 @@ class Trainer:
                 student_logits, teacher_logits, labels,
                 teacher_feats, student_feats,
             )
-            return total
+            return total, student_logits
 
         raise ValueError(f"Unknown mode: {self.mode}")
 
@@ -538,7 +584,8 @@ class Trainer:
         running_loss = 0.0
         ce_criterion = nn.CrossEntropyLoss()
 
-        for clips, labels in self.test_loader:
+        pbar = tqdm(self.eval_loader, desc=f"Eval {epoch+1}", leave=True, file=sys.stdout)
+        for clips, labels in pbar:
             clips = clips.to(self.device, non_blocking=True)
             labels = labels.to(self.device, non_blocking=True)
 
@@ -557,8 +604,13 @@ class Trainer:
             _, top5_preds = logits.topk(5, dim=1)
             correct_top5 += (top5_preds == labels.unsqueeze(1)).any(dim=1).sum().item()
 
+            pbar.set_postfix(
+                acc=f"{(100.0 * correct / total):.2f}",
+                top5=f"{(100.0 * correct_top5 / total):.2f}",
+            )
+
         acc = 100.0 * correct / total
         acc_top5 = 100.0 * correct_top5 / total
         avg_loss = running_loss / total
 
-        return {"test_acc": acc, "test_acc_top5": acc_top5, "test_loss": avg_loss}
+        return {"eval_acc": acc, "eval_acc_top5": acc_top5, "eval_loss": avg_loss}

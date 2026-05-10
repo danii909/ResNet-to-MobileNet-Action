@@ -1,0 +1,39 @@
+profile: "teacher"
+seed: 42
+model:
+  type: "teacher"
+  width_mult: null
+  pretrained: true
+  freeze_backbone: false
+dataset:
+  data_dir: "data/ucf101"
+  num_classes: 101
+  num_frames: 24
+  crop_size: 112
+  backend: "hf"
+  use_eval_split: true
+  eval_ratio: 0.2
+  split_seed: 42
+training:
+  mode: "teacher_finetune"
+  epochs: 50
+  batch_size: 12
+  num_workers: 4
+  optimizer: "sgd"
+  lr: 0.0007
+  momentum: 0.9
+  weight_decay: 0.001
+  scheduler: "cosine"
+  grad_clip: 1.0
+  mixed_precision: true
+distillation:
+  teacher_checkpoint: null
+  temperature: null
+  alpha: null
+  at_beta: null
+  teacher_keys: null
+  student_keys: null
+logging:
+  enabled: true
+  project: "kd-action-recognition"
+  run_name: "teacher_4201"

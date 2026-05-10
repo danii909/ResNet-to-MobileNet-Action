@@ -21,8 +21,9 @@ class TeacherModel(nn.Module):
         extract_features: If True, store intermediate activations via hooks.
     """
 
-    # Indices of residual stages to hook for attention transfer
-    FEATURE_BLOCKS = [3, 4, 5]
+    # Indices of residual stages to hook for attention transfer.
+    # Block 5 is the classification head (outputs [B, num_classes], 2D) — excluded.
+    FEATURE_BLOCKS = [2, 3, 4]
 
     def __init__(
         self,

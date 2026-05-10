@@ -1,10 +1,12 @@
 """Evaluation metrics: accuracy, model size, inference latency."""
 
+import sys
 import time
 
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 
 @torch.no_grad()
@@ -24,7 +26,8 @@ def compute_accuracy(
     correct_5 = 0
     total = 0
 
-    for clips, labels in dataloader:
+    pbar = tqdm(dataloader, desc="Test", leave=True, file=sys.stdout)
+    for clips, labels in pbar:
         clips = clips.to(device, non_blocking=True)
         labels = labels.to(device, non_blocking=True)
 
@@ -40,6 +43,11 @@ def compute_accuracy(
         correct_5 += (top5 == labels.unsqueeze(1)).any(dim=1).sum().item()
 
         total += labels.size(0)
+
+        pbar.set_postfix(
+            top1=f"{(100.0 * correct_1 / total):.2f}",
+            top5=f"{(100.0 * correct_5 / total):.2f}",
+        )
 
     return {
         "top1": 100.0 * correct_1 / total,

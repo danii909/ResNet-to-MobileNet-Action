@@ -1,0 +1,60 @@
+Pipeline Summary
+============================================================
+job_tag: slurm-train-eval-4414
+slurm_job_id: 4414
+root_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4414
+
+[assistant_r18]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4414/assistant_r18/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4414/assistant_r18/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+[config]
+mode: distillation
+model.type: assistant
+training.batch_size: 16
+training.lr: 0.0005
+training.weight_decay: 0.01
+training.label_smoothing: 
+distillation.teacher_type: teacher
+distillation.teacher_checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth
+distillation.temperature: 8.0
+distillation.alpha: 0.7
+[train results]
+best_eval_acc: 60.87
+best_epoch: 55
+final_train_acc: 99.12
+final_eval_acc: 60.64
+final_eval_top5: 84.02
+[eval results]
+checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4414/resnet18/distillation_best.pth
+top1: 59.95241871530531
+top5: 84.80042294475284
+
+[mobilenet_from_r18]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4414/mobilenet_from_r18/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4414/mobilenet_from_r18/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+[config]
+mode: distillation
+model.type: student
+training.batch_size: 16
+training.lr: 0.0005
+training.weight_decay: 0.01
+training.label_smoothing: 
+distillation.teacher_type: assistant
+distillation.teacher_checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4414/resnet18/distillation_best.pth
+distillation.temperature: 8.0
+distillation.alpha: 0.7
+[train results]
+best_eval_acc: 57.45
+best_epoch: 55
+final_train_acc: 92.79
+final_eval_acc: 56.23
+final_eval_top5: 81.68
+[eval results]
+checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4414/mobilenet/distillation_best.pth
+top1: 57.52048638646577
+top5: 84.80042294475284
+

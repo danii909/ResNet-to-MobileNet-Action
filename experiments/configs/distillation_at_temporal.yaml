@@ -1,0 +1,58 @@
+# Knowledge Distillation + Spatial & Temporal Attention Transfer
+#
+# Extra Objective: "Expand KD to include Attention Transfer across intermediate
+# temporal activation mappings."
+#
+# IMPORTANT: This config matches the validated slurm-train-eval-4201 distillation
+# settings EXACTLY, adding ONLY the AT-specific parameters. This ensures a fair
+# comparison with the KD-only baseline (63.78% best_eval_acc).
+#
+# AT loss decomposition:
+#   L = L_KD + beta_s * sum_i MSE(A_spatial_t_i, A_spatial_s_i)
+#            + beta_t * sum_i MSE(A_temporal_t_i, A_temporal_s_i)
+#
+# beta_s = beta_t = 0.05: symmetric weighting.
+
+seed: 42
+
+model:
+  type: student
+  width_mult: 1.0
+
+dataset:
+  data_dir: data/ucf101
+  num_classes: 101
+  num_frames: 24
+  crop_size: 112
+  backend: hf
+  use_eval_split: true
+  eval_ratio: 0.2
+  split_seed: 42
+
+training:
+  mode: distillation_at
+  epochs: 60
+  batch_size: 16
+  num_workers: 4
+  optimizer: adamw
+  lr: 0.0005
+  momentum: 0.9
+  weight_decay: 0.01
+  scheduler: cosine
+  grad_clip: 1.0
+  mixed_precision: true
+  checkpoint_dir: experiments/checkpoints
+
+distillation:
+  teacher_checkpoint: experiments/checkpoints/teacher_finetune_best.pth
+  temperature: 8.0
+  alpha: 0.7
+  at_beta_spatial: 0.05
+  at_beta_temporal: 0.05
+  teacher_keys: [2, 3, 4]
+  student_keys: [2, 4, 6]
+
+logging:
+  enabled: true
+  project: kd-action-recognition
+  run_name: kd-at-spatial-temporal-sym

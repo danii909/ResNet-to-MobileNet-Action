@@ -1,0 +1,59 @@
+# Knowledge Distillation v2 — improved training recipe
+#
+# Key improvements over v1 (slurm-train-eval-4201):
+#   - 75 epochs  (v1: 60) — best epoch was 59/60, model had not converged
+#   - max_temporal_stride: 2  (v1: 1) — clip spans 1-2x window for temporal diversity
+#   - cosine_warmup scheduler (v1: cosine) — 5-epoch LR ramp stabilises early training
+#   - kd_warmup_epochs: 3  (v1: 5) — less CE-only warmup, more KD training
+#   - label_smoothing: 0.05  (v1: 0.05, unchanged — good value)
+#   - group-aware eval split: same as v1 (use_eval_split + split_seed=42)
+
+seed: 42
+
+model:
+  type: student
+  width_mult: 1.0
+
+dataset:
+  data_dir: data/ucf101
+  num_classes: 101
+  num_frames: 24
+  crop_size: 112
+  backend: hf
+  resize_short_side: 128
+  use_random_resized_crop: false
+  color_jitter_strength: 0.1
+  random_erasing_prob: 0.05
+  max_temporal_stride: 2          # NEW: random stride in {1,2} during training
+  use_eval_split: true
+  eval_ratio: 0.2
+  split_seed: 42
+
+training:
+  mode: distillation
+  epochs: 75                      # +15 vs v1: model had not converged at epoch 60
+  batch_size: 16
+  num_workers: 4
+  optimizer: adamw
+  lr: 0.0005
+  momentum: 0.9
+  weight_decay: 0.01
+  scheduler: cosine_warmup        # NEW: linear ramp then cosine decay
+  warmup_epochs: 5
+  warmup_start_factor: 0.1
+  grad_clip: 1.0
+  mixed_precision: true
+  label_smoothing: 0.05
+  kd_warmup_epochs: 3             # reduced from 5: less CE-only warmup
+  checkpoint_dir: experiments/checkpoints
+
+distillation:
+  # Reuse the teacher trained in slurm-train-eval-4201 (88.71% on test).
+  teacher_checkpoint: experiments/checkpoints/teacher_finetune_best.pth
+  temperature: 8.0
+  alpha: 0.7
+
+logging:
+  enabled: true
+  project: kd-action-recognition
+  run_name: kd-t8-a07-24f-v2

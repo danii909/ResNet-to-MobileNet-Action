@@ -1,0 +1,16 @@
+Evaluation Summary
+========================================
+mode: distillation
+model_type: assistant
+checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4414/resnet18/distillation_best.pth
+device: cuda
+top1: 59.95
+top5: 84.80
+param_count: 33218085
+param_count_trainable: 33218085
+size_mb: 126.72
+inference_avg_ms: 2.55
+inference_std_ms: 0.02
+inference_min_ms: 2.54
+inference_max_ms: 2.76
+finished_at: 2026-05-07T15:37:22

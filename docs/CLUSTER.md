@@ -124,21 +124,26 @@ TEACHER_JOB=$(CONFIG=experiments/configs/teacher.yaml sbatch --parsable cluster/
 CONFIG=experiments/configs/distillation.yaml sbatch --dependency=afterok:$TEACHER_JOB cluster/train.sh
 ```
 
-**Catena multipla (teacher -> baseline -> distillation) con script helper:**
+**Catena multipla (teacher -> baseline -> distillation):**
 
 ```bash
-bash cluster/submit_chain.sh \
-	experiments/configs/teacher.yaml \
-	experiments/configs/baseline.yaml \
-	experiments/configs/distillation.yaml
+CONFIGS="experiments/configs/teacher.yaml experiments/configs/baseline.yaml experiments/configs/distillation.yaml" \
+sbatch cluster/train_sequential.sh
 ```
 
-Lo script usa dipendenze `afterok`, quindi resta sempre attivo un solo job alla volta.
-Se un job fallisce, i successivi non partono.
+Questo e' il comando da usare per la sequenza completa quando vuoi eseguire tutti i training in ordine dentro un solo job SLURM.
+Se un run fallisce, lo script interrompe la sequenza e marca il job come `FAILED`.
+
+**Alias comodo da shell:**
+
+```bash
+source cluster/aliases.sh
+train-seq teacher.yaml baseline.yaml distillation.yaml
+```
 
 **Se ricevi `QOSMaxSubmitJobPerUserLimit`:**
 
-Alcuni account permettono solo 1 job totale (running + pending). In quel caso usa un solo job SLURM che esegue piu training in sequenza:
+Alcuni account permettono solo 1 job totale (running + pending). In quel caso usa sempre un solo job SLURM che esegue piu training in sequenza:
 
 ```bash
 CONFIGS="experiments/configs/teacher.yaml experiments/configs/baseline.yaml experiments/configs/distillation.yaml" \
@@ -147,6 +152,31 @@ sbatch cluster/train_sequential.sh
 
 Questo evita submission multiple e rispetta il limite QoS.
 Nota: il tempo totale resta soggetto al wall-time massimo del job (es. 12h).
+
+### 4.2.1 Job unico consigliato (StrongAug KD)
+
+Per i nuovi esperimenti KD (strong augmentation + 24 frame + KD+AT) usa un solo job:
+
+```bash
+sbatch cluster/submit_single_job_strongaug.sh
+```
+
+Questo script esegue in sequenza, dentro lo stesso job SLURM:
+
+- `distillation_t10_a07_strongaug.yaml`
+- `distillation_t10_a07_strongaug_24f.yaml`
+- `distillation_at_t10_a07_strongaug.yaml`
+
+Override checkpoint teacher (opzionale):
+
+```bash
+TEACHER_CKPT=/path/to/teacher_finetune_best.pth sbatch cluster/submit_single_job_strongaug.sh
+```
+
+Output principale:
+
+- log SLURM: `logs/slurm-strongaug-runs-<JOBID>.log`
+- summary pipeline: `experiments/logs/slurm-strongaug-runs-<JOBID>/pipeline_summary.txt`
 
 > Nota: aggirare limiti di slot, QoS o wall-time del cluster (ad esempio eseguendo training GPU fuori scheduler) non è una pratica corretta. Usa sempre `sbatch`/`srun` e le policy ufficiali del corso/cluster.
 
@@ -157,6 +187,16 @@ CONFIG=experiments/configs/teacher.yaml \
 CHECKPOINT=experiments/checkpoints/teacher_finetune_best.pth \
 sbatch cluster/eval.sh
 ```
+
+### 4.4. Alias utili
+
+Se carichi gli alias con `source cluster/aliases.sh`, i comandi piu' utili per il training sono:
+
+- `train teacher.yaml` per lanciare un singolo training
+- `train-chain teacher.yaml baseline.yaml distillation.yaml` per una catena di job con dipendenze `afterok`
+- `train-seq teacher.yaml baseline.yaml distillation.yaml` per un singolo job SLURM con i training eseguiti in sequenza
+
+Per la sequenza completa, usa `train-seq` oppure direttamente `sbatch cluster/train_sequential.sh`.
 
 ---
 
@@ -204,8 +244,12 @@ Per sincronizzare dopo il training:
 ```powershell
 # Da Windows:
 .\sync_cluster.ps1 -Action download-wandb -User <CF>
-wandb sync experiments\logs\wandb\offline-run-*
+wandb login
+wandb sync wandb\offline-run-*
 ```
+
+Nota: i run offline vengono salvati principalmente in `~/dl26-projects/wandb` sul cluster.
+Lo script `download-wandb` prova anche un path legacy sotto `experiments/logs/*/wandb` per compatibilita'.
 
 ---
 

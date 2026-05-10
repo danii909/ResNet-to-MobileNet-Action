@@ -25,7 +25,7 @@ def init(config: dict) -> None:
         return
 
     _run = wandb.init(
-        project=log_cfg.get("project", "kd-action-recognition"),
+        project=log_cfg.get("project", "kd-action-recognition-v2"),
         name=log_cfg.get("run_name"),
         entity=log_cfg.get("entity"),
         config=config,

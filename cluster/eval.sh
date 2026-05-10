@@ -73,6 +73,7 @@ echo ""
 # â”€â”€ Esecuzione dentro container Apptainer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 apptainer run --nv \
     --env WANDB_MODE=offline \
+    ${HF_TOKEN:+--env HF_TOKEN="$HF_TOKEN"} \
     --env PYTORCH_ALLOC_CONF=garbage_collection_threshold:0.8 \
     /shared/sifs/latest.sif \
     python -m src.evaluation.evaluate ${EVAL_ARGS}

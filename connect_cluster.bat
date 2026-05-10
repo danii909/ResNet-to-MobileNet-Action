@@ -1,0 +1,3 @@
+@echo off
+echo Connessione a clusterone in corso...
+ssh -t clusterone "cd dl26-projects/ && bash --rcfile cluster/aliases.sh"

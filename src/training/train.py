@@ -18,6 +18,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(line_buffering=True)
 
 from src.datasets.ucf101 import get_dataloaders
+from src.models.assistant import get_assistant
 from src.models.student import get_student
 from src.models.teacher import get_teacher
 from src.training.trainer import Trainer
@@ -60,7 +61,11 @@ def main() -> None:
     t0 = time.time()
     dataloaders = get_dataloaders(config)
     print(f"[main] Dataset loaded in {time.time()-t0:.1f}s.")
-    print(f"[main] Train batches: {len(dataloaders['train'])}, Test batches: {len(dataloaders['test'])}")
+    eval_loader = dataloaders.get("eval", dataloaders["test"])
+    print(
+        f"[main] Train batches: {len(dataloaders['train'])}, "
+        f"Eval batches: {len(eval_loader)}, Test batches: {len(dataloaders['test'])}"
+    )
     num_classes = config["dataset"].get("num_classes", 101)
 
     # Mode
@@ -68,35 +73,85 @@ def main() -> None:
     print(f"[main] Training mode: {mode}")
     print(f"[main] Building model(s)...")
 
+    model_cfg = config.get("model", {})
+    model_type = model_cfg.get("type", "student")
+
     # Build model(s)
     teacher = None
     if mode == "teacher_finetune":
-        model = get_teacher(
-            num_classes=num_classes,
-            pretrained=config["model"].get("pretrained", True),
-            freeze_backbone=config["model"].get("freeze_backbone", False),
-        )
+        if model_type == "teacher":
+            model = get_teacher(
+                num_classes=num_classes,
+                pretrained=model_cfg.get("pretrained", True),
+                freeze_backbone=model_cfg.get("freeze_backbone", False),
+            )
+        elif model_type == "assistant":
+            model = get_assistant(
+                num_classes=num_classes,
+                pretrained=model_cfg.get("pretrained", False),
+                freeze_backbone=model_cfg.get("freeze_backbone", False),
+            )
+        else:
+            raise ValueError(f"Unknown model type for teacher_finetune: {model_type}")
     elif mode == "baseline":
-        model = get_student(
-            num_classes=num_classes,
-            width_mult=config["model"].get("width_mult", 1.0),
-        )
+        if model_type == "student":
+            model = get_student(
+                num_classes=num_classes,
+                width_mult=model_cfg.get("width_mult", 1.0),
+            )
+        elif model_type == "assistant":
+            model = get_assistant(
+                num_classes=num_classes,
+                pretrained=model_cfg.get("pretrained", False),
+                freeze_backbone=model_cfg.get("freeze_backbone", False),
+            )
+        else:
+            raise ValueError(f"Unknown model type for baseline: {model_type}")
     elif mode in ("distillation", "distillation_at"):
-        # Student
         extract_feats = (mode == "distillation_at")
-        model = get_student(
-            num_classes=num_classes,
-            width_mult=config["model"].get("width_mult", 1.0),
-            extract_features=extract_feats,
-        )
-        # Teacher (frozen, eval mode)
-        teacher_ckpt = config["distillation"]["teacher_checkpoint"]
-        teacher = get_teacher(
-            num_classes=num_classes,
-            pretrained=False,
-            extract_features=extract_feats,
-            checkpoint_path=teacher_ckpt,
-        )
+        if model_type == "student":
+            model = get_student(
+                num_classes=num_classes,
+                width_mult=model_cfg.get("width_mult", 1.0),
+                extract_features=extract_feats,
+            )
+        elif model_type == "assistant":
+            model = get_assistant(
+                num_classes=num_classes,
+                pretrained=model_cfg.get("pretrained", False),
+                freeze_backbone=model_cfg.get("freeze_backbone", False),
+                extract_features=extract_feats,
+            )
+        else:
+            raise ValueError(f"Unknown model type for distillation: {model_type}")
+
+        dist_cfg = config.get("distillation", {})
+        teacher_ckpt = dist_cfg["teacher_checkpoint"]
+        teacher_type = dist_cfg.get("teacher_type", "teacher")
+        if teacher_type == "teacher":
+            teacher = get_teacher(
+                num_classes=num_classes,
+                pretrained=False,
+                extract_features=extract_feats,
+                checkpoint_path=teacher_ckpt,
+            )
+        elif teacher_type == "assistant":
+            teacher = get_assistant(
+                num_classes=num_classes,
+                pretrained=False,
+                extract_features=extract_feats,
+                checkpoint_path=teacher_ckpt,
+            )
+        elif teacher_type == "student":
+            # Allow student architecture to act as teacher (student->student distillation)
+            teacher = get_student(
+                num_classes=num_classes,
+                width_mult=dist_cfg.get("teacher_width_mult", 1.0),
+                extract_features=extract_feats,
+                checkpoint_path=teacher_ckpt,
+            )
+        else:
+            raise ValueError(f"Unknown distillation teacher type: {teacher_type}")
     else:
         raise ValueError(f"Unknown training mode: {mode}")
 
@@ -119,7 +174,7 @@ def main() -> None:
         config=config,
         model=model,
         train_loader=dataloaders["train"],
-        test_loader=dataloaders["test"],
+        eval_loader=eval_loader,
         teacher=teacher,
         device=device,
     )
@@ -127,7 +182,7 @@ def main() -> None:
 
     # Finish logging
     logger.finish()
-    print(f"Done. Best accuracy: {results['best_acc']:.2f}%")
+    print(f"Done. Best eval accuracy: {results['best_acc']:.2f}%")
     if "best_epoch" in results:
         print(f"Best epoch: {results['best_epoch'] + 1}")
     if "run_log_dir" in results:
