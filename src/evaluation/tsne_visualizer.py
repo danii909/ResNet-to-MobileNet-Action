@@ -46,6 +46,7 @@ def parse_args():
     parser.add_argument("--config", type=str, required=True, help="Path to the training/evaluation config YAML file.")
     parser.add_argument("--teacher-ckpt", type=str, required=True, help="Path to the teacher model checkpoint.")
     parser.add_argument("--student-ckpt", type=str, required=True, help="Path to the student model checkpoint.")
+    parser.add_argument("--baseline-ckpt", type=str, default=None, help="Optional path to the baseline student model checkpoint.")
     parser.add_argument("--num-classes", type=int, default=10, help="Number of distinct classes to visualize (7-10 recommended).")
     parser.add_argument("--output-dir", type=str, default="experiments/logs", help="Directory to save the resulting plot.")
     parser.add_argument("--output-filename", type=str, default=None, help="Custom filename for the output plot (without extension).")
@@ -105,6 +106,13 @@ def main():
     student = get_student(num_classes=num_classes, width_mult=width_mult, checkpoint_path=args.student_ckpt)
     student.to(device)
     student.eval()
+    
+    baseline = None
+    if args.baseline_ckpt:
+        print("Loading Baseline model...")
+        baseline = get_student(num_classes=num_classes, width_mult=width_mult, checkpoint_path=args.baseline_ckpt)
+        baseline.to(device)
+        baseline.eval()
 
     # --- INIZIO FIX: Forward Hook per il Teacher ---
     teacher_features_buffer = []
@@ -128,6 +136,7 @@ def main():
     # 4. Feature Extraction
     print("\nExtracting embeddings from the test set...")
     student_embeddings = []
+    baseline_embeddings = []
     labels_list = []
     
     selected_set = set(selected_class_ids.tolist())
@@ -145,8 +154,12 @@ def main():
             # Il passaggio del forward riempirà automaticamente teacher_features_buffer grazie all'hook
             _ = teacher(filtered_inputs) 
             s_emb = student.get_embedding(filtered_inputs)
+            if baseline is not None:
+                b_emb = baseline.get_embedding(filtered_inputs)
             
         student_embeddings.append(s_emb.detach().cpu().float().numpy())
+        if baseline is not None:
+            baseline_embeddings.append(b_emb.detach().cpu().float().numpy())
         labels_list.append(filtered_targets.numpy())
 
     # Rimuovi l'hook alla fine per pulizia
@@ -159,11 +172,15 @@ def main():
         
     teacher_embeddings = np.concatenate(teacher_features_buffer, axis=0)
     student_embeddings = np.concatenate(student_embeddings, axis=0)
+    if baseline is not None:
+        baseline_embeddings = np.concatenate(baseline_embeddings, axis=0)
     labels_list = np.concatenate(labels_list, axis=0)
     
     print(f"\nExtracted {len(labels_list)} samples.")
     print(f"Teacher embeddings shape: {teacher_embeddings.shape}")
     print(f"Student embeddings shape: {student_embeddings.shape}")
+    if baseline is not None:
+        print(f"Baseline embeddings shape: {baseline_embeddings.shape}")
     
     # 5. t-SNE Computation
     print("\nComputing t-SNE for Teacher...")
@@ -173,6 +190,10 @@ def main():
     print("Computing t-SNE for Student...")
     s_proj = tsne.fit_transform(student_embeddings)
     
+    if baseline is not None:
+        print("Computing t-SNE for Baseline...")
+        b_proj = tsne.fit_transform(baseline_embeddings)
+    
     # 6. Visualization
     print("\nGenerating side-by-side plots...")
     string_labels = [class_names[lbl] for lbl in labels_list]
@@ -180,7 +201,11 @@ def main():
     sns.set_theme(style="whitegrid", rc={"axes.facecolor": "#f8f9fa", "grid.color": "#e9ecef"})
     palette = sns.color_palette("husl", n_colors=args.num_classes)
     
-    fig, axes = plt.subplots(1, 2, figsize=(16, 7), sharex=True, sharey=True)
+    num_cols = 3 if baseline is not None else 2
+    fig, axes = plt.subplots(1, num_cols, figsize=(8 * num_cols, 7), sharex=True, sharey=True)
+    
+    # If 1x2, axes is a 1D array. If 1x3, still a 1D array.
+    ax_teacher = axes[0]
     
     # Left subplot: Teacher
     sns.scatterplot(
@@ -188,40 +213,61 @@ def main():
         hue=string_labels,
         hue_order=selected_class_names,
         palette=palette,
-        ax=axes[0],
+        ax=ax_teacher,
         alpha=0.8,
         s=50,
         legend=False 
     )
-    axes[0].set_title("Teacher Latent Space (ResNet-50)", fontsize=14, pad=10)
-    axes[0].set_xlabel("t-SNE Dimension 1", fontsize=12)
-    axes[0].set_ylabel("t-SNE Dimension 2", fontsize=12)
-    axes[0].tick_params(labelsize=10)
+    ax_teacher.set_title("Teacher Latent Space (ResNet-50)", fontsize=14, pad=10)
+    ax_teacher.set_xlabel("t-SNE Dimension 1", fontsize=12)
+    ax_teacher.set_ylabel("t-SNE Dimension 2", fontsize=12)
+    ax_teacher.tick_params(labelsize=10)
     
-    # Right subplot: Student
+    if baseline is not None:
+        ax_baseline = axes[1]
+        sns.scatterplot(
+            x=b_proj[:, 0], y=b_proj[:, 1],
+            hue=string_labels,
+            hue_order=selected_class_names,
+            palette=palette,
+            ax=ax_baseline,
+            alpha=0.8,
+            s=50,
+            legend=False 
+        )
+        ax_baseline.set_title("Baseline Latent Space (MobileNet3D)", fontsize=14, pad=10)
+        ax_baseline.set_xlabel("t-SNE Dimension 1", fontsize=12)
+        ax_baseline.tick_params(labelsize=10)
+        
+        ax_student = axes[2]
+    else:
+        ax_student = axes[1]
+        
+    # Right/Last subplot: Student
     scatter_student = sns.scatterplot(
         x=s_proj[:, 0], y=s_proj[:, 1],
         hue=string_labels,
         hue_order=selected_class_names,
         palette=palette,
-        ax=axes[1],
+        ax=ax_student,
         alpha=0.8,
         s=50,
         legend=True
     )
-    axes[1].set_title("Student Latent Space (MobileNet3D)", fontsize=14, pad=10)
-    axes[1].set_xlabel("t-SNE Dimension 1", fontsize=12)
-    axes[1].set_ylabel("t-SNE Dimension 2", fontsize=12)
-    axes[1].tick_params(labelsize=10)
+    ax_student.set_title("Student Latent Space (Distilled)", fontsize=14, pad=10)
+    ax_student.set_xlabel("t-SNE Dimension 1", fontsize=12)
+    if baseline is None:
+        ax_student.set_ylabel("t-SNE Dimension 2", fontsize=12)
+    ax_student.tick_params(labelsize=10)
     
     # Shared Legend outside
     handles, labels_leg = scatter_student.get_legend_handles_labels()
-    axes[1].get_legend().remove()
+    ax_student.get_legend().remove()
     
     fig.legend(
         handles, labels_leg, 
         loc='center right', 
-        bbox_to_anchor=(1.12, 0.5), 
+        bbox_to_anchor=(1.08 if baseline is not None else 1.12, 0.5),  
         title="UCF-101 Classes",
         title_fontsize=15,
         fontsize=13,

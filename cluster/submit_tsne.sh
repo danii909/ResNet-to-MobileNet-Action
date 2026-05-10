@@ -28,20 +28,39 @@ export HF_DATASETS_OFFLINE=1
 export HF_TOKEN="${HF_TOKEN:-}"
 export PYTORCH_ALLOC_CONF=garbage_collection_threshold:0.8
 
-# Usage: sbatch cluster/submit_tsne.sh <config> <teacher_ckpt> <student_ckpt> [output_filename] [num_classes]
+# Usage: sbatch cluster/submit_tsne.sh <config> <teacher_ckpt> <student_ckpt> [baseline_ckpt] [output_filename] [num_classes]
 CONFIG="${1:-experiments/configs/distillation_t8_a07_24f_lightaug.yaml}"
 TEACHER_CKPT="${2:-experiments/checkpoints/teacher_finetune_best.pth}"
 STUDENT_CKPT="${3:-experiments/checkpoints/distillation_best.pth}"
-OUTPUT_FILENAME="${4:-tsne_comparison_teacher_vs_student}"
-NUM_CLASSES="${5:-10}"
+BASELINE_CKPT="${4:-}"
+OUTPUT_FILENAME="${5:-tsne_comparison_teacher_vs_student}"
+NUM_CLASSES="${6:-10}"
 
 echo "Starting t-SNE Visualization"
 echo "Config: $CONFIG"
 echo "Teacher Checkpoint: $TEACHER_CKPT"
 echo "Student Checkpoint: $STUDENT_CKPT"
+if [ -n "$BASELINE_CKPT" ]; then
+    echo "Baseline Checkpoint: $BASELINE_CKPT"
+fi
 echo "Output Filename: $OUTPUT_FILENAME"
 echo "Number of Classes: $NUM_CLASSES"
 echo "========================================="
+
+# Costruiamo gli argomenti base
+TSNE_ARGS=(
+    "--config" "$CONFIG"
+    "--teacher-ckpt" "$TEACHER_CKPT"
+    "--student-ckpt" "$STUDENT_CKPT"
+    "--num-classes" "$NUM_CLASSES"
+    "--output-dir" "experiments/logs/tsne_plots"
+    "--output-filename" "$OUTPUT_FILENAME"
+)
+
+# Aggiungiamo il baseline se presente
+if [ -n "$BASELINE_CKPT" ]; then
+    TSNE_ARGS+=("--baseline-ckpt" "$BASELINE_CKPT")
+fi
 
 set +e
 apptainer run --nv \
@@ -51,13 +70,7 @@ apptainer run --nv \
     --env PYTORCH_ALLOC_CONF=garbage_collection_threshold:0.8 \
     --env PYTHONUNBUFFERED=1 \
     /shared/sifs/latest.sif \
-    python -u -m src.evaluation.tsne_visualizer \
-        --config "$CONFIG" \
-        --teacher-ckpt "$TEACHER_CKPT" \
-        --student-ckpt "$STUDENT_CKPT" \
-        --num-classes "$NUM_CLASSES" \
-        --output-dir "experiments/logs/tsne_plots" \
-        --output-filename "$OUTPUT_FILENAME"
+    python -u -m src.evaluation.tsne_visualizer "${TSNE_ARGS[@]}"
 rc=$?
 set -e
 

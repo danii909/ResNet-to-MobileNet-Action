@@ -319,6 +319,7 @@ if [ "$overall_status" != "FAILED" ] && [ -f "$teacher_ckpt" ] && [ -f "$kd_ckpt
         python -u -m src.evaluation.tsne_visualizer \
             --config "$kd_cfg" \
             --teacher-ckpt "$teacher_ckpt" \
+            --baseline-ckpt "$baseline_ckpt" \
             --student-ckpt "$kd_ckpt" \
             --num-classes 10 \
             --output-dir "$tsne_output_dir" \
