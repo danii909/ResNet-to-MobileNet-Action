@@ -1,6 +1,7 @@
 """UCF-101 dataset loader with HF frames and optional video decoding."""
 
 import copy
+import re
 import shutil
 import subprocess
 import urllib.request
@@ -552,13 +553,27 @@ def _extract_labels(dataset: Dataset) -> np.ndarray:
 def _extract_groups(dataset: Dataset) -> np.ndarray | None:
     """Extract per-sample group ids to avoid train/eval leakage.
 
-    For HF clips, groups map to source video_id.
-    For file-based UCF101Dataset, each sample is already one video so group==path.
+    Extracts the group ID (e.g., '01' from 'v_ApplyEyeMakeup_g01_c01') 
+    using a regular expression to prevent group-level data leakage.
+    If the pattern is not found, it falls back to the original string.
     """
+    # Compile regex to find the pattern _g followed by digits _
+    group_pattern = re.compile(r'_g(\d+)_')
+
+    def extract_group_id(identifier: str) -> str:
+        match = group_pattern.search(identifier)
+        if match:
+            return match.group(1)
+        return identifier  # Fallback if pattern is not found
+
     if hasattr(dataset, "clip_groups"):
-        return np.asarray(dataset.clip_groups, dtype=object)
+        # HF clips: groups map to source video_id
+        return np.asarray([extract_group_id(str(vid)) for vid in dataset.clip_groups], dtype=object)
+        
     if hasattr(dataset, "samples"):
-        return np.asarray([str(path) for path, _ in dataset.samples], dtype=object)
+        # File-based UCF101Dataset: group is the path
+        return np.asarray([extract_group_id(str(path)) for path, _ in dataset.samples], dtype=object)
+        
     return None
 
 
