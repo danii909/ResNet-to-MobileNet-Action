@@ -157,18 +157,18 @@ PY
 } > "$SUMMARY_FILE"
 
 # --- STAGE 1: Symmetric AT ---
-run_stage "at_symmetric" "experiments/configs/pipeline_at_sym_p50.yaml" "$TEACHER_R50" || true
+run_stage "at_symmetric" "experiments/configs/at_symmetric_p50.yaml" "$TEACHER_R50" || true
 
 # --- STAGE 2: Temporal-Only AT ---
-run_stage "at_temporal_only" "experiments/configs/pipeline_at_temp_only_p50.yaml" "$TEACHER_R50" || true
+run_stage "at_temporal_only" "experiments/configs/at_temporal_p50.yaml" "$TEACHER_R50" || true
 
 # --- STAGE 3: Born Again Gen 1 ---
-run_stage "born_again_gen1" "experiments/configs/pipeline_born_again_at_p50.yaml" "$TEACHER_STUDENT_BA_START" || true
+run_stage "born_again_gen1" "experiments/configs/born_again_p50.yaml" "$TEACHER_STUDENT_BA_START" || true
 
 # --- STAGE 4: Born Again Gen 2 ---
 GEN1_CKPT="$CHECKPOINT_ROOT/born_again_gen1/distillation_best.pth"
 if [ "$overall_status" = "SUCCESS" ] || [ -f "$GEN1_CKPT" ]; then
-    run_stage "born_again_gen2" "experiments/configs/pipeline_born_again_at_p50.yaml" "$GEN1_CKPT" || true
+    run_stage "born_again_gen2" "experiments/configs/born_again_p50.yaml" "$GEN1_CKPT" || true
 else
     echo "[born_again_gen2] SKIPPED" >> "$SUMMARY_FILE"
 fi
@@ -176,7 +176,7 @@ fi
 # --- STAGE 5: Born Again Gen 3 ---
 GEN2_CKPT="$CHECKPOINT_ROOT/born_again_gen2/distillation_best.pth"
 if [ -f "$GEN2_CKPT" ]; then
-    run_stage "born_again_gen3" "experiments/configs/pipeline_born_again_at_p50.yaml" "$GEN2_CKPT" || true
+    run_stage "born_again_gen3" "experiments/configs/born_again_p50.yaml" "$GEN2_CKPT" || true
 else
     echo "[born_again_gen3] SKIPPED" >> "$SUMMARY_FILE"
 fi
@@ -199,7 +199,7 @@ if [ -f "$CKPT_AT_SYM" ] && [ -f "$CKPT_AT_TEMP" ]; then
         --env TMPDIR="$TMPDIR" \
         /shared/sifs/latest.sif \
         python -u -m src.evaluation.tsne_visualizer \
-            --config "experiments/configs/pipeline_at_sym_p50.yaml" \
+            --config "experiments/configs/at_symmetric_p50.yaml" \
             --teacher-ckpt "$TEACHER_R50" \
             --baseline-ckpt "$BASELINE_4495" \
             --student-ckpt "$CKPT_AT_SYM" \
@@ -221,7 +221,7 @@ if [ -n "$LAST_BA_CKPT" ]; then
         --env TMPDIR="$TMPDIR" \
         /shared/sifs/latest.sif \
         python -u -m src.evaluation.tsne_visualizer \
-            --config "experiments/configs/pipeline_born_again_at_p50.yaml" \
+            --config "experiments/configs/born_again_p50.yaml" \
             --teacher-ckpt "$TEACHER_R50" \
             --baseline-ckpt "$BASELINE_4495" \
             --student-ckpt "$LAST_BA_CKPT" \
