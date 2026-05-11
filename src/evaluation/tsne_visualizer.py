@@ -46,6 +46,7 @@ def parse_args():
     parser.add_argument("--config", type=str, required=True, help="Path to the training/evaluation config YAML file.")
     parser.add_argument("--teacher-ckpt", type=str, required=True, help="Path to the teacher model checkpoint.")
     parser.add_argument("--student-ckpt", type=str, required=True, help="Path to the student model checkpoint.")
+    parser.add_argument("--student2-ckpt", type=str, default=None, help="Optional second student model checkpoint for 4-column comparison.")
     parser.add_argument("--baseline-ckpt", type=str, default=None, help="Optional path to the baseline student model checkpoint.")
     parser.add_argument("--num-classes", type=int, default=10, help="Number of distinct classes to visualize (7-10 recommended).")
     parser.add_argument("--output-dir", type=str, default="experiments/logs", help="Directory to save the resulting plot.")
@@ -114,6 +115,13 @@ def main():
         baseline.to(device)
         baseline.eval()
 
+    student2 = None
+    if args.student2_ckpt:
+        print("Loading Student 2 model...")
+        student2 = get_student(num_classes=num_classes, width_mult=width_mult, checkpoint_path=args.student2_ckpt)
+        student2.to(device)
+        student2.eval()
+
     # --- INIZIO FIX: Forward Hook per il Teacher ---
     teacher_features_buffer = []
     def teacher_hook(module, input, output):
@@ -136,6 +144,7 @@ def main():
     # 4. Feature Extraction
     print("\nExtracting embeddings from the test set...")
     student_embeddings = []
+    student2_embeddings = []
     baseline_embeddings = []
     labels_list = []
     
@@ -158,6 +167,9 @@ def main():
                 b_emb = baseline.get_embedding(filtered_inputs)
             
         student_embeddings.append(s_emb.detach().cpu().float().numpy())
+        if student2 is not None:
+            s2_emb = student2.get_embedding(filtered_inputs)
+            student2_embeddings.append(s2_emb.detach().cpu().float().numpy())
         if baseline is not None:
             baseline_embeddings.append(b_emb.detach().cpu().float().numpy())
         labels_list.append(filtered_targets.numpy())
@@ -172,6 +184,8 @@ def main():
         
     teacher_embeddings = np.concatenate(teacher_features_buffer, axis=0)
     student_embeddings = np.concatenate(student_embeddings, axis=0)
+    if student2 is not None:
+        student2_embeddings = np.concatenate(student2_embeddings, axis=0)
     if baseline is not None:
         baseline_embeddings = np.concatenate(baseline_embeddings, axis=0)
     labels_list = np.concatenate(labels_list, axis=0)
@@ -190,6 +204,10 @@ def main():
     print("Computing t-SNE for Student...")
     s_proj = tsne.fit_transform(student_embeddings)
     
+    if student2 is not None:
+        print("Computing t-SNE for Student 2...")
+        s2_proj = tsne.fit_transform(student2_embeddings)
+    
     if baseline is not None:
         print("Computing t-SNE for Baseline...")
         b_proj = tsne.fit_transform(baseline_embeddings)
@@ -201,11 +219,15 @@ def main():
     sns.set_theme(style="whitegrid", rc={"axes.facecolor": "#f8f9fa", "grid.color": "#e9ecef"})
     palette = sns.color_palette("husl", n_colors=args.num_classes)
     
-    num_cols = 3 if baseline is not None else 2
+    # Calculate columns: Teacher (1) + Student (1) + Baseline? (1) + Student2? (1)
+    num_cols = 2
+    if baseline is not None: num_cols += 1
+    if student2 is not None: num_cols += 1
+    
     fig, axes = plt.subplots(1, num_cols, figsize=(8 * num_cols, 7), sharex=True, sharey=True)
     
-    # If 1x2, axes is a 1D array. If 1x3, still a 1D array.
-    ax_teacher = axes[0]
+    current_ax = 0
+    ax_teacher = axes[current_ax]
     
     # Left subplot: Teacher
     sns.scatterplot(
@@ -238,10 +260,16 @@ def main():
         ax_baseline.set_title("Baseline Latent Space (MobileNet3D)", fontsize=14, pad=10)
         ax_baseline.set_xlabel("t-SNE Dimension 1", fontsize=12)
         ax_baseline.tick_params(labelsize=10)
+        current_ax += 1
         
-        ax_student = axes[2]
-    else:
-        ax_student = axes[1]
+    ax_student = axes[current_ax]
+    current_ax += 1
+    
+    # Optional Student 2
+    ax_student2 = None
+    if student2 is not None:
+        ax_student2 = axes[current_ax]
+        current_ax += 1
         
     # Right/Last subplot: Student
     scatter_student = sns.scatterplot(
@@ -254,14 +282,31 @@ def main():
         s=50,
         legend=True
     )
-    ax_student.set_title("Student Latent Space (Distilled)", fontsize=14, pad=10)
+    ax_student.set_title("Student Latent Space", fontsize=14, pad=10)
     ax_student.set_xlabel("t-SNE Dimension 1", fontsize=12)
     if baseline is None:
         ax_student.set_ylabel("t-SNE Dimension 2", fontsize=12)
     ax_student.tick_params(labelsize=10)
     
+    # Right/Last subplot: Student 2 (Optional)
+    if student2 is not None:
+        sns.scatterplot(
+            x=s2_proj[:, 0], y=s2_proj[:, 1],
+            hue=string_labels,
+            hue_order=selected_class_names,
+            palette=palette,
+            ax=ax_student2,
+            alpha=0.8,
+            s=50,
+            legend=False
+        )
+        ax_student2.set_title("Student 2 Latent Space", fontsize=14, pad=10)
+        ax_student2.set_xlabel("t-SNE Dimension 1", fontsize=12)
+        ax_student2.tick_params(labelsize=10)
+
     # Shared Legend outside
-    handles, labels_leg = scatter_student.get_legend_handles_labels()
+    scatter_obj = scatter_student # Use student for legend handles
+    handles, labels_leg = scatter_obj.get_legend_handles_labels()
     ax_student.get_legend().remove()
     
     fig.legend(
