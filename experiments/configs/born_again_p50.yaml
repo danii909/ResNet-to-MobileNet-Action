@@ -31,6 +31,7 @@ distillation:
   # Born Again: Student teaching Student
   # Note: The teacher architecture must match the student for AT layer matching
   # to work correctly if using the same keys.
+  teacher_type: student
   temperature: 2.5
   alpha: 0.5
   at_beta_spatial: 0.05

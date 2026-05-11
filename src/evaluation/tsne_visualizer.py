@@ -228,6 +228,7 @@ def main():
     
     current_ax = 0
     ax_teacher = axes[current_ax]
+    current_ax += 1
     
     # Left subplot: Teacher
     sns.scatterplot(
@@ -246,7 +247,7 @@ def main():
     ax_teacher.tick_params(labelsize=10)
     
     if baseline is not None:
-        ax_baseline = axes[1]
+        ax_baseline = axes[current_ax]
         sns.scatterplot(
             x=b_proj[:, 0], y=b_proj[:, 1],
             hue=string_labels,

@@ -157,10 +157,10 @@ PY
 } > "$SUMMARY_FILE"
 
 # --- STAGE 1: Symmetric AT ---
-run_stage "at_symmetric" "experiments/configs/at_symmetric_p50.yaml" "$TEACHER_R50" || true
+# run_stage "at_symmetric" "experiments/configs/at_symmetric_p50.yaml" "$TEACHER_R50" || true
 
 # --- STAGE 2: Temporal-Only AT ---
-run_stage "at_temporal_only" "experiments/configs/at_temporal_p50.yaml" "$TEACHER_R50" || true
+# run_stage "at_temporal_only" "experiments/configs/at_temporal_p50.yaml" "$TEACHER_R50" || true
 
 # --- STAGE 3: Born Again Gen 1 ---
 run_stage "born_again_gen1" "experiments/configs/born_again_p50.yaml" "$TEACHER_STUDENT_BA_START" || true
@@ -190,24 +190,24 @@ TSNE_OUT_DIR="$ROOT_DIR/tsne_plots"
 mkdir -p "$TSNE_OUT_DIR"
 
 # Comparison 1: Teacher vs Baseline 4495 vs AT Symmetric vs AT Temporal
-CKPT_AT_SYM="$CHECKPOINT_ROOT/at_symmetric/distillation_best.pth"
-CKPT_AT_TEMP="$CHECKPOINT_ROOT/at_temporal_only/distillation_best.pth"
-
-if [ -f "$CKPT_AT_SYM" ] && [ -f "$CKPT_AT_TEMP" ]; then
-    echo "Running t-SNE Comparison: AT Symmetric vs AT Temporal"
-    apptainer run --nv \
-        --env TMPDIR="$TMPDIR" \
-        /shared/sifs/latest.sif \
-        python -u -m src.evaluation.tsne_visualizer \
-            --config "experiments/configs/at_symmetric_p50.yaml" \
-            --teacher-ckpt "$TEACHER_R50" \
-            --baseline-ckpt "$BASELINE_4495" \
-            --student-ckpt "$CKPT_AT_SYM" \
-            --student2-ckpt "$CKPT_AT_TEMP" \
-            --output-dir "$TSNE_OUT_DIR" \
-            --output-filename "tsne_at_comparison" \
-            --num-classes 10 || true
-fi
+# CKPT_AT_SYM="$CHECKPOINT_ROOT/at_symmetric/distillation_best.pth"
+# CKPT_AT_TEMP="$CHECKPOINT_ROOT/at_temporal_only/distillation_best.pth"
+#
+# if [ -f "$CKPT_AT_SYM" ] && [ -f "$CKPT_AT_TEMP" ]; then
+#     echo "Running t-SNE Comparison: AT Symmetric vs AT Temporal"
+#     apptainer run --nv \
+#         --env TMPDIR="$TMPDIR" \
+#         /shared/sifs/latest.sif \
+#         python -u -m src.evaluation.tsne_visualizer \
+#             --config "experiments/configs/at_symmetric_p50.yaml" \
+#             --teacher-ckpt "$TEACHER_R50" \
+#             --baseline-ckpt "$BASELINE_4495" \
+#             --student-ckpt "$CKPT_AT_SYM" \
+#             --student2-ckpt "$CKPT_AT_TEMP" \
+#             --output-dir "$TSNE_OUT_DIR" \
+#             --output-filename "tsne_at_comparison" \
+#             --num-classes 10 || true
+# fi
 
 # Comparison 2: Teacher vs Baseline 4495 vs Last Born Again
 LAST_BA_CKPT=""
