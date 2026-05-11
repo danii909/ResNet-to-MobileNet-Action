@@ -1,0 +1,16 @@
+{
+  "mode": "baseline",
+  "model_type": "student",
+  "checkpoint": "/home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-multiple-runs-4077/baseline_wd002_ls01/baseline_best.pth",
+  "device": "cuda",
+  "top1": 62.12001057361882,
+  "top5": 84.00740153317473,
+  "param_count": 2483429,
+  "param_count_trainable": 2483429,
+  "size_mb": 9.473529815673828,
+  "inference_avg_ms": 1.7599885677918792,
+  "inference_std_ms": 0.3280272636395838,
+  "inference_min_ms": 1.611534971743822,
+  "inference_max_ms": 3.350235056132078,
+  "finished_at": "2026-04-09T22:49:19"
+}

@@ -1,0 +1,10 @@
+job_tag=slurm-train-eval-4041
+slurm_job_id=4041
+hostname=gnode10
+node=gnode10
+started_at=2026-04-08T23:22:50+02:00
+finished_at=2026-04-09T03:34:35+02:00
+project_dir=/home/brbdnl01e03e017o/dl26-projects
+configs=experiments/configs/teacher.yaml experiments/configs/baseline.yaml experiments/configs/distillation.yaml
+overall_status=COMPLETED
+slurm_stdout=/home/brbdnl01e03e017o/dl26-projects/logs/slurm-train-eval-4041.log

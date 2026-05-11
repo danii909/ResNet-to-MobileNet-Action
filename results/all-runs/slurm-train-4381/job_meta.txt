@@ -1,0 +1,12 @@
+job_tag=slurm-train-4381
+slurm_job_id=4381
+partition=dl-course-q2
+qos=gpu-xlarge
+training_type=distillation
+hostname=gnode10
+gpu_name=NVIDIA L40S
+started_at=2026-05-05T13:10:42+02:00
+config=experiments/configs/student_distillation_24f.yaml
+extra_args=
+finished_at=2026-05-05T13:12:22+02:00
+exit_code=1

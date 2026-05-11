@@ -1,0 +1,20 @@
+Training Summary
+========================================
+mode: distillation
+device: cuda
+epochs_completed: 75
+best_eval_acc: 52.16
+best_epoch: 75
+final_train_acc: 95.86
+final_eval_acc: 52.16
+final_eval_top5: 77.79
+final_train_loss: 0.569604
+final_eval_loss: 2.118550
+started_at: 2026-04-16T19:49:37
+finished_at: 2026-04-16T22:53:29
+elapsed_seconds: 11032
+run_log_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4211/distillation/train
+metrics_csv: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4211/distillation/train/metrics_epoch.csv
+metrics_jsonl: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4211/distillation/train/metrics_epoch.jsonl
+config_summary: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4211/distillation/train/config_summary.txt
+config_summary_json: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4211/distillation/train/config_summary.json

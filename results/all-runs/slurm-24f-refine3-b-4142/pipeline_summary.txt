@@ -1,0 +1,88 @@
+Pipeline Summary
+============================================================
+job_tag: slurm-24f-refine3-b-4142
+slurm_job_id: 4142
+root_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-24f-refine3-b-4142
+teacher_checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth
+
+[kd_t12_a07_24f_lightaug]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-24f-refine3-b-4142/kd_t12_a07_24f_lightaug/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-24f-refine3-b-4142/kd_t12_a07_24f_lightaug/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+[config]
+mode: distillation
+model.type: student
+dataset.num_frames: 24
+dataset.max_temporal_stride: 
+training.batch_size: 16
+training.lr: 0.0005
+training.weight_decay: 0.01
+training.label_smoothing: 
+training.kd_warmup_epochs: 
+distillation.temperature: 12.0
+distillation.alpha: 0.7
+[train results]
+best_acc: 69.87
+best_epoch: 52
+final_train_acc: 97.80
+final_test_acc: 69.13
+final_test_top5: 90.93
+[eval results]
+top1: 69.86518636003171
+top5: 90.35157282579964
+
+[kd_t8_a07_24f_lightaug]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-24f-refine3-b-4142/kd_t8_a07_24f_lightaug/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-24f-refine3-b-4142/kd_t8_a07_24f_lightaug/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+[config]
+mode: distillation
+model.type: student
+dataset.num_frames: 24
+dataset.max_temporal_stride: 
+training.batch_size: 16
+training.lr: 0.0005
+training.weight_decay: 0.01
+training.label_smoothing: 
+training.kd_warmup_epochs: 
+distillation.temperature: 8.0
+distillation.alpha: 0.7
+[train results]
+best_acc: 70.18
+best_epoch: 58
+final_train_acc: 96.51
+final_test_acc: 69.71
+final_test_top5: 90.46
+[eval results]
+top1: 70.18239492466297
+top5: 90.40444091990484
+
+[kd_t10_a07_24f_lightaug_stride2]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-24f-refine3-b-4142/kd_t10_a07_24f_lightaug_stride2/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-24f-refine3-b-4142/kd_t10_a07_24f_lightaug_stride2/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+[config]
+mode: distillation
+model.type: student
+dataset.num_frames: 24
+dataset.max_temporal_stride: 
+training.batch_size: 16
+training.lr: 0.0005
+training.weight_decay: 0.01
+training.label_smoothing: 
+training.kd_warmup_epochs: 
+distillation.temperature: 10.0
+distillation.alpha: 0.7
+[train results]
+best_acc: 58.02
+best_epoch: 51
+final_train_acc: 91.45
+final_test_acc: 56.54
+final_test_top5: 82.32
+[eval results]
+top1: 58.02273328046524
+top5: 83.00290774517579
+

@@ -1,0 +1,20 @@
+Training Summary
+========================================
+mode: baseline
+device: cuda
+epochs_completed: 75
+best_eval_acc: 45.31
+best_epoch: 72
+final_train_acc: 98.81
+final_eval_acc: 44.61
+final_eval_top5: 67.85
+final_train_loss: 0.936512
+final_eval_loss: 2.449955
+started_at: 2026-04-16T16:43:55
+finished_at: 2026-04-16T19:45:41
+elapsed_seconds: 10905
+run_log_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4211/baseline/train
+metrics_csv: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4211/baseline/train/metrics_epoch.csv
+metrics_jsonl: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4211/baseline/train/metrics_epoch.jsonl
+config_summary: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4211/baseline/train/config_summary.txt
+config_summary_json: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4211/baseline/train/config_summary.json

@@ -1,0 +1,94 @@
+Pipeline Summary v2
+============================================================
+job_tag: slurm-train-eval-4211
+slurm_job_id: 4211
+root_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4211
+teacher_checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4201/teacher/teacher_finetune_best.pth
+
+[baseline]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4211/baseline/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4211/baseline/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+[config]
+mode: baseline
+model.type: student
+training.batch_size: 16
+training.lr: 0.0005
+training.scheduler: cosine_warmup
+training.label_smoothing: 
+distillation.teacher_checkpoint: None
+distillation.temperature: None
+distillation.alpha: None
+distillation.at_beta: None
+[train results]
+best_eval_acc: 45.31
+best_epoch: 72
+final_train_acc: 98.81
+final_eval_acc: 44.61
+final_eval_top5: 67.85
+[eval results]
+checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4211/baseline/baseline_best.pth
+top1: 48.03066349458102
+top5: 70.44673539518901
+size_mb: 9.473529815673828
+inference_avg_ms: 1.7840598616749048
+
+[distillation]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4211/distillation/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4211/distillation/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+[config]
+mode: distillation
+model.type: student
+training.batch_size: 16
+training.lr: 0.0005
+training.scheduler: cosine_warmup
+training.label_smoothing: 
+distillation.teacher_checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4201/teacher/teacher_finetune_best.pth
+distillation.temperature: 8.0
+distillation.alpha: 0.7
+distillation.at_beta: None
+[train results]
+best_eval_acc: 52.16
+best_epoch: 75
+final_train_acc: 95.86
+final_eval_acc: 52.16
+final_eval_top5: 77.79
+[eval results]
+checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4211/distillation/distillation_best.pth
+top1: 54.692043351837164
+top5: 80.88818398096748
+size_mb: 9.473529815673828
+inference_avg_ms: 1.7993754614144564
+
+[distillation_at]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4211/distillation_at/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4211/distillation_at/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+[config]
+mode: distillation_at
+model.type: student
+training.batch_size: 16
+training.lr: 0.0005
+training.scheduler: cosine_warmup
+training.label_smoothing: 
+distillation.teacher_checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4201/teacher/teacher_finetune_best.pth
+distillation.temperature: 8.0
+distillation.alpha: 0.7
+distillation.at_beta: 0.05
+[train results]
+best_eval_acc: 52.06
+best_epoch: 67
+final_train_acc: 95.82
+final_eval_acc: 51.45
+final_eval_top5: 77.37
+[eval results]
+checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4211/distillation_at/distillation_at_best.pth
+top1: 52.92096219931271
+top5: 80.09516256938937
+size_mb: 9.473529815673828
+inference_avg_ms: 1.8041859799996018
+

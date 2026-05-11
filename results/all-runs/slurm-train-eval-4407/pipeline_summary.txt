@@ -1,0 +1,69 @@
+Pipeline Summary
+============================================================
+job_tag: slurm-train-eval-4407
+slurm_job_id: 4407
+root_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4407
+teacher_checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth
+
+[baseline_t8_24f_lightaug]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4407/baseline_t8_24f_lightaug/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4407/baseline_t8_24f_lightaug/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+[config]
+mode: baseline
+model.type: student
+dataset.use_eval_split: True
+dataset.eval_ratio: 0.2
+dataset.split_seed: 42
+dataset.max_temporal_stride: 
+training.batch_size: 16
+training.lr: 0.0005
+training.weight_decay: 0.01
+training.label_smoothing: 
+training.kd_warmup_epochs: 
+distillation.teacher_checkpoint: None
+distillation.temperature: None
+distillation.alpha: None
+[train results]
+best_eval_acc: 60.31
+best_epoch: 54
+final_train_acc: 99.89
+final_eval_acc: 59.79
+final_eval_top5: 81.30
+[eval results]
+checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4407/baseline_t8_24f_lightaug/baseline_best.pth
+top1: 59.740946338884484
+top5: 83.37298440391224
+
+[kd_t8_a07_24f_lightaug]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4407/kd_t8_a07_24f_lightaug/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4407/kd_t8_a07_24f_lightaug/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+[config]
+mode: distillation
+model.type: student
+dataset.use_eval_split: True
+dataset.eval_ratio: 0.2
+dataset.split_seed: 42
+dataset.max_temporal_stride: 
+training.batch_size: 16
+training.lr: 0.0005
+training.weight_decay: 0.01
+training.label_smoothing: 
+training.kd_warmup_epochs: 
+distillation.teacher_checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/teacher_finetune_best.pth
+distillation.temperature: 8.0
+distillation.alpha: 0.7
+[train results]
+best_eval_acc: 62.93
+best_epoch: 55
+final_train_acc: 93.38
+final_eval_acc: 62.75
+final_eval_top5: 86.46
+[eval results]
+checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4407/kd_t8_a07_24f_lightaug/distillation_best.pth
+top1: 61.432725350251125
+top5: 88.42188739095955
+

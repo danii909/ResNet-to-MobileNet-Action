@@ -1,0 +1,7 @@
+Born Again Distillation Pipeline
+============================================================
+job_tag: slurm-train-eval-4445
+slurm_job_id: 4445
+root_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4445
+strategy: Student_0 (from 4201) -> Student_1 -> Student_2 -> Student_3
+

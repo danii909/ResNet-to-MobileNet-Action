@@ -1,0 +1,26 @@
+Born Again Distillation Pipeline (Stages 3-5 Only)
+============================================================
+job_id: 4536
+root_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-born-again-4529
+
+[born_again_gen1]
+train_status: SUCCESS
+best_eval_acc: 60.78
+final_train_acc: 97.73
+test_top1: 60.983346550356856
+teacher: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4495/kd_t8_a07_24f_lightaug/distillation_best.pth
+
+[born_again_gen2]
+train_status: SUCCESS
+best_eval_acc: 61.20
+final_train_acc: 98.02
+test_top1: 60.42823156225218
+teacher: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-born-again-4529/born_again_gen1/distillation_at_best.pth
+
+[born_again_gen3]
+train_status: SUCCESS
+best_eval_acc: 59.98
+final_train_acc: 98.09
+test_top1: 59.21226539783241
+teacher: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-born-again-4529/born_again_gen2/distillation_at_best.pth
+

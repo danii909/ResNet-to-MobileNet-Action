@@ -1,0 +1,20 @@
+Training Summary
+========================================
+mode: distillation_at
+device: cuda
+epochs_completed: 50
+best_eval_acc: 61.20
+best_epoch: 42
+final_train_acc: 98.02
+final_eval_acc: 59.93
+final_eval_top5: 82.99
+final_train_loss: 0.353991
+final_eval_loss: 1.975022
+started_at: 2026-05-11T19:08:04
+finished_at: 2026-05-11T20:29:56
+elapsed_seconds: 4912
+run_log_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-born-again-4529/born_again_gen2/train
+metrics_csv: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-born-again-4529/born_again_gen2/train/metrics_epoch.csv
+metrics_jsonl: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-born-again-4529/born_again_gen2/train/metrics_epoch.jsonl
+config_summary: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-born-again-4529/born_again_gen2/train/config_summary.txt
+config_summary_json: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-born-again-4529/born_again_gen2/train/config_summary.json

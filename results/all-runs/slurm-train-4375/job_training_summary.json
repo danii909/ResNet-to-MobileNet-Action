@@ -1,0 +1,71 @@
+{
+  "generated_at": "2026-05-05T01:24:27",
+  "job_tag": "slurm-train-4375",
+  "slurm_job_id": "4375",
+  "job_log_dir": "/home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-4375",
+  "job_type": "single",
+  "hostname": "gnode10",
+  "gpu_name": "NVIDIA L40S",
+  "partition": "dl-course-q2",
+  "qos": "gpu-xlarge",
+  "started_at": "2026-05-05T01:24:09+02:00",
+  "finished_at": "2026-05-05T01:24:27+02:00",
+  "overall_status": "",
+  "total_runs": 1,
+  "success_runs": 0,
+  "failed_runs": 1,
+  "unknown_runs": 0,
+  "best_eval_acc_max": null,
+  "avg_final_eval_acc": null,
+  "runs": [
+    {
+      "run_tag": "slurm-train-4375",
+      "run_log_dir": "/home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-4375",
+      "status": "FAILED",
+      "training_type": "distillation",
+      "mode": "",
+      "profile": null,
+      "config_path": "experiments/configs/distillation_at_v3.yaml",
+      "node": "gnode10",
+      "gpu": "NVIDIA L40S",
+      "device": null,
+      "started_at": "2026-05-05T01:24:09+02:00",
+      "finished_at": "2026-05-05T01:24:27+02:00",
+      "exit_code": "1",
+      "best_eval_acc": null,
+      "best_epoch": null,
+      "final_train_acc": null,
+      "final_eval_acc": null,
+      "final_eval_top5": null,
+      "final_train_loss": null,
+      "final_eval_loss": null,
+      "epochs_completed": null,
+      "elapsed_seconds": null,
+      "model": {
+        "type": null,
+        "width_mult": null,
+        "pretrained": null,
+        "freeze_backbone": null
+      },
+      "training": {
+        "epochs": null,
+        "batch_size": null,
+        "optimizer": null,
+        "lr": null,
+        "momentum": null,
+        "weight_decay": null,
+        "scheduler": null,
+        "grad_clip": null,
+        "mixed_precision": null
+      },
+      "distillation": {
+        "teacher_checkpoint": null,
+        "temperature": null,
+        "alpha": null,
+        "at_beta": null,
+        "at_beta_spatial": null,
+        "at_beta_temporal": null
+      }
+    }
+  ]
+}
