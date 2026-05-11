@@ -22,6 +22,11 @@
 
 set -euo pipefail
 
+# Avoid "No space left on device" in /tmp by using a local tmp directory
+mkdir -p "$HOME/tmp"
+export TMPDIR="$HOME/tmp"
+
+
 PROJECT_DIR="${PROJECT_DIR:-$HOME/dl26-projects}"
 if [ ! -d "$PROJECT_DIR" ]; then
     echo "Project directory not found: $PROJECT_DIR"
@@ -70,6 +75,7 @@ run_training() {
         ${HF_TOKEN:+--env HF_TOKEN="$HF_TOKEN"} \
         --env PYTORCH_ALLOC_CONF=garbage_collection_threshold:0.8 \
         --env PYTHONUNBUFFERED=1 \
+        --env TMPDIR="$TMPDIR" \
         /shared/sifs/latest.sif \
         python -u -m src.training.train --config "$config" --override "${ov[@]}"
     local rc=$?
@@ -105,6 +111,7 @@ run_evaluation() {
         --env HF_DATASETS_OFFLINE=1 \
         ${HF_TOKEN:+--env HF_TOKEN="$HF_TOKEN"} \
         --env PYTORCH_ALLOC_CONF=garbage_collection_threshold:0.8 \
+        --env TMPDIR="$TMPDIR" \
         /shared/sifs/latest.sif \
         python -u -m src.evaluation.evaluate --config "$config" --override "evaluation.checkpoint=$checkpoint"
     local rc=$?
