@@ -10,6 +10,7 @@ Usage (on cluster):
                   model.type=student
 """
 
+import csv
 import json
 import os
 import sys
@@ -67,6 +68,56 @@ def predict_all(
         pbar.set_postfix(acc=f"{running_acc:.2f}")
 
     return np.concatenate(all_preds), np.concatenate(all_labels)
+
+
+def _as_bool(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y"}
+    return bool(value)
+
+
+def _unwrap_dataset(dataset):
+    ds = dataset
+    while hasattr(ds, "dataset"):
+        ds = ds.dataset
+    return ds
+
+
+def _get_class_names(dataset, num_classes: int) -> list[str]:
+    ds = _unwrap_dataset(dataset)
+    hf_dataset = getattr(ds, "hf_dataset", None)
+    if hf_dataset is not None:
+        try:
+            names = hf_dataset.features["label"].names
+            if isinstance(names, list) and len(names) == num_classes:
+                return names
+        except Exception:
+            pass
+
+    class_to_idx = getattr(ds, "class_to_idx", None)
+    if isinstance(class_to_idx, dict) and class_to_idx:
+        idx_to_class = {idx: name for name, idx in class_to_idx.items()}
+        return [idx_to_class.get(i, str(i)) for i in range(num_classes)]
+
+    return [str(i) for i in range(num_classes)]
+
+
+def save_predictions_csv(
+    preds: np.ndarray,
+    labels: np.ndarray,
+    class_names: list[str],
+    save_path: Path,
+) -> None:
+    save_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(save_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["sample_idx", "label_idx", "label_name", "pred_idx", "pred_name"])
+        for idx, (label, pred) in enumerate(zip(labels, preds)):
+            label_name = class_names[label] if 0 <= label < len(class_names) else str(label)
+            pred_name = class_names[pred] if 0 <= pred < len(class_names) else str(pred)
+            writer.writerow([idx, int(label), label_name, int(pred), pred_name])
 
 
 # ---------------------------------------------------------------------------
@@ -234,6 +285,7 @@ def main() -> None:
     model_type = config["model"]["type"]
     checkpoint = eval_cfg.get("checkpoint")
     label = eval_cfg.get("label", model_type)
+    save_predictions_only = _as_bool(eval_cfg.get("save_predictions_only", False))
 
     if checkpoint is None:
         raise ValueError("Must set evaluation.checkpoint via config or --override.")
@@ -267,6 +319,21 @@ def main() -> None:
     ).topk(5, dim=1)  # placeholder; compute properly below
     # Recompute top-5 using stored logits not available here — report top-1 only.
     print(f"\n[Confusion] Top-1 Accuracy: {top1:.2f}%")
+
+    class_names = _get_class_names(test_loader.dataset, num_classes)
+    pred_dir = Path(
+        os.environ.get(
+            "PREDICTIONS_LOG_DIR",
+            eval_cfg.get("predictions_dir", str(out_dir)),
+        )
+    )
+    pred_csv_path = pred_dir / f"predictions_{label}.csv"
+    save_predictions_csv(preds, labels_arr, class_names, pred_csv_path)
+    print(f"[Confusion] Predictions CSV saved to: {pred_csv_path}")
+
+    if save_predictions_only:
+        print(f"\n[Confusion] Done. Predictions saved in: {pred_dir}")
+        return
 
     # Per-class accuracy
     per_class = compute_per_class_accuracy(preds, labels_arr, num_classes)
