@@ -1,0 +1,5 @@
+experiment: at_temporal_only
+best_eval_acc: 59.0440
+epochs: 50
+final_train_loss: 0.535125
+final_eval_loss: 1.816653

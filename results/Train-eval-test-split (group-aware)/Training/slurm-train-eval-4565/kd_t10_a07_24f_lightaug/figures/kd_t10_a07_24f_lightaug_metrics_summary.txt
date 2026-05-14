@@ -1,0 +1,5 @@
+experiment: kd_t10_a07_24f_lightaug
+best_eval_acc: 64.8547
+epochs: 60
+final_train_loss: 0.564256
+final_eval_loss: 1.495400

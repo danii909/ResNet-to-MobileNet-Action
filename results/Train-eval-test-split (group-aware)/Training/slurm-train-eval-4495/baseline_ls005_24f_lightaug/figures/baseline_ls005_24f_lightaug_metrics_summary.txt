@@ -1,0 +1,5 @@
+experiment: baseline_ls005_24f_lightaug
+best_eval_acc: 59.1846
+epochs: 60
+final_train_loss: 0.523578
+final_eval_loss: 1.782137

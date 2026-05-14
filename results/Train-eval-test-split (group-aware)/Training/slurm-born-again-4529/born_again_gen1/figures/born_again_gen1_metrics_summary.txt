@@ -1,0 +1,5 @@
+experiment: born_again_gen1
+best_eval_acc: 60.7779
+epochs: 50
+final_train_loss: 0.432448
+final_eval_loss: 1.766566
