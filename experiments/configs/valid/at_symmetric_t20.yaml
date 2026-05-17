@@ -19,7 +19,7 @@ dataset:
   max_temporal_stride: 1
 
 training:
-  mode: distillation
+  mode: distillation_at
   epochs: 60
   batch_size: 16
   num_workers: 4
@@ -30,16 +30,20 @@ training:
   scheduler: cosine
   grad_clip: 1.0
   mixed_precision: true
-  label_smoothing: 0.1
+  label_smoothing: 0.05
   kd_warmup_epochs: 5
   checkpoint_dir: experiments/checkpoints
 
 distillation:
-  teacher_checkpoint: experiments/checkpoints/teacher_finetune_best.pth
-  temperature: 8.0
+  teacher_checkpoint: experiments/checkpoints/slurm-train-eval-4495/teacher_24f_lightaug/teacher_finetune_best.pth
+  temperature: 20.0
   alpha: 0.7
+  at_beta_spatial: 0.05
+  at_beta_temporal: 0.05
+  teacher_keys: [2, 3, 4]
+  student_keys: [2, 4, 6]
 
 logging:
   enabled: true
   project: kd-action-recognition
-  run_name: kd-t8-a07-24f-lightaug
+  run_name: ATS-t20-a07-24f-lightaug
