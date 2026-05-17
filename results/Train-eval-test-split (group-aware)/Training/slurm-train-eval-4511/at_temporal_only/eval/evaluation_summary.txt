@@ -1,0 +1,16 @@
+Evaluation Summary
+========================================
+mode: distillation_at
+model_type: student
+checkpoint: experiments/checkpoints/slurm-train-eval-4511/at_temporal_only/distillation_at_best.pth
+device: cuda
+top1: 58.95
+top5: 84.06
+param_count: 2483429
+param_count_trainable: 2483429
+size_mb: 9.47
+inference_avg_ms: 1.78
+inference_std_ms: 0.35
+inference_min_ms: 1.60
+inference_max_ms: 3.42
+finished_at: 2026-05-18T00:00:44

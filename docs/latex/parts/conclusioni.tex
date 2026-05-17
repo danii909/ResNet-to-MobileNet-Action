@@ -1,0 +1,55 @@
+\chapter{Conclusioni e Lavori Futuri}
+\label{chap:conclusioni}
+
+\section{Sintesi dei Risultati}
+
+Questo progetto ha implementato e valutato una pipeline completa di Knowledge Distillation per la compressione di un modello 3D ResNet-50 (33.4M parametri) in un MobileNet3D (2.5M parametri) per il riconoscimento di azioni su UCF-101. I risultati principali sono:
+
+\begin{enumerate}
+    \item \textbf{KD Logit-based}: la Knowledge Distillation produce un miglioramento consistente rispetto al baseline. La configurazione migliore ($T=20$, $\alpha=0.7$) raggiunge il \textbf{65.85\%} di Test Top-1 accuracy, con un guadagno di \textbf{+6.37 punti percentuali} rispetto al baseline (59.48\%), colmando circa il \textbf{22\%} del gap tra student e teacher.
+    
+    \item \textbf{Temperature Scaling}: lo studio ablativo rivela un trend crescente con la temperatura nel range $[1, 20]$, suggerendo che per coppie teacher-student con capacity gap significativo, temperature alte che ``smussano'' le distribuzioni del teacher facilitano il trasferimento della conoscenza.
+    
+    \item \textbf{Attention Transfer}: l'estensione con AT spaziale e temporale non ha prodotto miglioramenti, anzi una regressione di 5--6 punti. Questo risultato evidenzia i limiti del trasferimento delle mappe di attenzione tra architetture strutturalmente eterogenee (convoluzioni standard vs depthwise separabili).
+    
+    \item \textbf{Born-Again Networks}: la self-distillation iterativa MobileNet$\rightarrow$MobileNet produce un collasso generazionale, scendendo sotto il baseline alla terza generazione. Il risultato è attribuibile alla temperatura non calibrata e all'assenza di un teacher oracolo.
+    
+    \item \textbf{Compressione}: il modello finale mantiene una dimensione di \textbf{9.5 MB} (vs $\sim$128 MB del teacher), una latenza di \textbf{$\sim$1.8 ms}, e un rapporto di compressione superiore a \textbf{13$\times$}.
+\end{enumerate}
+
+\section{Lezioni Apprese}
+
+Il percorso di sviluppo ha evidenziato alcune lezioni significative:
+
+\begin{itemize}
+    \item \textbf{Data leakage silenzioso}: il leakage tra train e validation dovuto ai gruppi video di UCF-101 è un problema insidioso che produce metriche artificialmente alte senza generare errori espliciti. Lo split group-aware è essenziale per qualsiasi valutazione affidabile su questo dataset.
+    
+    \item \textbf{Bug silenti nelle pipeline complesse}: il bug del Block 5 nell'Attention Transfer --- che produceva mappe costanti senza alcun warning --- dimostra l'importanza della validazione delle feature intermedie tramite ispezione manuale, non solo della loss finale.
+    
+    \item \textbf{Stabilità numerica con AMP}: il mixed precision training richiede attenzione esplicita quando si calcolano potenze di feature map, poiché l'overflow in float16 può propagarsi silenziosamente come NaN.
+    
+    \item \textbf{Warmup per KD}: le prime epoche di distillazione beneficiano di una fase di warmup con sola cross-entropy, permettendo ai pesi dello student di raggiungere una regione ragionevole prima di essere esposti al segnale soft del teacher.
+\end{itemize}
+
+\section{Limiti del Lavoro}
+
+\begin{itemize}
+    \item L'ablazione sulla temperatura è stata condotta con $\alpha = 0.7$ fisso; un'analisi congiunta $T \times \alpha$ potrebbe rivelare configurazioni ottimali diverse.
+    \item L'AT è stato testato con un solo set di $(\beta_s, \beta_t)$; uno sweep più ampio e un'esplorazione di tecniche di accoppiamento alternative (FitNets~\cite{romero2015fitnets}, proiezione lineare) potrebbero produrre risultati diversi.
+    \item Le Born-Again Networks sono state testate con temperatura fissa; un decay della temperatura attraverso le generazioni potrebbe mitigare il collasso.
+    \item Il progetto utilizza un singolo split seed; la riproducibilità dei risultati andrebbe verificata su split multipli.
+\end{itemize}
+
+\section{Lavori Futuri}
+
+\begin{enumerate}
+    \item \textbf{Progressive distillation}: utilizzare temperature decrescenti nelle Born-Again Networks per mantenere la qualità del segnale attraverso le generazioni.
+    \item \textbf{Feature projection AT}: inserire layer lineari trainabili tra le feature del teacher e dello student per ridurre il mismatch architetturale nell'AT.
+    \item \textbf{Distillazione multi-teacher}: combinare i segnali di teacher con architetture diverse per produrre soft targets più robusti.
+    \item \textbf{Deployment reale}: integrare il modello compresso in un'applicazione mobile con benchmark di latenza su dispositivi edge (Raspberry Pi, smartphone Android).
+    \item \textbf{Dataset più complessi}: estendere la valutazione a Kinetics-400 o HMDB-51 per verificare la generalizzabilità dei risultati.
+\end{enumerate}
+
+\section{Dichiarazione sull'Uso dell'IA}
+
+Coerentemente con la policy del corso, si dichiara che durante lo sviluppo del progetto sono stati utilizzati strumenti di intelligenza artificiale generativa (GitHub Copilot, Claude) come supporto per: la scrittura di codice boilerplate, il debugging di errori, la consultazione della documentazione di PyTorch e PyTorchVideo, e l'automazione della pipeline di testing. Le decisioni architetturali, la strategia sperimentale e l'interpretazione dei risultati sono state interamente formulate dall'autore.

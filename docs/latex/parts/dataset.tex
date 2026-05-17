@@ -1,0 +1,75 @@
+\chapter{Dataset e Protocollo Sperimentale}
+\label{chap:dataset}
+
+\section{UCF-101}
+
+Il dataset UCF-101~\cite{soomro2012ucf101} è un benchmark consolidato per il riconoscimento di azioni, composto da 13\,320 video suddivisi in 101 classi di azioni umane (sport, attività quotidiane, interazioni con oggetti). I video sono estratti da clip di YouTube e presentano sfide realistiche: variabilità di illuminazione, sfondi complessi, occlusioni parziali e variazioni intra-classe significative.
+
+\subsection{Caricamento e Pre-processing}
+
+Il progetto utilizza il backend \texttt{flwrlabs/ucf101} di Hugging Face, che fornisce i frame pre-estratti dei video. Il data loading pipeline opera come segue:
+
+\begin{enumerate}
+    \item \textbf{Campionamento temporale}: per ciascun video vengono campionati $N = 24$ frame tramite campionamento segmentato uniforme. Durante il training, viene applicato un jitter temporale casuale all'interno di ciascun segmento.
+    \item \textbf{Trasformazioni spaziali}: i frame vengono ridimensionati a 128 pixel sul lato corto, seguiti da random crop a $112\times112$ (training) o center crop (evaluation). Si applica random horizontal flip con probabilità 0.5.
+    \item \textbf{Normalizzazione}: ogni frame viene normalizzato secondo la media e deviazione standard di Kinetics ($\mu = 0.45$, $\sigma = 0.225$ per tutti i canali).
+    \item \textbf{Formato}: il tensore risultante ha shape $[C, T, H, W] = [3, 24, 112, 112]$, coerente con le convenzioni PyTorchVideo.
+\end{enumerate}
+
+\section{Il Problema del Data Leakage}
+\label{sec:data_leakage}
+
+Una sfida critica affrontata durante lo sviluppo è stata l'identificazione e la correzione di un \textit{data leakage} tra training e validation set. UCF-101 organizza i video per \textit{gruppi}: video della stessa classe possono provenire dalla stessa clip sorgente, generando clip fortemente correlate.
+
+\subsection{Evoluzione degli Split}
+
+Il protocollo di split è passato attraverso tre fasi:
+
+\begin{enumerate}
+    \item \textbf{Train-Test split} (fase iniziale): la validation durante il training veniva effettuata direttamente sul test set ufficiale. Questo porta a \textit{selection bias}: il checkpoint selezionato è quello che massimizza le prestazioni sul test, rendendo le metriche troppo ottimistiche.
+    
+    \item \textbf{Train-Eval-Test split senza group-aware} (prima correzione): viene creato un validation split interno dal training set, ma la separazione avviene per singolo campione, senza vincolare i gruppi video. Di conseguenza, clip della stessa sequenza sorgente possono trovarsi sia in train che in eval, producendo metriche artificialmente alte.
+    
+    \item \textbf{Train-Eval-Test split group-aware} (soluzione corretta): lo split interno viene effettuato a livello di \textbf{gruppo video}. Un'espressione regolare estrae l'identificatore di gruppo (\texttt{\_g\textbackslash d+\_}) dal video ID, garantendo che tutte le clip dello stesso video sorgente finiscano nello stesso set (train o eval). Questo elimina il leakage e produce metriche affidabili.
+\end{enumerate}
+
+\subsection{Impatto Sulle Metriche}
+
+La differenza tra i protocolli è significativa. Con lo split non-group-aware, le accuratezze di validation raggiungevano valori sistematicamente più alti, mascherando il reale gap di generalizzazione. Con lo split group-aware, il gap tra training accuracy ($\sim$98\%) e validation accuracy ($\sim$60--65\%) diventa evidente, riflettendo la reale difficoltà del task.
+
+\textbf{Tutti i risultati presentati nel Capitolo~\ref{chap:risultati} utilizzano esclusivamente lo split group-aware.}
+
+\subsection{Implementazione dello Split Group-Aware}
+
+Lo split stratificato group-aware è implementato nella funzione \texttt{\_stratified\_group\_split\_indices}. Per ciascuna classe:
+\begin{enumerate}
+    \item Si identificano i gruppi video unici appartenenti alla classe.
+    \item I gruppi vengono mescolati con un seme fisso ($\texttt{seed} = 42$).
+    \item Si assegnano interi gruppi al set di eval fino a raggiungere la \texttt{eval\_ratio} target ($20\%$), con il vincolo che almeno un campione rimanga nel train.
+    \item Tutti i campioni dei gruppi non selezionati finiscono nel train.
+\end{enumerate}
+
+\section{Protocollo Sperimentale Finale}
+
+\begin{table}[H]
+\centering
+\caption{Protocollo sperimentale adottato per tutti gli esperimenti safe.}
+\label{tab:protocol}
+\begin{tabular}{ll}
+\toprule
+\textbf{Parametro} & \textbf{Valore} \\
+\midrule
+Dataset & UCF-101 (HuggingFace backend) \\
+Frame per clip & 24 \\
+Crop size & $112 \times 112$ \\
+Split & Group-aware stratificato \\
+Eval ratio & 0.2 \\
+Split seed & 42 \\
+Test set & Ufficiale UCF-101 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Infrastruttura Computazionale}
+
+Tutti gli esperimenti sono stati eseguiti sul cluster GPU del DMI dell'Università di Catania, gestito tramite SLURM. Le risorse principali comprendono GPU NVIDIA K80, V100 e L40S. Il progetto ha utilizzato script bash automatizzati per il lancio sequenziale di pipeline multi-stage (training $\rightarrow$ evaluation $\rightarrow$ t-SNE), con gestione dei checkpoint e fallback per la ripresa dei job interrotti.

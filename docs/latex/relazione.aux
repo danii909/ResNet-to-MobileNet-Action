@@ -7,122 +7,167 @@
 \@nameuse{bbl@beforestart}
 \babel@aux{italian}{}
 \babel@aux{italian}{}
-\@writefile{toc}{\contentsline {chapter}{\numberline {1}Ambiente e Simulazione}{3}{chapter.1}\protected@file@percent }
+\citation{he2016deep}
+\citation{feichtenhofer2019slowfast}
+\citation{hinton2015distilling}
+\citation{kay2017kinetics}
+\citation{soomro2012ucf101}
+\citation{sandler2018mobilenetv2}
+\citation{zagoruyko2017paying}
+\@writefile{toc}{\contentsline {chapter}{\numberline {1}Introduzione}{3}{chapter.1}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {section}{\numberline {1.1}Griglia}{3}{section.1.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {1.2}Magazzini}{3}{section.1.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {1.3}Ciclo di simulazione}{4}{section.1.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {1.4}Gestione delle collisioni}{4}{section.1.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {1.5}Prenotazione degli ingressi ai magazzini}{5}{section.1.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {1.6}Comunicazione}{5}{section.1.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{\numberline {2}Agenti}{6}{chapter.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.1}Obiettivi del Progetto}{3}{section.1.1}\protected@file@percent }
+\citation{vandermaaten2008tsne}
+\citation{furlanello2018born}
+\@writefile{toc}{\contentsline {section}{\numberline {1.2}Organizzazione della Relazione}{4}{section.1.2}\protected@file@percent }
+\citation{hinton2015distilling}
+\@writefile{toc}{\contentsline {chapter}{\numberline {2}Background Teorico}{5}{chapter.2}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {section}{\numberline {2.1}Attributi}{6}{section.2.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2.2}Percezione (Sense)}{6}{section.2.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2.3}Macchina a stati}{6}{section.2.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2.4}Pathfinding}{7}{section.2.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2.5}Consegna}{7}{section.2.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.5.1}Strategie di ricarica}{7}{subsection.2.5.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{\numberline {3}Strategie di Esplorazione}{8}{chapter.3}\protected@file@percent }
+\newlabel{chap:background}{{2}{5}{Background Teorico}{chapter.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.1}Knowledge Distillation}{5}{section.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.1}Formulazione Matematica}{5}{subsection.2.1.1}\protected@file@percent }
+\newlabel{eq:kd_loss}{{2.2}{5}{Formulazione Matematica}{equation.2.1.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.2}Ruolo della Temperatura}{5}{subsection.2.1.2}\protected@file@percent }
+\citation{zagoruyko2017paying}
+\@writefile{toc}{\contentsline {section}{\numberline {2.2}Attention Transfer}{6}{section.2.2}\protected@file@percent }
+\newlabel{sec:at_background}{{2.2}{6}{Attention Transfer}{section.2.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.1}AT per Immagini 2D}{6}{subsection.2.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.2}Estensione al Video 3D: Attenzione Spaziale e Temporale}{6}{subsection.2.2.2}\protected@file@percent }
+\newlabel{sec:at_3d}{{2.2.2}{6}{Estensione al Video 3D: Attenzione Spaziale e Temporale}{subsection.2.2.2}{}}
+\citation{furlanello2018born}
+\citation{vandermaaten2008tsne}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.3}Loss Totale di Distillation con AT}{7}{subsection.2.2.3}\protected@file@percent }
+\newlabel{eq:total_loss}{{2.8}{7}{Loss Totale di Distillation con AT}{equation.2.2.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.3}Born-Again Networks}{7}{section.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2.4}Visualizzazione t-SNE}{7}{section.2.4}\protected@file@percent }
+\citation{feichtenhofer2019slowfast}
+\citation{he2016deep}
+\citation{kay2017kinetics}
+\@writefile{toc}{\contentsline {chapter}{\numberline {3}Architetture dei Modelli}{8}{chapter.3}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {section}{\numberline {3.1}Funzioni condivise della classe base}{8}{section.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Priority-Move.}{8}{section*.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Selezione ingresso di consegna.}{8}{section*.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Find-Frontier.}{8}{section*.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Coverage targets.}{9}{section*.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Guadagno informativo (\textit  {information gain}).}{9}{section*.8}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3.2}Smart Random Walk}{9}{section.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3.3}Frontier}{10}{section.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3.4}Greedy}{10}{section.3.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3.5}Sector}{10}{section.3.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3.6}Repulsion}{10}{section.3.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{\numberline {4}Interfaccia Utente}{11}{chapter.4}\protected@file@percent }
-\@writefile{lof}{\addvspace {10\p@ }}
-\@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {section}{\numberline {4.1}Barra laterale}{11}{section.4.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4.2}Tab Simulazione}{11}{section.4.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4.3}Tab Benchmark}{12}{section.4.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{\numberline {5}Risultati Sperimentali}{13}{chapter.5}\protected@file@percent }
-\@writefile{lof}{\addvspace {10\p@ }}
-\@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{ch:risultati}{{5}{13}{Risultati Sperimentali}{chapter.5}{}}
-\@writefile{toc}{\contentsline {paragraph}{Nota sulla configurazione del test esaustivo.}{13}{section*.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5.1}Mappa A}{13}{section.5.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.1}Test esaustivo --- 32.768 simulazioni}{13}{subsection.5.1.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {5.1}{\ignorespaces Configurazione della Mappa~A utilizzata nel test esaustivo.}}{14}{figure.caption.10}\protected@file@percent }
+\newlabel{chap:architetture}{{3}{8}{Architetture dei Modelli}{chapter.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.1}{\ignorespaces Schema concettuale della Knowledge Distillation: il modello teacher pesante trasferisce la propria conoscenza allo student leggero attraverso soft targets e, opzionalmente, mappe di attenzione intermedie.}}{8}{figure.caption.2}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{fig:confA-32k}{{5.1}{14}{Configurazione della Mappa~A utilizzata nel test esaustivo}{figure.caption.10}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.2}{\ignorespaces Mappa~A --- 32k sim: distribuzione degli oggetti consegnati per preset. Tasso di completamento: 96,4\%}}{14}{figure.caption.11}\protected@file@percent }
-\newlabel{fig:A32k-oggetti}{{5.2}{14}{Mappa~A --- 32k sim: distribuzione degli oggetti consegnati per preset. Tasso di completamento: 96,4\%}{figure.caption.11}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.3}{\ignorespaces Mappa~A --- 32k sim: tick di completamento per preset. Tick medi: 174,9. Energia media consumata: 173,1 unit\`a.}}{14}{figure.caption.12}\protected@file@percent }
-\newlabel{fig:A32k-tick}{{5.3}{14}{Mappa~A --- 32k sim: tick di completamento per preset. Tick medi: 174,9. Energia media consumata: 173,1 unit\`a}{figure.caption.12}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.4}{\ignorespaces Mappa~A --- 32k sim: classifica dei 10 migliori preset per tick di completamento.}}{14}{figure.caption.13}\protected@file@percent }
-\newlabel{fig:A32k-top10}{{5.4}{14}{Mappa~A --- 32k sim: classifica dei 10 migliori preset per tick di completamento}{figure.caption.13}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {5.1}{\ignorespaces Mappa~A --- Top~10 preset nel test esaustivo (32k simulazioni).}}{15}{table.caption.14}\protected@file@percent }
-\newlabel{tab:A32k-top10}{{5.1}{15}{Mappa~A --- Top~10 preset nel test esaustivo (32k simulazioni)}{table.caption.14}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.2}Test randomizzato --- 100$\times $3 seed}{15}{subsection.5.1.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {5.5}{\ignorespaces Configurazione della Mappa~A utilizzata nel test randomizzato.}}{15}{figure.caption.15}\protected@file@percent }
-\newlabel{fig:confA-100}{{5.5}{15}{Configurazione della Mappa~A utilizzata nel test randomizzato}{figure.caption.15}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.6}{\ignorespaces Mappa~A --- seed 42: oggetti consegnati per preset.}}{16}{figure.caption.17}\protected@file@percent }
-\newlabel{fig:As42-oggetti}{{5.6}{16}{Mappa~A --- seed 42: oggetti consegnati per preset}{figure.caption.17}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.7}{\ignorespaces Mappa~A --- seed 42: tick di completamento per preset.}}{16}{figure.caption.18}\protected@file@percent }
-\newlabel{fig:As42-tick}{{5.7}{16}{Mappa~A --- seed 42: tick di completamento per preset}{figure.caption.18}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.8}{\ignorespaces Mappa~A --- seed 42: classifica Top~10.}}{16}{figure.caption.19}\protected@file@percent }
-\newlabel{fig:As42-top10}{{5.8}{16}{Mappa~A --- seed 42: classifica Top~10}{figure.caption.19}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.9}{\ignorespaces Mappa~A --- seed 43: oggetti consegnati per preset.}}{16}{figure.caption.21}\protected@file@percent }
-\newlabel{fig:As43-oggetti}{{5.9}{16}{Mappa~A --- seed 43: oggetti consegnati per preset}{figure.caption.21}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.10}{\ignorespaces Mappa~A --- seed 43: tick di completamento per preset.}}{16}{figure.caption.22}\protected@file@percent }
-\newlabel{fig:As43-tick}{{5.10}{16}{Mappa~A --- seed 43: tick di completamento per preset}{figure.caption.22}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.11}{\ignorespaces Mappa~A --- seed 43: classifica Top~10.}}{17}{figure.caption.23}\protected@file@percent }
-\newlabel{fig:As43-top10}{{5.11}{17}{Mappa~A --- seed 43: classifica Top~10}{figure.caption.23}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.12}{\ignorespaces Mappa~A --- seed 44: oggetti consegnati per preset.}}{17}{figure.caption.25}\protected@file@percent }
-\newlabel{fig:As44-oggetti}{{5.12}{17}{Mappa~A --- seed 44: oggetti consegnati per preset}{figure.caption.25}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.13}{\ignorespaces Mappa~A --- seed 44: tick di completamento per preset.}}{17}{figure.caption.26}\protected@file@percent }
-\newlabel{fig:As44-tick}{{5.13}{17}{Mappa~A --- seed 44: tick di completamento per preset}{figure.caption.26}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.14}{\ignorespaces Mappa~A --- seed 44: classifica Top~10.}}{17}{figure.caption.27}\protected@file@percent }
-\newlabel{fig:As44-top10}{{5.14}{17}{Mappa~A --- seed 44: classifica Top~10}{figure.caption.27}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5.2}Mappa B}{17}{section.5.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.2.1}Test esaustivo --- 32.768 simulazioni}{17}{subsection.5.2.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {5.15}{\ignorespaces Configurazione della Mappa~B utilizzata nel test esaustivo.}}{18}{figure.caption.28}\protected@file@percent }
-\newlabel{fig:confB-32k}{{5.15}{18}{Configurazione della Mappa~B utilizzata nel test esaustivo}{figure.caption.28}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.16}{\ignorespaces Mappa~B --- 32k sim: distribuzione degli oggetti consegnati per preset. Tasso di completamento: 99,6\%}}{18}{figure.caption.29}\protected@file@percent }
-\newlabel{fig:B32k-oggetti}{{5.16}{18}{Mappa~B --- 32k sim: distribuzione degli oggetti consegnati per preset. Tasso di completamento: 99,6\%}{figure.caption.29}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.17}{\ignorespaces Mappa~B --- 32k sim: tick di completamento per preset. Tick medi: 107,1. Energia media consumata: 104,7 unit\`a.}}{18}{figure.caption.30}\protected@file@percent }
-\newlabel{fig:B32k-tick}{{5.17}{18}{Mappa~B --- 32k sim: tick di completamento per preset. Tick medi: 107,1. Energia media consumata: 104,7 unit\`a}{figure.caption.30}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.18}{\ignorespaces Mappa~B --- 32k sim: classifica dei 10 migliori preset per tick di completamento.}}{19}{figure.caption.31}\protected@file@percent }
-\newlabel{fig:B32k-top10}{{5.18}{19}{Mappa~B --- 32k sim: classifica dei 10 migliori preset per tick di completamento}{figure.caption.31}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {5.2}{\ignorespaces Mappa~B --- Top~10 preset nel test esaustivo (32k simulazioni).}}{19}{table.caption.32}\protected@file@percent }
-\newlabel{tab:B32k-top10}{{5.2}{19}{Mappa~B --- Top~10 preset nel test esaustivo (32k simulazioni)}{table.caption.32}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.2.2}Test randomizzato --- 100$\times $3 seed}{19}{subsection.5.2.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {5.19}{\ignorespaces Configurazione della Mappa~B utilizzata nel test randomizzato.}}{20}{figure.caption.33}\protected@file@percent }
-\newlabel{fig:confB-100}{{5.19}{20}{Configurazione della Mappa~B utilizzata nel test randomizzato}{figure.caption.33}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.20}{\ignorespaces Mappa~B --- seed 42: oggetti consegnati per preset.}}{20}{figure.caption.35}\protected@file@percent }
-\newlabel{fig:Bs42-oggetti}{{5.20}{20}{Mappa~B --- seed 42: oggetti consegnati per preset}{figure.caption.35}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.21}{\ignorespaces Mappa~B --- seed 42: tick di completamento per preset.}}{20}{figure.caption.36}\protected@file@percent }
-\newlabel{fig:Bs42-tick}{{5.21}{20}{Mappa~B --- seed 42: tick di completamento per preset}{figure.caption.36}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.22}{\ignorespaces Mappa~B --- seed 42: classifica Top~10.}}{20}{figure.caption.37}\protected@file@percent }
-\newlabel{fig:Bs42-top10}{{5.22}{20}{Mappa~B --- seed 42: classifica Top~10}{figure.caption.37}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.23}{\ignorespaces Mappa~B --- seed 43: oggetti consegnati per preset.}}{21}{figure.caption.39}\protected@file@percent }
-\newlabel{fig:Bs43-oggetti}{{5.23}{21}{Mappa~B --- seed 43: oggetti consegnati per preset}{figure.caption.39}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.24}{\ignorespaces Mappa~B --- seed 43: tick di completamento per preset.}}{21}{figure.caption.40}\protected@file@percent }
-\newlabel{fig:Bs43-tick}{{5.24}{21}{Mappa~B --- seed 43: tick di completamento per preset}{figure.caption.40}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.25}{\ignorespaces Mappa~B --- seed 43: classifica Top~10.}}{21}{figure.caption.41}\protected@file@percent }
-\newlabel{fig:Bs43-top10}{{5.25}{21}{Mappa~B --- seed 43: classifica Top~10}{figure.caption.41}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.26}{\ignorespaces Mappa~B --- seed 44: oggetti consegnati per preset.}}{21}{figure.caption.43}\protected@file@percent }
-\newlabel{fig:Bs44-oggetti}{{5.26}{21}{Mappa~B --- seed 44: oggetti consegnati per preset}{figure.caption.43}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.27}{\ignorespaces Mappa~B --- seed 44: tick di completamento per preset.}}{21}{figure.caption.44}\protected@file@percent }
-\newlabel{fig:Bs44-tick}{{5.27}{21}{Mappa~B --- seed 44: tick di completamento per preset}{figure.caption.44}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5.28}{\ignorespaces Mappa~B --- seed 44: classifica Top~10.}}{22}{figure.caption.45}\protected@file@percent }
-\newlabel{fig:Bs44-top10}{{5.28}{22}{Mappa~B --- seed 44: classifica Top~10}{figure.caption.45}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5.3}Considerazioni sui risultati}{22}{section.5.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.1}Confronto tra le due mappe}{22}{subsection.5.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.2}Impatto della strategia dominante}{22}{subsection.5.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.3}Team eterogenei vs omogenei}{22}{subsection.5.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.4}Impatto del raggio di visibilit\`a}{23}{subsection.5.3.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.5}Robustezza ai seed casuali}{23}{subsection.5.3.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.6}Riepilogo}{23}{subsection.5.3.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.7}Riepilogo delle euristiche utilizzate}{25}{subsection.5.3.7}\protected@file@percent }
-\gdef \@abspage@last{27}
+\newlabel{fig:kd_schema}{{3.1}{8}{Schema concettuale della Knowledge Distillation: il modello teacher pesante trasferisce la propria conoscenza allo student leggero attraverso soft targets e, opzionalmente, mappe di attenzione intermedie}{figure.caption.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.1}Teacher: 3D ResNet-50 (\texttt  {slow\_r50})}{8}{section.3.1}\protected@file@percent }
+\citation{sandler2018mobilenetv2}
+\citation{loshchilov2019adamw}
+\@writefile{lot}{\contentsline {table}{\numberline {3.1}{\ignorespaces Struttura del Teacher (slow\_r50). Il blocco 5 è la testa di classificazione, non uno stage di estrazione feature.}}{9}{table.caption.3}\protected@file@percent }
+\newlabel{tab:teacher_blocks}{{3.1}{9}{Struttura del Teacher (slow\_r50). Il blocco 5 è la testa di classificazione, non uno stage di estrazione feature}{table.caption.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.2}Student: MobileNet3D}{9}{section.3.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3.2}{\ignorespaces Stage del MobileNet3D con le risoluzioni spaziali di output.}}{9}{table.caption.4}\protected@file@percent }
+\newlabel{tab:student_stages}{{3.2}{9}{Stage del MobileNet3D con le risoluzioni spaziali di output}{table.caption.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.3}Confronto Dimensionale}{10}{section.3.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3.3}{\ignorespaces Confronto tra Teacher e Student in termini di parametri, dimensione e latenza di inferenza.}}{10}{table.caption.5}\protected@file@percent }
+\newlabel{tab:model_comparison}{{3.3}{10}{Confronto tra Teacher e Student in termini di parametri, dimensione e latenza di inferenza}{table.caption.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.4}Accoppiamento dei Layer per l'Attention Transfer}{10}{section.3.4}\protected@file@percent }
+\newlabel{sec:layer_pairing}{{3.4}{10}{Accoppiamento dei Layer per l'Attention Transfer}{section.3.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3.4}{\ignorespaces Accoppiamento delle feature map per l'Attention Transfer.}}{10}{table.caption.6}\protected@file@percent }
+\newlabel{tab:feature_pairing}{{3.4}{10}{Accoppiamento delle feature map per l'Attention Transfer}{table.caption.6}{}}
+\citation{soomro2012ucf101}
+\@writefile{toc}{\contentsline {chapter}{\numberline {4}Dataset e Protocollo Sperimentale}{11}{chapter.4}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:dataset}{{4}{11}{Dataset e Protocollo Sperimentale}{chapter.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.1}UCF-101}{11}{section.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.1}Caricamento e Pre-processing}{11}{subsection.4.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.2}Il Problema del Data Leakage}{11}{section.4.2}\protected@file@percent }
+\newlabel{sec:data_leakage}{{4.2}{11}{Il Problema del Data Leakage}{section.4.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.1}Evoluzione degli Split}{11}{subsection.4.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.2}Impatto Sulle Metriche}{12}{subsection.4.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.3}Implementazione dello Split Group-Aware}{12}{subsection.4.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.3}Protocollo Sperimentale Finale}{12}{section.4.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4.1}{\ignorespaces Protocollo sperimentale adottato per tutti gli esperimenti safe.}}{12}{table.caption.7}\protected@file@percent }
+\newlabel{tab:protocol}{{4.1}{12}{Protocollo sperimentale adottato per tutti gli esperimenti safe}{table.caption.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.4}Infrastruttura Computazionale}{13}{section.4.4}\protected@file@percent }
+\citation{loshchilov2019adamw}
+\@writefile{toc}{\contentsline {chapter}{\numberline {5}Implementazione della Pipeline}{14}{chapter.5}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:implementazione}{{5}{14}{Implementazione della Pipeline}{chapter.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.1}Architettura della Pipeline}{14}{section.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.2}Funzione di Loss Combinata}{14}{section.5.2}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Calcolo della loss combinata KD + AT}}{15}{algorithm.1}\protected@file@percent }
+\newlabel{alg:loss}{{1}{15}{Calcolo della loss combinata KD + AT}{algorithm.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.3}Il Bug del Block 5 (``Key~5'')}{15}{section.5.3}\protected@file@percent }
+\newlabel{sec:at_bug}{{5.3}{15}{Il Bug del Block 5 (``Key~5'')}{section.5.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.4}Gestione dell'Interpolazione Spaziale}{15}{section.5.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.5}Warmup per la Knowledge Distillation}{16}{section.5.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.6}Mixed Precision Training}{16}{section.5.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {6}Risultati Sperimentali}{17}{chapter.6}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:risultati}{{6}{17}{Risultati Sperimentali}{chapter.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.1}Modelli di Riferimento}{17}{section.6.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6.1}{\ignorespaces Performance dei modelli di riferimento sul test set ufficiale.}}{17}{table.caption.8}\protected@file@percent }
+\newlabel{tab:baselines}{{6.1}{17}{Performance dei modelli di riferimento sul test set ufficiale}{table.caption.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.2}Knowledge Distillation: Risultato Principale}{17}{section.6.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6.2}{\ignorespaces Confronto Baseline vs Knowledge Distillation ($T=8$, $\alpha =0.7$).}}{17}{table.caption.9}\protected@file@percent }
+\newlabel{tab:kd_main}{{6.2}{17}{Confronto Baseline vs Knowledge Distillation ($T=8$, $\alpha =0.7$)}{table.caption.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6.1}{\ignorespaces Curve di accuracy per il training di KD con $T=8$, $\alpha =0.7$. Si noti il gap tipico tra training accuracy ($\sim $98\%) e validation accuracy ($\sim $64\%), indicativo della difficoltà del task con split group-aware.}}{18}{figure.caption.10}\protected@file@percent }
+\newlabel{fig:kd_accuracy}{{6.1}{18}{Curve di accuracy per il training di KD con $T=8$, $\alpha =0.7$. Si noti il gap tipico tra training accuracy ($\sim $98\%) e validation accuracy ($\sim $64\%), indicativo della difficoltà del task con split group-aware}{figure.caption.10}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6.2}{\ignorespaces Andamento della loss durante il training di KD ($T=8$).}}{18}{figure.caption.11}\protected@file@percent }
+\newlabel{fig:kd_loss}{{6.2}{18}{Andamento della loss durante il training di KD ($T=8$)}{figure.caption.11}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.3}Temperature Scaling Ablation}{18}{section.6.3}\protected@file@percent }
+\newlabel{sec:temp_sweep}{{6.3}{18}{Temperature Scaling Ablation}{section.6.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6.3}{\ignorespaces Ablazione sulla temperatura con $\alpha = 0.7$ fisso.}}{18}{table.caption.12}\protected@file@percent }
+\newlabel{tab:temp_ablation}{{6.3}{18}{Ablazione sulla temperatura con $\alpha = 0.7$ fisso}{table.caption.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3.1}Analisi dei Risultati}{19}{subsection.6.3.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6.3}{\ignorespaces Delta di accuratezza (test) rispetto al baseline per ciascuna temperatura. Trend crescente con la temperatura, con picco a $T = 20$.}}{19}{figure.caption.13}\protected@file@percent }
+\newlabel{fig:delta_temp}{{6.3}{19}{Delta di accuratezza (test) rispetto al baseline per ciascuna temperatura. Trend crescente con la temperatura, con picco a $T = 20$}{figure.caption.13}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.4}Attention Transfer}{19}{section.6.4}\protected@file@percent }
+\newlabel{sec:at_results}{{6.4}{19}{Attention Transfer}{section.6.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6.4}{\ignorespaces Risultati dell'Attention Transfer (split group-aware). Le colonne $\beta _s$ e $\beta _t$ indicano i pesi delle componenti spaziale e temporale.}}{19}{table.caption.14}\protected@file@percent }
+\newlabel{tab:at_results}{{6.4}{19}{Risultati dell'Attention Transfer (split group-aware). Le colonne $\beta _s$ e $\beta _t$ indicano i pesi delle componenti spaziale e temporale}{table.caption.14}{}}
+\citation{zagoruyko2017paying}
+\citation{furlanello2018born}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4.1}Analisi del Risultato Negativo}{20}{subsection.6.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6.5}Born-Again Networks}{20}{section.6.5}\protected@file@percent }
+\newlabel{sec:born_again}{{6.5}{20}{Born-Again Networks}{section.6.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6.5}{\ignorespaces Risultati Born-Again Networks (3 generazioni successive). Si noti il collasso progressivo delle prestazioni.}}{20}{table.caption.15}\protected@file@percent }
+\newlabel{tab:born_again}{{6.5}{20}{Risultati Born-Again Networks (3 generazioni successive). Si noti il collasso progressivo delle prestazioni}{table.caption.15}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.5.1}Collasso Generazionale}{20}{subsection.6.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6.6}Visualizzazione t-SNE dello Spazio Latente}{21}{section.6.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6.4}{\ignorespaces t-SNE a tre colonne: Teacher (ResNet-50), Baseline (MobileNet3D), e Student distillato (KD $T=8$). Il teacher mostra cluster compatti e ben separati; il baseline presenta sovrapposizione; lo student distillato mostra una struttura intermedia migliorata.}}{21}{figure.caption.16}\protected@file@percent }
+\newlabel{fig:tsne_main}{{6.4}{21}{t-SNE a tre colonne: Teacher (ResNet-50), Baseline (MobileNet3D), e Student distillato (KD $T=8$). Il teacher mostra cluster compatti e ben separati; il baseline presenta sovrapposizione; lo student distillato mostra una struttura intermedia migliorata}{figure.caption.16}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6.5}{\ignorespaces t-SNE per i modelli con Attention Transfer: il pattern di clustering è simile a quello del baseline, confermando che l'AT non ha prodotto miglioramenti strutturali nelle rappresentazioni.}}{21}{figure.caption.17}\protected@file@percent }
+\newlabel{fig:tsne_at}{{6.5}{21}{t-SNE per i modelli con Attention Transfer: il pattern di clustering è simile a quello del baseline, confermando che l'AT non ha prodotto miglioramenti strutturali nelle rappresentazioni}{figure.caption.17}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6.6}{\ignorespaces t-SNE delle Born-Again Networks: la struttura non migliora nelle generazioni successive, coerentemente con il collasso osservato nelle metriche quantitative.}}{21}{figure.caption.18}\protected@file@percent }
+\newlabel{fig:tsne_born}{{6.6}{21}{t-SNE delle Born-Again Networks: la struttura non migliora nelle generazioni successive, coerentemente con il collasso osservato nelle metriche quantitative}{figure.caption.18}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.7}Confusion Matrix}{22}{section.6.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6.7}{\ignorespaces Confusion matrix Top-25 del Teacher: errori concentrati su classi semanticamente ambigue.}}{22}{figure.caption.19}\protected@file@percent }
+\newlabel{fig:cm_teacher}{{6.7}{22}{Confusion matrix Top-25 del Teacher: errori concentrati su classi semanticamente ambigue}{figure.caption.19}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6.8}{\ignorespaces Confusion matrix Top-25 del Baseline: pattern di confusione più diffusi, in particolare tra azioni sportive visivamente simili.}}{23}{figure.caption.20}\protected@file@percent }
+\newlabel{fig:cm_baseline}{{6.8}{23}{Confusion matrix Top-25 del Baseline: pattern di confusione più diffusi, in particolare tra azioni sportive visivamente simili}{figure.caption.20}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6.9}{\ignorespaces Confusion matrix Top-25 del migliore Student distillato (KD $T=20$): pattern di errore ridotto rispetto al baseline, evidenziando un trasferimento effettivo della conoscenza discriminativa del teacher.}}{24}{figure.caption.21}\protected@file@percent }
+\newlabel{fig:cm_kd_best}{{6.9}{24}{Confusion matrix Top-25 del migliore Student distillato (KD $T=20$): pattern di errore ridotto rispetto al baseline, evidenziando un trasferimento effettivo della conoscenza discriminativa del teacher}{figure.caption.21}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.8}Riepilogo Quantitativo}{24}{section.6.8}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6.6}{\ignorespaces Riepilogo completo di tutti gli esperimenti con split group-aware.}}{24}{table.caption.22}\protected@file@percent }
+\newlabel{tab:summary}{{6.6}{24}{Riepilogo completo di tutti gli esperimenti con split group-aware}{table.caption.22}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {7}Conclusioni e Lavori Futuri}{25}{chapter.7}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:conclusioni}{{7}{25}{Conclusioni e Lavori Futuri}{chapter.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.1}Sintesi dei Risultati}{25}{section.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.2}Lezioni Apprese}{25}{section.7.2}\protected@file@percent }
+\citation{romero2015fitnets}
+\bibstyle{plain}
+\bibdata{references}
+\@writefile{toc}{\contentsline {section}{\numberline {7.3}Limiti del Lavoro}{26}{section.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.4}Lavori Futuri}{26}{section.7.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.5}Dichiarazione sull'Uso dell'IA}{26}{section.7.5}\protected@file@percent }
+\bibcite{feichtenhofer2019slowfast}{1}
+\bibcite{furlanello2018born}{2}
+\bibcite{he2016deep}{3}
+\bibcite{hinton2015distilling}{4}
+\bibcite{kay2017kinetics}{5}
+\bibcite{loshchilov2019adamw}{6}
+\bibcite{romero2015fitnets}{7}
+\bibcite{sandler2018mobilenetv2}{8}
+\bibcite{soomro2012ucf101}{9}
+\bibcite{vandermaaten2008tsne}{10}
+\bibcite{zagoruyko2017paying}{11}
+\gdef \@abspage@last{29}

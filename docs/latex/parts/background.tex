@@ -1,0 +1,101 @@
+\chapter{Background Teorico}
+\label{chap:background}
+
+Questo capitolo presenta i fondamenti teorici su cui si basa il progetto, dalla formulazione classica della Knowledge Distillation alla sua estensione con Attention Transfer per feature video 3D.
+
+\section{Knowledge Distillation}
+
+La Knowledge Distillation, introdotta da Hinton et al.~\cite{hinton2015distilling}, è una tecnica di compressione dei modelli in cui un modello ``teacher'' ad alta capacità guida l'addestramento di un modello ``student'' più leggero. L'intuizione fondamentale è che le \textit{soft predictions} del teacher --- ovvero le distribuzioni di probabilità ottenute applicando un parametro di temperatura $T$ ai logit --- trasportano informazioni strutturali più ricche rispetto alle sole etichette discrete. Ad esempio, un teacher che assegna una piccola probabilità alla classe ``PullUps'' quando classifica ``PushUps'' comunica allo student una relazione semantica tra queste due azioni.
+
+\subsection{Formulazione Matematica}
+
+Dato un input $\mathbf{x}$, il teacher produce i logit $\mathbf{z}^T$ e lo student i logit $\mathbf{z}^S$. Le distribuzioni softmax temperate sono definite come:
+
+\begin{equation}
+    \sigma_i(\mathbf{z}, T) = \frac{\exp(z_i / T)}{\sum_j \exp(z_j / T)}
+\end{equation}
+
+dove $T$ è la \textit{temperatura}. Per $T = 1$ si ottiene il softmax standard; per $T > 1$ la distribuzione diventa più uniforme, rivelando le relazioni inter-classe codificate nei logit del teacher.
+
+La loss di Knowledge Distillation combina due componenti:
+
+\begin{equation}
+    \mathcal{L}_{\text{KD}} = \alpha \cdot T^2 \cdot D_{\text{KL}}\!\left(\sigma(\mathbf{z}^S/T) \;\|\; \sigma(\mathbf{z}^T/T)\right) + (1 - \alpha) \cdot \mathcal{L}_{\text{CE}}(\mathbf{z}^S, y)
+    \label{eq:kd_loss}
+\end{equation}
+
+dove $\alpha \in [0, 1]$ bilancia il contributo della distillazione rispetto alla cross-entropy sulle hard labels $y$, e il fattore $T^2$ compensa la riduzione dei gradienti causata dalla temperatura.
+
+\subsection{Ruolo della Temperatura}
+
+La temperatura $T$ controlla la ``morbidezza'' delle distribuzioni di probabilità:
+\begin{itemize}
+    \item \textbf{$T = 1$}: le predizioni del teacher sono peaky, dominano le classi con i logit più alti; le relazioni inter-classe sono nascoste.
+    \item \textbf{$T \gg 1$}: le distribuzioni si appiattiscono, rendendo visibili le correlazioni tra classi poco probabili (es. azioni simili).
+    \item \textbf{$T \to \infty$}: la distribuzione converge a una uniforme, perdendo ogni informazione discriminativa.
+\end{itemize}
+
+Esiste quindi un punto ottimale che bilancia la ricchezza informativa del segnale soft con il rischio di distribuzioni troppo piatte. In questo progetto, è stato condotto uno studio ablativo sistematico con $T \in \{1, 5, 10, 20\}$ (Sezione~\ref{sec:temp_sweep}).
+
+\section{Attention Transfer}
+\label{sec:at_background}
+
+L'Attention Transfer (AT), proposto da Zagoruyko e Komodakis~\cite{zagoruyko2017paying}, estende la KD classica al trasferimento delle \textit{feature map intermedie}. L'idea è che la distribuzione spaziale delle attivazioni --- ovvero ``dove'' la rete presta attenzione --- trasporti informazioni discriminative complementari rispetto ai soli logit finali.
+
+\subsection{AT per Immagini 2D}
+
+Per la classificazione di immagini, dato un tensore di feature $F \in \mathbb{R}^{B \times C \times H \times W}$, la mappa di attenzione spaziale è definita come:
+
+\begin{equation}
+    A(F) = \text{normalize}\left(\sum_{c=1}^{C} |F_c|^2\right) \in \mathbb{R}^{B \times H \times W}
+\end{equation}
+
+La loss di AT è la somma pesata degli errori MSE tra le mappe di attenzione di teacher e student su $L$ coppie di livelli:
+
+\begin{equation}
+    \mathcal{L}_{\text{AT}} = \beta \sum_{i=1}^{L} \text{MSE}\!\left(A(F^T_i),\, A(F^S_i)\right)
+\end{equation}
+
+\subsection{Estensione al Video 3D: Attenzione Spaziale e Temporale}
+\label{sec:at_3d}
+
+Nel dominio video, le feature intermedie sono tensori a 5 dimensioni: $F \in \mathbb{R}^{B \times C \times T \times H \times W}$, dove $T$ è la dimensione temporale. Un'estensione diretta dell'AT 2D al 3D --- sommare sui canali e appiattire tutte le dimensioni rimanenti --- è teoricamente scorretta perché mescola informazioni spaziali e temporali semanticamente diverse.
+
+La soluzione adottata in questo progetto decompone l'attenzione in due componenti:
+
+\textbf{Mappa di Attenzione Spaziale} (``dove guardare''):
+\begin{equation}
+    A_{\text{spaziale}}(F) = \text{L2\_norm}\left(\text{mean}_{c,t}(F^2)\right) \in \mathbb{R}^{B \times H \cdot W}
+\end{equation}
+
+Calcola la media su canali e tempo, producendo una heatmap spaziale che riassume \textit{dove} la rete presta attenzione per l'intera clip.
+
+\textbf{Mappa di Attenzione Temporale} (``quando attivare''):
+\begin{equation}
+    A_{\text{temporale}}(F) = \text{L2\_norm}\left(\text{mean}_{c,h,w}(F^2)\right) \in \mathbb{R}^{B \times T}
+\end{equation}
+
+Calcola la media su canali e dimensioni spaziali, producendo un profilo temporale che riassume \textit{quando} si raggiungono i picchi di attivazione.
+
+La loss AT combinata è:
+\begin{equation}
+    \mathcal{L}_{\text{AT}} = \beta_s \sum_i \text{MSE}(A^T_{s,i}, A^S_{s,i}) + \beta_t \sum_i \text{MSE}(A^T_{t,i}, A^S_{t,i})
+\end{equation}
+
+dove $\beta_s$ e $\beta_t$ sono coefficienti indipendenti per le componenti spaziale e temporale.
+
+\subsection{Loss Totale di Distillation con AT}
+
+La funzione obiettivo complessiva combina KD e AT:
+\begin{equation}
+    \mathcal{L}_{\text{totale}} = \underbrace{\alpha T^2 D_{\text{KL}} + (1-\alpha)\mathcal{L}_{\text{CE}}}_{\text{Knowledge Distillation}} + \underbrace{\beta_s \sum_i \text{MSE}(A^T_{s,i}, A^S_{s,i})}_{\text{AT Spaziale}} + \underbrace{\beta_t \sum_i \text{MSE}(A^T_{t,i}, A^S_{t,i})}_{\text{AT Temporale}}
+    \label{eq:total_loss}
+\end{equation}
+
+\section{Born-Again Networks}
+
+Le Born-Again Networks~\cite{furlanello2018born} estendono la KD alla self-distillation iterativa: uno student addestrato diventa il teacher della generazione successiva, con l'obiettivo di raffinare progressivamente le rappresentazioni interne pur mantenendo la stessa architettura. In uno scenario MobileNet$\rightarrow$MobileNet, i tensori intermedi tra teacher e student hanno la stessa dimensionalità, eliminando la necessità di interpolazione nelle mappe di attenzione. Tuttavia, come verrà discusso nella Sezione~\ref{sec:born_again}, questo approccio è soggetto a \textit{collasso generazionale} se gli iperparametri non sono calibrati per la minore confidenza del teacher non-oracolo.
+
+\section{Visualizzazione t-SNE}
+
+La t-SNE (t-distributed Stochastic Neighbor Embedding)~\cite{vandermaaten2008tsne} è una tecnica di riduzione dimensionale non lineare che preserva la struttura locale dei dati ad alta dimensionalità. In questo progetto viene utilizzata per proiettare gli embedding pre-classificatore dei modelli teacher, baseline e student distillato in uno spazio bidimensionale, permettendo di visualizzare il grado di separazione inter-classe e la coesione intra-classe appresa da ciascun modello.

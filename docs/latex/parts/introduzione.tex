@@ -1,0 +1,30 @@
+\chapter{Introduzione}
+
+Il riconoscimento di azioni in sequenze video rappresenta una delle sfide più rilevanti nel campo della visione artificiale. La crescente domanda di applicazioni in tempo reale su dispositivi mobili --- dalla sorveglianza intelligente alla realtà aumentata --- richiede modelli che siano al contempo accurati e computazionalmente efficienti. Tuttavia, le architetture di reti neurali 3D che raggiungono le migliori prestazioni su benchmark consolidati, come la 3D ResNet-50~\cite{he2016deep,feichtenhofer2019slowfast}, presentano decine di milioni di parametri e un costo computazionale proibitivo per il deployment su dispositivi con risorse limitate.
+
+La \textbf{Knowledge Distillation} (KD)~\cite{hinton2015distilling} offre un paradigma elegante per affrontare questo problema: un modello ``teacher'' pesante e ad alta capacità trasferisce la propria conoscenza ad un modello ``student'' leggero, guidandone l'apprendimento tramite distribuzioni di probabilità morbide (\textit{soft targets}) piuttosto che le sole etichette rigide (\textit{hard labels}). Lo student apprende così una rappresentazione più ricca rispetto a quanto otterrebbe dal solo addestramento supervisionato, pur mantenendo un'architettura compatta adatta al deployment mobile.
+
+\section{Obiettivi del Progetto}
+
+Questo progetto implementa una pipeline completa di Knowledge Distillation per comprimere un modello 3D ResNet-50 (\textit{slow\_r50}), pre-addestrato su Kinetics-400~\cite{kay2017kinetics} e sottoposto a fine-tuning su UCF-101~\cite{soomro2012ucf101}, in un modello ultra-leggero MobileNet3D~\cite{sandler2018mobilenetv2}, ottenendo una riduzione dei parametri nell'ordine di 10$\times$. Gli obiettivi specifici, definiti dal Track~6 del corso, sono:
+
+\begin{enumerate}
+    \item \textbf{Teacher Model}: valutare e consolidare un 3D ResNet-50 pre-addestrato come upper bound di accuratezza.
+    \item \textbf{Baseline}: addestrare un MobileNet3D da zero con sole hard labels, definendo il lower bound dell'architettura.
+    \item \textbf{Knowledge Transfer}: riaddestrare lo student con le distribuzioni soft del teacher.
+    \item \textbf{Valutazione}: confrontare Teacher, Baseline e Student distillato in termini di accuratezza, dimensione del modello e latenza di inferenza.
+\end{enumerate}
+
+Oltre agli obiettivi minimi, il progetto affronta tre \textit{Extra Objectives}:
+
+\begin{itemize}
+    \item \textbf{Temperature Scaling Ablation}: studio dell'effetto della temperatura $T \in \{1, 5, 10, 20\}$ sulle soft distributions del teacher.
+    \item \textbf{Attention Transfer}: estensione della KD al trasferimento delle mappe di attivazione intermedie spaziali e temporali~\cite{zagoruyko2017paying}.
+    \item \textbf{Visualizzazione t-SNE}: analisi qualitativa dello spazio latente per illustrare le differenze strutturali tra teacher e student~\cite{vandermaaten2008tsne}.
+\end{itemize}
+
+Inoltre, sono stati esplorati approcci avanzati non richiesti dal track, quali le \textit{Born-Again Networks}~\cite{furlanello2018born} (self-distillation iterativa MobileNet$\rightarrow$MobileNet).
+
+\section{Organizzazione della Relazione}
+
+La relazione è strutturata come segue. Il Capitolo~\ref{chap:background} presenta i fondamenti teorici della Knowledge Distillation e dell'Attention Transfer, con particolare attenzione all'estensione al dominio video 3D. Il Capitolo~\ref{chap:architetture} descrive le architetture dei modelli teacher e student. Il Capitolo~\ref{chap:dataset} illustra il dataset UCF-101, il protocollo sperimentale adottato e il problema del \textit{data leakage} affrontato durante lo sviluppo. Il Capitolo~\ref{chap:implementazione} dettaglia la pipeline di addestramento e le funzioni di loss implementate. Il Capitolo~\ref{chap:risultati} presenta i risultati sperimentali con analisi quantitativa e qualitativa. Infine, il Capitolo~\ref{chap:conclusioni} sintetizza i contributi e delinea i possibili sviluppi futuri.
