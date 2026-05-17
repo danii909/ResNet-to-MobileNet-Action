@@ -1,0 +1,48 @@
+\babel@toc {italian}{}\relax 
+\babel@toc {italian}{}\relax 
+\contentsline {chapter}{\numberline {1}Ambiente e Simulazione}{3}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Griglia}{3}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Magazzini}{3}{section.1.2}%
+\contentsline {section}{\numberline {1.3}Ciclo di simulazione}{4}{section.1.3}%
+\contentsline {section}{\numberline {1.4}Gestione delle collisioni}{4}{section.1.4}%
+\contentsline {section}{\numberline {1.5}Prenotazione degli ingressi ai magazzini}{5}{section.1.5}%
+\contentsline {section}{\numberline {1.6}Comunicazione}{5}{section.1.6}%
+\contentsline {chapter}{\numberline {2}Agenti}{6}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Attributi}{6}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Percezione (Sense)}{6}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Macchina a stati}{6}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Pathfinding}{7}{section.2.4}%
+\contentsline {section}{\numberline {2.5}Consegna}{7}{section.2.5}%
+\contentsline {subsection}{\numberline {2.5.1}Strategie di ricarica}{7}{subsection.2.5.1}%
+\contentsline {chapter}{\numberline {3}Strategie di Esplorazione}{8}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Funzioni condivise della classe base}{8}{section.3.1}%
+\contentsline {paragraph}{Priority-Move.}{8}{section*.4}%
+\contentsline {paragraph}{Selezione ingresso di consegna.}{8}{section*.5}%
+\contentsline {paragraph}{Find-Frontier.}{8}{section*.6}%
+\contentsline {paragraph}{Coverage targets.}{9}{section*.7}%
+\contentsline {paragraph}{Guadagno informativo (\textit {information gain}).}{9}{section*.8}%
+\contentsline {section}{\numberline {3.2}Smart Random Walk}{9}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Frontier}{10}{section.3.3}%
+\contentsline {section}{\numberline {3.4}Greedy}{10}{section.3.4}%
+\contentsline {section}{\numberline {3.5}Sector}{10}{section.3.5}%
+\contentsline {section}{\numberline {3.6}Repulsion}{10}{section.3.6}%
+\contentsline {chapter}{\numberline {4}Interfaccia Utente}{11}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Barra laterale}{11}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Tab Simulazione}{11}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Tab Benchmark}{12}{section.4.3}%
+\contentsline {chapter}{\numberline {5}Risultati Sperimentali}{13}{chapter.5}%
+\contentsline {paragraph}{Nota sulla configurazione del test esaustivo.}{13}{section*.9}%
+\contentsline {section}{\numberline {5.1}Mappa A}{13}{section.5.1}%
+\contentsline {subsection}{\numberline {5.1.1}Test esaustivo --- 32.768 simulazioni}{13}{subsection.5.1.1}%
+\contentsline {subsection}{\numberline {5.1.2}Test randomizzato --- 100$\times $3 seed}{15}{subsection.5.1.2}%
+\contentsline {section}{\numberline {5.2}Mappa B}{17}{section.5.2}%
+\contentsline {subsection}{\numberline {5.2.1}Test esaustivo --- 32.768 simulazioni}{17}{subsection.5.2.1}%
+\contentsline {subsection}{\numberline {5.2.2}Test randomizzato --- 100$\times $3 seed}{19}{subsection.5.2.2}%
+\contentsline {section}{\numberline {5.3}Considerazioni sui risultati}{22}{section.5.3}%
+\contentsline {subsection}{\numberline {5.3.1}Confronto tra le due mappe}{22}{subsection.5.3.1}%
+\contentsline {subsection}{\numberline {5.3.2}Impatto della strategia dominante}{22}{subsection.5.3.2}%
+\contentsline {subsection}{\numberline {5.3.3}Team eterogenei vs omogenei}{22}{subsection.5.3.3}%
+\contentsline {subsection}{\numberline {5.3.4}Impatto del raggio di visibilit\`a}{23}{subsection.5.3.4}%
+\contentsline {subsection}{\numberline {5.3.5}Robustezza ai seed casuali}{23}{subsection.5.3.5}%
+\contentsline {subsection}{\numberline {5.3.6}Riepilogo}{23}{subsection.5.3.6}%
+\contentsline {subsection}{\numberline {5.3.7}Riepilogo delle euristiche utilizzate}{25}{subsection.5.3.7}%
