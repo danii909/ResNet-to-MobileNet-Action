@@ -74,7 +74,7 @@ if ba_label in names:
     ax.annotate('Teacher: KD T=8 α=0.7',
                 xy=(ba_idx - 0.2, ba_val - 0.1), xycoords='data',
                 xytext=(-35, 40), textcoords='offset points',
-                arrowprops=dict(arrowstyle="->", color="blue", lw=1.5, connectionstyle="arc3,rad=-0.1"),
+                arrowprops=dict(arrowstyle="->", color="blue", lw=1.5, connectionstyle="arc3,rad=-0.1", shrinkB=12),
                 fontsize=9.5, fontweight='semibold', color='black',
                 ha='right', va='center',
                 bbox=dict(boxstyle='round,pad=0.2', fc='w', ec='none', alpha=0.7))
@@ -136,7 +136,7 @@ if ba_label in names:
     ax.annotate('Teacher: KD T=8 α=0.7',
                 xy=(ba_idx - 0.2, ba_val - 0.1), xycoords='data',
                 xytext=(-35, 40), textcoords='offset points',
-                arrowprops=dict(arrowstyle="->", color="blue", lw=1.5, connectionstyle="arc3,rad=-0.1"),
+                arrowprops=dict(arrowstyle="->", color="blue", lw=1.5, connectionstyle="arc3,rad=-0.1", shrinkB=12),
                 fontsize=9.5, fontweight='semibold', color='black',
                 ha='right', va='center',
                 bbox=dict(boxstyle='round,pad=0.2', fc='w', ec='none', alpha=0.7))
