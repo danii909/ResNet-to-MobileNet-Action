@@ -16,7 +16,7 @@ except Exception as e:
 
 # Percorsi ai risultati (adatta se necessario)
 PROJECT_ROOT = Path(__file__).parent.parent
-RESULTS_ROOT = PROJECT_ROOT / "results" / "Train-eval-test-split (group-aware)"
+RESULTS_ROOT = PROJECT_ROOT / "results" / "Training" / "Train-eval-test-split (group-aware)"
 PREDS_DIR = RESULTS_ROOT / "predictions"
 OUT_DIR = RESULTS_ROOT / "figures"
 OUT_DIR.mkdir(parents=True, exist_ok=True)

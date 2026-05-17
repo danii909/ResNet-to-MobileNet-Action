@@ -17,7 +17,7 @@ sns.set(style="whitegrid")
 
 # Navigate to project root (parent of scripts directory)
 PROJECT_ROOT = Path(__file__).parent.parent
-ROOT = PROJECT_ROOT / "results" / "Train-eval-test-split (group-aware)"
+ROOT = PROJECT_ROOT / "results" / "Training" / "Train-eval-test-split (group-aware)"
 if not ROOT.exists():
     print(f"Root folder not found: {ROOT}")
     sys.exit(1)
