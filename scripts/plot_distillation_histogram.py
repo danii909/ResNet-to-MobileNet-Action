@@ -62,7 +62,7 @@ ax.set_title("MObileNet3D — Test Set Top-1 Accuracy", fontsize=13, fontweight=
 ax.set_ylim(min(top1s) - 2, max(top1s) + 2.5)
 #ax.legend(fontsize=10)
 ax.grid(axis="y", alpha=0.3)
-ax.annotate('Teacher top-1: 88.82%', 
+ax.annotate('Teacher (ResNet50): top-1: 88.82%', 
             xy=(1.0, 1.0), xycoords='axes fraction',
             xytext=(-10, -10), textcoords='offset points',
             size=14, ha='right', va='top',
@@ -123,7 +123,7 @@ ax.set_title("MObileNet3D — Test Set Top-5 Accuracy", fontsize=13, fontweight=
 ax.set_ylim(min(top5s) - 2, max(top5s) + 2.5)
 #ax.legend(fontsize=10)
 ax.grid(axis="y", alpha=0.3)
-ax.annotate('Teacher top-5: 98.18%', 
+ax.annotate('Teacher (ResNet50) top-5: 98.18%', 
             xy=(1.0, 1.0), xycoords='axes fraction',
             xytext=(-10, -10), textcoords='offset points',
             size=14, ha='right', va='top',
