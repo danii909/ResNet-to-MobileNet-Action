@@ -1,0 +1,53 @@
+# Cross-Frame Knowledge Distillation: Teacher 24f → Student 16f
+#
+# The Teacher (ResNet-50) processes full 24-frame clips for maximum temporal context.
+# The Student (MobileNet3D) receives 16-frame sub-sampled clips, optimizing for
+# inference throughput while learning to mimic the Teacher's 24-frame predictions.
+#
+# Key difference from standard KD: the `student_frames` field under `distillation`
+# activates on-the-fly temporal sub-sampling inside the training loop.
+
+seed: 42
+
+model:
+  type: student
+  width_mult: 1.0
+
+dataset:
+  data_dir: data/ucf101
+  num_classes: 101
+  num_frames: 24          # DataLoader produces 24-frame clips (Teacher's resolution)
+  crop_size: 112
+  backend: hf
+  resize_short_side: 128
+  use_random_resized_crop: false
+  color_jitter_strength: 0.1
+  random_erasing_prob: 0.05
+  max_temporal_stride: 1
+
+training:
+  mode: distillation
+  epochs: 60
+  batch_size: 16
+  num_workers: 4
+  optimizer: adamw
+  lr: 0.0005
+  momentum: 0.9
+  weight_decay: 0.01
+  scheduler: cosine
+  grad_clip: 1.0
+  mixed_precision: true
+  label_smoothing: 0.05
+  kd_warmup_epochs: 5
+  checkpoint_dir: experiments/checkpoints
+
+distillation:
+  teacher_checkpoint: experiments/checkpoints/slurm-train-eval-4495/teacher_24f_lightaug/teacher_finetune_best.pth
+  temperature: 20.0
+  alpha: 0.7
+  student_frames: 16      # Cross-Frame KD: sub-sample to 16 frames for Student
+
+logging:
+  enabled: true
+  project: kd-action-recognition
+  run_name: crossframe-kd-t24-s16
