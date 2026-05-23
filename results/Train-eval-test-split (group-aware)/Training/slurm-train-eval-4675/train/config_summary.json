@@ -1,0 +1,44 @@
+{
+  "profile": "student_distillation",
+  "mode": "distillation",
+  "seed": 42,
+  "model": {
+    "type": "student",
+    "width_mult": 1.0,
+    "pretrained": null,
+    "freeze_backbone": null
+  },
+  "dataset": {
+    "data_dir": "data/ucf101",
+    "num_classes": 101,
+    "num_frames": 24,
+    "crop_size": 112,
+    "backend": "hf",
+    "use_eval_split": null,
+    "eval_ratio": null,
+    "split_seed": null
+  },
+  "training": {
+    "epochs": 60,
+    "batch_size": 16,
+    "num_workers": 4,
+    "optimizer": "adamw",
+    "lr": 0.0005,
+    "momentum": 0.9,
+    "weight_decay": 0.01,
+    "scheduler": "cosine",
+    "grad_clip": 1.0,
+    "mixed_precision": true
+  },
+  "distillation": {
+    "teacher_type": null,
+    "teacher_checkpoint": "experiments/checkpoints/slurm-train-eval-4495/teacher_24f_lightaug/teacher_finetune_best.pth",
+    "temperature": 20.0,
+    "alpha": 0.7,
+    "at_beta_spatial": null,
+    "at_beta_temporal": null,
+    "teacher_keys": null,
+    "student_keys": null,
+    "student_frames": 16
+  }
+}
