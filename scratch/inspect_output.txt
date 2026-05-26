@@ -1,0 +1,197 @@
+
+--- Slide 1 ---
+Shape 0: Type=AUTO_SHAPE (1), Name='Rectangle 1', Left=0.00, Top=0.00, Width=0.35, Height=7.50
+Shape 1: Type=TEXT_BOX (17), Name='TextBox 2', Left=1.00, Top=1.40, Width=7.20, Height=4.50
+  Text: DEEP LEARNING — ADVANCED MODELS AND METHODS | Knowledge Distillationfor Mobile Action Recognition | Compressing a 3D ResNet-50 teacher into a MobileNet3D studentfor efficient video action recognition on UCF-101
+Shape 2: Type=AUTO_SHAPE (1), Name='Rounded Rectangle 3', Left=8.90, Top=1.10, Width=3.60, Height=5.20
+Shape 3: Type=TEXT_BOX (17), Name='TextBox 4', Left=9.15, Top=1.35, Width=3.10, Height=4.80
+  Text: PROJECT INFO | AUTHOR | Daniele Barbagallo | STUDENT ID | 1000015334 | ADVISOR | Prof. Antonino Furnari | COURSE | Deep Learning (AMM) | UNIVERSITY | Università di Catania — DMI | YEAR | 2025 / 2026
+
+--- Slide 2 ---
+Shape 0: Type=TEXT_BOX (17), Name='TextBox 1', Left=0.80, Top=0.35, Width=11.00, Height=0.30
+  Text: INTRODUCTION
+Shape 1: Type=TEXT_BOX (17), Name='TextBox 2', Left=0.80, Top=0.60, Width=11.00, Height=0.75
+  Text: Objective & Capacity Gap
+Shape 2: Type=AUTO_SHAPE (1), Name='Rectangle 3', Left=0.80, Top=1.45, Width=1.60, Height=0.03
+Shape 3: Type=TEXT_BOX (17), Name='TextBox 4', Left=0.80, Top=1.70, Width=5.80, Height=5.00
+  Text: PROBLEM STATEMENT | Goal: compress a large 3D ResNet-50 teacher (~128 MB, pretrained on Kinetics-400) into a MobileNet3D student (~9.5 MB) for on-device video action recognition. | The student trained from scratch with standard cross-entropy reaches only 59.48% Test Top-1 — a 29.3 pp gap with the teacher (88.82%). | Knowledge Distillation transfers the teacher's soft probability distributions to the student, closing part of this gap without changing the student architecture or increasing its size.
+Shape 4: Type=AUTO_SHAPE (1), Name='Rounded Rectangle 5', Left=7.20, Top=1.70, Width=5.30, Height=4.50
+Shape 5: Type=TEXT_BOX (17), Name='TextBox 6', Left=7.40, Top=2.00, Width=4.90, Height=0.50
+  Text: REFERENCE MODELS
+Shape 6: Type=TABLE (19), Name='Table 7', Left=7.40, Top=2.70, Width=4.90, Height=1.50
+Shape 7: Type=TEXT_BOX (17), Name='TextBox 8', Left=7.40, Top=4.50, Width=4.90, Height=1.50
+  Text: The teacher is pretrained and fine-tuned; the student is trained from scratch. All experiments use the official UCF-101 test set for final evaluation.
+
+--- Slide 3 ---
+Shape 0: Type=TEXT_BOX (17), Name='TextBox 1', Left=0.80, Top=0.35, Width=11.00, Height=0.30
+  Text: METHODOLOGY
+Shape 1: Type=TEXT_BOX (17), Name='TextBox 2', Left=0.80, Top=0.60, Width=11.00, Height=0.75
+  Text: Experimental Setup
+Shape 2: Type=AUTO_SHAPE (1), Name='Rectangle 3', Left=0.80, Top=1.45, Width=1.60, Height=0.03
+Shape 3: Type=TEXT_BOX (17), Name='TextBox 4', Left=0.80, Top=1.70, Width=5.60, Height=5.00
+  Text: TRAINING CONFIGURATION | •  Optimizer: AdamW (weight decay 0.01) | •  Scheduler: cosine annealing (LR 5e-4 student, 7e-4 teacher) | •  Epochs: 60 (+ 10-epoch CE-only warmup for KD runs) | •  Batch size: 16 (student) / 12 (teacher) | •  Mixed precision (AMP), label smoothing 0.1, gradient clipping 1.0 | •  Augmentation: resize short-side 128 → crop 112×112, horizontal flip, color jitter 0.1, random erasing 0.05
+Shape 4: Type=AUTO_SHAPE (1), Name='Rounded Rectangle 5', Left=6.90, Top=1.70, Width=5.60, Height=4.60
+Shape 5: Type=TEXT_BOX (17), Name='TextBox 6', Left=7.15, Top=2.00, Width=5.10, Height=4.00
+  Text: GROUP-AWARE EVALUATION SPLIT | UCF-101 videos are organized into groups originating from the same source clip. A naïve random split leaks correlated frames between train and eval sets, inflating metrics. | The training set was split at the group level (regex on video IDs) to create a clean evaluation partition (20 %), preventing data leakage. | This reduced validation accuracy from fictitiously high values to a realistic 60-65 % range, ensuring reliable model selection.
+
+--- Slide 4 ---
+Shape 0: Type=TEXT_BOX (17), Name='TextBox 1', Left=0.80, Top=0.35, Width=11.00, Height=0.30
+  Text: KNOWLEDGE DISTILLATION
+Shape 1: Type=TEXT_BOX (17), Name='TextBox 2', Left=0.80, Top=0.60, Width=11.00, Height=0.75
+  Text: Logit-Based Knowledge Distillation
+Shape 2: Type=AUTO_SHAPE (1), Name='Rectangle 3', Left=0.80, Top=1.45, Width=1.60, Height=0.03
+Shape 3: Type=TEXT_BOX (17), Name='TextBox 4', Left=0.80, Top=1.70, Width=5.60, Height=5.00
+  Text: METHOD | The distillation loss combines standard cross-entropy on hard labels with KL divergence on temperature-softened teacher logits. | A 10-epoch warmup phase (CE-only) stabilizes student weights before soft targets are introduced. | STANDARD CONFIGURATION | T = 8,  α = 0.7  →  Test Top-1: 64.31 %  (+4.83 pp vs baseline) | The best overall result was obtained at higher temperatures (see next slide). The distilled student retains the same 9.5 MB size and inference latency.
+Shape 4: Type=AUTO_SHAPE (1), Name='Rounded Rectangle 5', Left=6.90, Top=1.70, Width=5.60, Height=4.60
+Shape 5: Type=TEXT_BOX (17), Name='TextBox 6', Left=7.15, Top=2.00, Width=5.10, Height=0.50
+  Text: RESULTS COMPARISON
+Shape 6: Type=TABLE (19), Name='Table 7', Left=7.15, Top=2.70, Width=5.10, Height=2.20
+Shape 7: Type=TEXT_BOX (17), Name='TextBox 8', Left=7.15, Top=5.20, Width=5.10, Height=1.00
+  Text: Distillation closes roughly one-sixth of the teacher-student gap, with zero size or latency overhead.
+
+--- Slide 5 ---
+Shape 0: Type=TEXT_BOX (17), Name='TextBox 1', Left=0.80, Top=0.35, Width=11.00, Height=0.30
+  Text: KNOWLEDGE DISTILLATION
+Shape 1: Type=TEXT_BOX (17), Name='TextBox 2', Left=0.80, Top=0.60, Width=3.68, Height=0.47
+  Text: Top1 - test accuracy
+Shape 2: Type=AUTO_SHAPE (1), Name='Rectangle 3', Left=0.80, Top=1.45, Width=1.60, Height=0.03
+Shape 3: Type=AUTO_SHAPE (1), Name='Rounded Rectangle 5', Left=0.48, Top=1.73, Width=12.38, Height=4.23
+Shape 4: Type=PICTURE (13), Name='Immagine 18', Left=0.65, Top=1.86, Width=11.89, Height=3.96
+  Picture: width=11.89, height=3.96
+
+--- Slide 6 ---
+Shape 0: Type=TEXT_BOX (17), Name='TextBox 1', Left=0.80, Top=0.35, Width=11.00, Height=0.30
+  Text: KNOWLEDGE DISTILLATION
+Shape 1: Type=TEXT_BOX (17), Name='TextBox 2', Left=0.80, Top=0.60, Width=3.71, Height=0.47
+  Text: Top5 – test accuracy
+Shape 2: Type=AUTO_SHAPE (1), Name='Rectangle 3', Left=0.80, Top=1.45, Width=1.60, Height=0.03
+Shape 3: Type=AUTO_SHAPE (1), Name='Rounded Rectangle 5', Left=0.48, Top=1.73, Width=12.38, Height=4.23
+Shape 4: Type=PICTURE (13), Name='Immagine 18', Left=0.65, Top=1.86, Width=11.88, Height=3.96
+  Picture: width=11.88, height=3.96
+
+--- Slide 7 ---
+Shape 0: Type=TEXT_BOX (17), Name='TextBox 1', Left=0.80, Top=0.35, Width=11.00, Height=0.30
+  Text: KNOWLEDGE DISTILLATION
+Shape 1: Type=TEXT_BOX (17), Name='TextBox 2', Left=0.80, Top=0.60, Width=11.00, Height=0.75
+  Text: Temperature Ablation (α = 0.7)
+Shape 2: Type=AUTO_SHAPE (1), Name='Rectangle 3', Left=0.80, Top=1.45, Width=1.60, Height=0.03
+Shape 3: Type=AUTO_SHAPE (1), Name='Rounded Rectangle 4', Left=0.80, Top=1.70, Width=5.80, Height=4.60
+Shape 4: Type=TEXT_BOX (17), Name='TextBox 5', Left=1.00, Top=2.00, Width=5.40, Height=0.50
+  Text: TEMPERATURE SWEEP
+Shape 5: Type=TABLE (19), Name='Table 6', Left=1.00, Top=2.60, Width=5.40, Height=2.80
+Shape 6: Type=TEXT_BOX (17), Name='TextBox 7', Left=7.20, Top=2.25, Width=5.30, Height=5.00
+  Text: ANALYSIS | Performance improves monotonically with temperature. At T = 20 the student reaches 65.85 % Test Top-1, a +6.37 pp gain over the baseline. | Higher temperatures smooth the teacher's output distribution, exposing inter-class similarity structure that a lower-capacity student can approximate more effectively. | At T = 1 the softmax outputs are nearly one-hot, which provides minimal additional signal beyond the hard labels.
+
+--- Slide 8 ---
+Shape 0: Type=TEXT_BOX (17), Name='TextBox 1', Left=0.80, Top=0.35, Width=11.00, Height=0.30
+  Text: ADVANCED METHODS
+Shape 1: Type=TEXT_BOX (17), Name='TextBox 2', Left=0.80, Top=0.60, Width=11.00, Height=0.75
+  Text: Attention Transfer
+Shape 2: Type=AUTO_SHAPE (1), Name='Rectangle 3', Left=0.80, Top=1.45, Width=1.60, Height=0.03
+Shape 3: Type=TEXT_BOX (17), Name='TextBox 4', Left=0.80, Top=1.70, Width=5.60, Height=5.00
+  Text: APPROACH & DEBUGGING | Spatial and temporal attention maps (L2-normalized squared activations) are aligned between teacher and student at matched network stages. | An initial configuration targeted block 5 of the teacher, which corresponds to the classification head (2D tensor). This produced constant attention maps and silently nullified the AT loss. | After correcting the mapping to [2,3,4] → [2,4,6], the AT loss became active but still resulted in a performance regression. | CONFIGURATIONS TESTED | •  Symmetric: β_s = 0.05, β_t = 0.05 | •  Temporal-Only: β_s = 0.0, β_t = 0.10
+Shape 4: Type=AUTO_SHAPE (1), Name='Rounded Rectangle 5', Left=6.90, Top=1.70, Width=5.60, Height=4.60
+Shape 5: Type=TEXT_BOX (17), Name='TextBox 6', Left=7.15, Top=2.00, Width=5.10, Height=0.50
+  Text: RESULTS
+Shape 6: Type=TABLE (19), Name='Table 7', Left=7.15, Top=2.60, Width=5.10, Height=1.60
+Shape 7: Type=TEXT_BOX (17), Name='TextBox 8', Left=7.15, Top=4.40, Width=5.10, Height=2.00
+  Text: INTERPRETATION | The spatial capacity gap between standard 3D convolutions (teacher) and depthwise separable convolutions (student) makes it structurally difficult for the student to reproduce the teacher's attention patterns. | The additional AT loss acts as an over-constraint, degrading performance rather than helping convergence.
+
+--- Slide 9 ---
+Shape 0: Type=TEXT_BOX (17), Name='TextBox 1', Left=0.80, Top=0.35, Width=11.00, Height=0.30
+  Text: ADVANCED METHODS
+Shape 1: Type=TEXT_BOX (17), Name='TextBox 2', Left=0.80, Top=0.60, Width=11.00, Height=0.75
+  Text: Born-Again Networks
+Shape 2: Type=AUTO_SHAPE (1), Name='Rectangle 3', Left=0.80, Top=1.45, Width=1.60, Height=0.03
+Shape 3: Type=TEXT_BOX (17), Name='TextBox 4', Left=0.80, Top=1.70, Width=5.60, Height=5.00
+  Text: SETUP | Iterative self-distillation with homogeneous architecture (MobileNet3D → MobileNet3D) across 3 generations. | Starting point (Gen 0): logit-distilled student (KD T = 8, 64.31 % Test Top-1). | Mode: distillation_at — logit KD combined with Attention Transfer using identical feature keys [2, 4, 6] on both sides (no interpolation needed). | Hyper-parameters: T = 2.5, α = 0.5, β_s = β_t = 0.05, 50 epochs, AdamW, cosine scheduler. | ANALYSIS | Despite the architectural homogeneity allowing exact feature alignment (a theoretical advantage over cross-architecture AT), a progressive collapse is observed: Gen 3 drops below the scratch baseline. | The non-oracle teacher (64 % accuracy) provides soft targets that already carry significant noise. Each successive generation inherits and amplifies these prediction errors, degrading the training signal.
+Shape 4: Type=AUTO_SHAPE (1), Name='Rounded Rectangle 5', Left=6.90, Top=1.70, Width=5.60, Height=3.32
+Shape 5: Type=TEXT_BOX (17), Name='TextBox 6', Left=7.15, Top=2.00, Width=5.10, Height=0.50
+  Text: GENERATIONAL COLLAPSE
+Shape 6: Type=TABLE (19), Name='Table 7', Left=7.15, Top=2.60, Width=5.10, Height=2.00
+
+--- Slide 10 ---
+Shape 0: Type=TEXT_BOX (17), Name='TextBox 1', Left=0.80, Top=0.35, Width=11.00, Height=0.30
+  Text: QUALITATIVE ANALYSIS
+Shape 1: Type=TEXT_BOX (17), Name='TextBox 2', Left=0.80, Top=0.60, Width=11.00, Height=0.75
+  Text: Latent Space — t-SNE Visualization
+Shape 2: Type=AUTO_SHAPE (1), Name='Rectangle 3', Left=0.80, Top=1.45, Width=1.60, Height=0.03
+Shape 3: Type=TEXT_BOX (17), Name='TextBox 4', Left=0.80, Top=5.11, Width=11.57, Height=2.07
+  Text: EMBEDDING ANALYSIS | t-SNE projections of pre-classifier embeddings (10 random classes). | Teacher: compact, well-separated clusters. | Baseline: significant inter-class overlap. | Best student (KD T = 20): visibly tighter clustering and improved class separation compared to the baseline, confirming effective structural knowledge transfer.
+Shape 4: Type=AUTO_SHAPE (1), Name='Rounded Rectangle 5', Left=1.28, Top=1.70, Width=10.77, Height=3.28
+Shape 5: Type=PICTURE (13), Name='Picture 6', Left=1.54, Top=1.99, Width=10.26, Height=2.71
+  Picture: width=10.26, height=2.71
+
+--- Slide 11 ---
+Shape 0: Type=TEXT_BOX (17), Name='TextBox 1', Left=0.80, Top=0.35, Width=11.00, Height=0.30
+  Text: EFFICIENCY
+Shape 1: Type=TEXT_BOX (17), Name='TextBox 2', Left=0.80, Top=0.60, Width=11.00, Height=0.75
+  Text: Cross-Frame Distillation
+Shape 2: Type=AUTO_SHAPE (1), Name='Rectangle 3', Left=0.80, Top=1.45, Width=1.60, Height=0.03
+Shape 3: Type=TEXT_BOX (17), Name='TextBox 4', Left=0.80, Top=1.70, Width=5.60, Height=5.00
+  Text: MOTIVATION | Processing 24 frames per clip is computationally expensive for edge and mobile deployments. | A 16-frame student (Model B) reduces temporal computation by 33.3 % compared to the 24-frame model (Model A). | The benchmark measures whether this theoretical saving translates into real wall-clock speedup on GPU and CPU hardware.
+Shape 4: Type=AUTO_SHAPE (1), Name='Rounded Rectangle 5', Left=6.90, Top=1.70, Width=5.60, Height=2.97
+Shape 5: Type=TEXT_BOX (17), Name='TextBox 6', Left=7.15, Top=2.00, Width=5.10, Height=4.00
+  Text: BENCHMARK PROTOCOL | •  Dataset: official UCF-101 test split (3 783 clips) | •  Metric: pure forward-pass latency (I/O excluded) | •  GPU: NVIDIA L40S with CUDA synchronization | •  CPU: sub-sampled (50 batches BS=1, 20 batches BS=8) to avoid excessive runtime while preserving statistical accuracy | •  Server: DMI Cluster (gnode10)
+
+--- Slide 12 ---
+Shape 0: Type=AUTO_SHAPE (1), Name='Rounded Rectangle 7', Left=0.65, Top=1.97, Width=12.03, Height=4.52
+Shape 1: Type=TEXT_BOX (17), Name='TextBox 1', Left=0.80, Top=0.35, Width=11.00, Height=0.30
+  Text: QUALITATIVE ANALYSIS
+Shape 2: Type=TEXT_BOX (17), Name='TextBox 2', Left=0.80, Top=0.60, Width=5.97, Height=0.47
+  Text: GPU Benchmark — NVIDIA L40S
+Shape 3: Type=AUTO_SHAPE (1), Name='Rectangle 3', Left=0.80, Top=1.45, Width=1.60, Height=0.03
+Shape 4: Type=PICTURE (13), Name='Immagine 8', Left=0.90, Top=2.17, Width=5.59, Height=4.11
+  Picture: width=5.59, height=4.11
+Shape 5: Type=PICTURE (13), Name='Immagine 10', Left=6.67, Top=2.15, Width=5.77, Height=4.12
+  Picture: width=5.77, height=4.12
+
+--- Slide 13 ---
+Shape 0: Type=AUTO_SHAPE (1), Name='Rounded Rectangle 7', Left=0.80, Top=1.77, Width=6.00, Height=4.71
+Shape 1: Type=TEXT_BOX (17), Name='TextBox 1', Left=0.80, Top=0.35, Width=11.00, Height=0.30
+  Text: QUALITATIVE ANALYSIS
+Shape 2: Type=TEXT_BOX (17), Name='TextBox 2', Left=0.80, Top=0.60, Width=5.97, Height=0.47
+  Text: GPU Benchmark — NVIDIA L40S
+Shape 3: Type=AUTO_SHAPE (1), Name='Rectangle 3', Left=0.80, Top=1.45, Width=1.60, Height=0.03
+Shape 4: Type=PICTURE (13), Name='Immagine 5', Left=0.94, Top=1.95, Width=5.71, Height=4.37
+  Picture: width=5.71, height=4.37
+Shape 5: Type=TABLE (19), Name='Table 5', Left=7.05, Top=2.24, Width=5.60, Height=2.20
+Shape 6: Type=TEXT_BOX (17), Name='TextBox 6', Left=7.05, Top=4.64, Width=5.60, Height=0.79
+  Text: At batch sizes ≥ 8 the GPU is fully saturated and Model B achieves 37-40 % latency savings, exceeding the linear 33 % frame reduction. | At BS = 1, PCIe kernel-launch overhead dominates, limiting the gain to ~11 
+
+--- Slide 14 ---
+Shape 0: Type=AUTO_SHAPE (1), Name='Rounded Rectangle 7', Left=0.65, Top=1.97, Width=12.03, Height=4.52
+Shape 1: Type=TEXT_BOX (17), Name='TextBox 1', Left=0.80, Top=0.35, Width=11.00, Height=0.30
+  Text: QUALITATIVE ANALYSIS
+Shape 2: Type=TEXT_BOX (17), Name='TextBox 2', Left=0.80, Top=0.60, Width=5.94, Height=0.47
+  Text: CPU Benchmark — NVIDIA L40S
+Shape 3: Type=AUTO_SHAPE (1), Name='Rectangle 3', Left=0.80, Top=1.45, Width=1.60, Height=0.03
+Shape 4: Type=PICTURE (13), Name='Immagine 8', Left=0.98, Top=2.17, Width=5.44, Height=4.11
+  Picture: width=5.44, height=4.11
+Shape 5: Type=PICTURE (13), Name='Immagine 10', Left=6.86, Top=2.15, Width=5.37, Height=4.12
+  Picture: width=5.37, height=4.12
+
+--- Slide 15 ---
+Shape 0: Type=AUTO_SHAPE (1), Name='Rounded Rectangle 7', Left=0.80, Top=1.77, Width=6.00, Height=4.71
+Shape 1: Type=TEXT_BOX (17), Name='TextBox 1', Left=0.80, Top=0.35, Width=11.00, Height=0.30
+  Text: QUALITATIVE ANALYSIS
+Shape 2: Type=TEXT_BOX (17), Name='TextBox 2', Left=0.80, Top=0.60, Width=5.88, Height=0.47
+  Text: CPU Benchmark — NVIDIA L40S
+Shape 3: Type=AUTO_SHAPE (1), Name='Rectangle 3', Left=0.80, Top=1.45, Width=1.60, Height=0.03
+Shape 4: Type=PICTURE (13), Name='Immagine 5', Left=0.95, Top=1.94, Width=5.70, Height=4.37
+  Picture: width=5.70, height=4.37
+Shape 5: Type=TABLE (19), Name='Table 5', Left=7.08, Top=2.30, Width=5.60, Height=1.50
+Shape 6: Type=TEXT_BOX (17), Name='TextBox 6', Left=7.08, Top=4.20, Width=5.60, Height=2.50
+  Text: Without PCIe overhead, the speedup directly reflects the arithmetic FLOP reduction. | Single-clip latency drops from 137 ms to 89 ms, crossing below the 100 ms real-time threshold and making the 16-frame model suitable for edge deployment.
+
+--- Slide 16 ---
+Shape 0: Type=TEXT_BOX (17), Name='TextBox 1', Left=0.80, Top=0.35, Width=11.00, Height=0.30
+  Text: SUMMARY
+Shape 1: Type=TEXT_BOX (17), Name='TextBox 2', Left=0.80, Top=0.60, Width=11.00, Height=0.75
+  Text: Conclusions
+Shape 2: Type=AUTO_SHAPE (1), Name='Rectangle 3', Left=0.80, Top=1.45, Width=1.60, Height=0.03
+Shape 3: Type=TEXT_BOX (17), Name='TextBox 4', Left=0.80, Top=1.70, Width=5.60, Height=5.00
+  Text: SPEED-ACCURACY TRADE-OFF | Model A (24 f, KD T = 20):  65.85 % Test Top-1  (+6.37 pp vs baseline) | Model B (16 f, cross-frame):  62.68 % Test Top-1 | Saving 37-40 % latency costs only 3.17 pp in accuracy compared to Model A.  Model B still exceeds the scratch baseline by +3.20 pp.
+Shape 4: Type=AUTO_SHAPE (1), Name='Rounded Rectangle 5', Left=6.90, Top=1.70, Width=5.60, Height=4.60
+Shape 5: Type=TEXT_BOX (17), Name='TextBox 6', Left=7.15, Top=2.00, Width=5.10, Height=4.00
+  Text: KEY FINDINGS | •  Logit-based KD is effective and zero-overhead; higher temperatures better bridge large capacity gaps. | •  Attention Transfer is limited by the architectural mismatch between standard and depthwise convolutions. | •  Born-Again self-distillation is sensitive to temperature calibration and prone to generational collapse without an oracle teacher. | •  Cross-frame distillation offers an effective latency-accuracy trade-off for real-time edge deployment.
