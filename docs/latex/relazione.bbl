@@ -1,0 +1,71 @@
+\begin{thebibliography}{10}
+
+\bibitem{feichtenhofer2019slowfast}
+Christoph Feichtenhofer, Haoqi Fan, Jitendra Malik, and Kaiming He.
+\newblock Slowfast networks for video recognition.
+\newblock In {\em IEEE/CVF International Conference on Computer Vision (ICCV)},
+  pages 6202--6211, 2019.
+
+\bibitem{furlanello2018born}
+Tommaso Furlanello, Zachary~C. Lipton, Michael Tschannen, Laurent Itti, and
+  Anima Anandkumar.
+\newblock Born again neural networks.
+\newblock In {\em International Conference on Machine Learning (ICML)}, pages
+  1607--1616, 2018.
+
+\bibitem{he2016deep}
+Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun.
+\newblock Deep residual learning for image recognition.
+\newblock In {\em IEEE/CVF Conference on Computer Vision and Pattern
+  Recognition (CVPR)}, pages 770--778, 2016.
+
+\bibitem{hinton2015distilling}
+Geoffrey Hinton, Oriol Vinyals, and Jeff Dean.
+\newblock Distilling the knowledge in a neural network.
+\newblock In {\em NeurIPS Workshop on Deep Learning}, 2015.
+
+\bibitem{kay2017kinetics}
+Will Kay, Joao Carreira, Karen Simonyan, Brian Zhang, Chloe Hillier, Sudheendra
+  Vijayanarasimhan, Fabio Viola, Tim Green, Trevor Back, Paul Natsev, Mustafa
+  Suleyman, and Andrew Zisserman.
+\newblock The kinetics human action video dataset.
+\newblock In {\em arXiv preprint arXiv:1705.06950}, 2017.
+
+\bibitem{loshchilov2019adamw}
+Ilya Loshchilov and Frank Hutter.
+\newblock Decoupled weight decay regularization.
+\newblock In {\em International Conference on Learning Representations (ICLR)},
+  2019.
+
+\bibitem{romero2015fitnets}
+Adriana Romero, Nicolas Ballas, Samira~Ebrahimi Kahou, Antoine Chassang, Carlo
+  Gatta, and Yoshua Bengio.
+\newblock Fitnets: Hints for thin deep nets.
+\newblock {\em arXiv preprint arXiv:1412.6550}, 2015.
+
+\bibitem{sandler2018mobilenetv2}
+Mark Sandler, Andrew Howard, Menglong Zhu, Andrey Zhmoginov, and Liang-Chieh
+  Chen.
+\newblock Mobilenetv2: Inverted residuals and linear bottlenecks.
+\newblock In {\em IEEE/CVF Conference on Computer Vision and Pattern
+  Recognition (CVPR)}, pages 4510--4520, 2018.
+
+\bibitem{soomro2012ucf101}
+Khurram Soomro, Amir~Roshan Zamir, and Mubarak Shah.
+\newblock Ucf101: A dataset of 101 human actions classes from videos in the
+  wild.
+\newblock {\em arXiv preprint arXiv:1212.0402}, 2012.
+
+\bibitem{vandermaaten2008tsne}
+Laurens van~der Maaten and Geoffrey Hinton.
+\newblock Visualizing data using t-sne.
+\newblock {\em Journal of Machine Learning Research}, 9:2579--2605, 2008.
+
+\bibitem{zagoruyko2017paying}
+Sergey Zagoruyko and Nikos Komodakis.
+\newblock Paying more attention to attention: Improving the performance of
+  convolutional neural networks via attention transfer.
+\newblock In {\em International Conference on Learning Representations (ICLR)},
+  2017.
+
+\end{thebibliography}

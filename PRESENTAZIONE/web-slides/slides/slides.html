@@ -1,0 +1,1918 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Distillation for Mobile Action Recognition</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+
+  <style>
+    :root {
+      --white: #ffffff;
+      --off-white: #f5f6f8;
+      --gray-50: #f9fafb;
+      --gray-100: #f0f1f3;
+      --gray-200: #e2e4e8;
+      --gray-300: #c9cdd4;
+      --gray-500: #6b7280;
+      --gray-700: #374151;
+      --gray-900: #111827;
+
+      --navy: #1b2e4a;
+      --navy-light: #2d4a7c;
+      --blue: #2563eb;
+      --blue-bg: #eff6ff;
+      --green: #16a34a;
+      --green-bg: #f0fdf4;
+      --red: #dc2626;
+      --red-bg: #fef2f2;
+      --amber: #d97706;
+      --amber-bg: #fffbeb;
+      --purple: #7c3aed;
+      --purple-bg: #f5f3ff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    body {
+      background: var(--white);
+      color: var(--gray-900);
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* === PRESENTATION === */
+    #deck {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 1600px;
+      height: 900px;
+      background: var(--white);
+      border-radius: 0;
+      box-shadow: none;
+      padding: 52px 64px 44px;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(var(--deck-scale, 1));
+      transform-origin: center;
+      transition: opacity .35s ease;
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, -50%) scale(var(--deck-scale, 1));
+      z-index: 10;
+    }
+
+    /* === HEADER === */
+    .s-tag {
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--navy-light);
+      margin-bottom: 8px;
+    }
+
+    .s-title {
+      font-size: 2.1rem;
+      font-weight: 800;
+      color: var(--gray-900);
+      line-height: 1.15;
+      letter-spacing: -.5px;
+    }
+
+    .s-sub {
+      font-size: 1.1rem;
+      color: var(--gray-500);
+      margin-top: 4px;
+      font-weight: 400;
+    }
+
+    .s-head {
+      margin-bottom: 32px;
+      padding-bottom: 18px;
+      border-bottom: 2px solid var(--gray-200);
+    }
+
+    /* === BODY === */
+    .s-body {
+      flex: 1;
+      display: flex;
+      gap: 40px;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* === HELPERS === */
+    .big-num {
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .mid-num {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .label {
+      font-size: .75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--gray-500);
+    }
+
+    .body-text {
+      font-size: 1.15rem;
+      line-height: 1.65;
+      color: var(--gray-700);
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: .8rem;
+      font-weight: 600;
+    }
+
+    .kpi {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 20px 16px;
+      background: var(--gray-50);
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .panel {
+      background: var(--gray-50);
+      border-radius: 14px;
+      padding: 28px 32px;
+    }
+
+    .math-formula {
+      font-family: "Cambria Math", "STIX Two Math", "Times New Roman", serif;
+      font-style: italic;
+      font-size: 1.36rem;
+      line-height: 1.6;
+      color: var(--gray-900);
+      background: white;
+      border-radius: 8px;
+      padding: 16px 20px;
+    }
+
+    .img-frame {
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .img-frame img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    /* === TABLE === */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      font-size: .8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--navy);
+      padding: 14px 14px;
+      text-align: left;
+      background: var(--blue-bg);
+      border-bottom: 2px solid var(--navy);
+    }
+
+    td {
+      font-size: 1.05rem;
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--gray-200);
+      color: var(--gray-700);
+    }
+
+    .hl td {
+      font-weight: 700;
+      color: var(--gray-900);
+      background: #dbeafe;
+    }
+
+    /* === CHART BARS === */
+    .bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 0;
+      height: 100%;
+    }
+
+    .bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      height: 100%;
+      padding: 0 8px;
+    }
+
+    .bar-col .val {
+      font-size: .95rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .bar-col .fill {
+      width: 100%;
+      border-radius: 6px 6px 0 0;
+      transition: filter .2s;
+    }
+
+    .bar-col .fill:hover {
+      filter: brightness(1.08);
+    }
+
+    .bar-col .lbl {
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      margin-top: 10px;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .ref-line {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--green);
+    }
+
+    .ref-label {
+      position: absolute;
+      left: 12px;
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--green);
+      background: var(--white);
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid #bbf7d0;
+      transform: translateY(-50%);
+      z-index: 3;
+    }
+
+    /* === TITLE SLIDE === */
+    .slide-title-page {
+      justify-content: center;
+      align-items: flex-start;
+      gap: 16px;
+      background: linear-gradient(135deg, #fff 0%, #eff6ff 60%, #e0e7ff 100%);
+      padding-left: 72px;
+    }
+
+    .slide-title-page .course-badge {
+      background: var(--navy);
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      padding: 10px 24px;
+      border-radius: 8px;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+    }
+
+    .slide-title-page h1 {
+      font-size: 4.8rem;
+      font-weight: 900;
+      color: var(--navy);
+      line-height: 1.08;
+      letter-spacing: -1.5px;
+      max-width: 1200px;
+    }
+
+    .slide-title-page .tagline {
+      font-size: 1.6rem;
+      color: var(--gray-500);
+      max-width: 1000px;
+      line-height: 1.55;
+      margin-top: 6px;
+    }
+
+    .slide-title-page .meta-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+      margin-top: 36px;
+      padding-top: 36px;
+      border-top: 2px solid var(--gray-200);
+      width: 100%;
+    }
+
+    .slide-title-page .meta-grid .mi {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .slide-title-page .meta-grid .mi .ml {
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--amber);
+    }
+
+    .slide-title-page .meta-grid .mi .mv {
+      font-size: 1.25rem;
+      color: var(--gray-900);
+      margin-top: 6px;
+      font-weight: 500;
+    }
+
+    .slide-title-page .meta-grid .mi a {
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* === NAV === */
+    #nav {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      width: 93vw;
+      max-width: 1440px;
+      margin-top: 18px;
+      z-index: 20;
+    }
+
+    .nbtn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--white);
+      border: 1px solid var(--gray-300);
+      color: var(--gray-700);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, .06);
+    }
+
+    .nbtn:hover:not(:disabled) {
+      background: var(--navy);
+      color: #fff;
+      border-color: var(--navy);
+    }
+
+    .nbtn:disabled {
+      opacity: .25;
+      cursor: not-allowed;
+    }
+
+    .nav-mid {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex-grow: 1;
+      max-width: 360px;
+    }
+
+    .pbar-bg {
+      width: 100%;
+      height: 5px;
+      background: var(--gray-200);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .pbar-fg {
+      height: 100%;
+      width: 0%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--navy), var(--blue));
+      transition: width .3s;
+    }
+
+    .ptext {
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      letter-spacing: .5px;
+    }
+
+    .keys {
+      font-size: .72rem;
+      color: var(--gray-500);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .keys kbd {
+      background: var(--gray-100);
+      border: 1px solid var(--gray-300);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .68rem;
+    }
+
+    /* === PRINT === */
+    @media print {
+      @page {
+        size: landscape;
+        margin: 0;
+      }
+
+      body {
+        background: #fff !important;
+        overflow: visible !important;
+        height: auto !important;
+      }
+
+      #deck {
+        width: 100% !important;
+        height: auto !important;
+        max-width: none !important;
+        max-height: none !important;
+        display: block !important;
+      }
+
+      .slide {
+        position: relative !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        transform: none !important;
+        page-break-after: always !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+      }
+
+      #nav {
+        display: none !important;
+      }
+    }
+
+    /* === IMAGE ZOOM MODAL === */
+    .slide img {
+      cursor: zoom-in;
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .slide img:hover {
+      transform: scale(1.015);
+    }
+
+    #image-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(17, 24, 39, 0.95);
+      z-index: 99999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-out;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    #image-modal.active {
+      opacity: 1;
+    }
+
+    #modal-img {
+      max-width: 95vw;
+      max-height: 95vh;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.5);
+      transform: scale(0.95);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    #image-modal.active #modal-img {
+      transform: scale(1);
+    }
+
+    #modal-caption {
+      position: absolute;
+      top: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      gap: 180px;
+      justify-content: center;
+      align-items: center;
+      z-index: 100000;
+      background: rgba(17, 24, 39, 0.9);
+      padding: 12px 36px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+      pointer-events: none;
+    }
+
+    #modal-caption div {
+      font-size: 1.25rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="deck">
+
+        <div class="slide slide-title-page active" id="s1">
+      <div class="course-badge">Deep Learning — DL26</div>
+      <h1>Knowledge Distillation<br>for Mobile Action Recognition</h1>
+      <p class="tagline">
+        Compressing a 3D&nbsp;ResNet&#8209;50 into an ultra-lightweight MobileNet3D on UCF&#8209;101 via logit-based,
+        attention transfer, and cross-frame distillation.
+      </p>
+      <div class="meta-grid">
+        <div class="mi"><span class="ml">Student</span><span class="mv">Daniele Barbagallo</span></div>
+        <div class="mi"><span class="ml">Track</span><span class="mv">Track 6 — KD for Mobile Action Recognition</span>
+        </div>
+        <div class="mi"><span class="ml">Institution</span><span class="mv">Università degli Studi di Catania —
+            DMI</span></div>
+        <div class="mi"><span class="ml">Advisor</span><span class="mv">Prof. Antonino Furnari</span></div>
+        <div class="mi"><span class="ml">Repository</span><span class="mv"><a
+              href="https://github.com/danii909/KD_Project" target="_blank">github.com/danii909/KD_Project</a></span>
+        </div>
+      </div>
+    </div>
+
+<div class="slide" id="s2">
+      <div class="s-head">
+        <div class="s-tag">Problem &amp; Motivation</div>
+        <h2 class="s-title">The Capacity Gap</h2>
+      </div>
+      <div class="s-body" style="flex-direction: column; justify-content: center; gap: 48px;">
+        <p class="body-text"
+          style="font-size: 1.4rem; line-height: 1.75; color: var(--gray-800); text-align: center; max-width: 1050px; margin: 12px auto 0;">
+          <strong>Goal:</strong> Compress a 3D ResNet-50 teacher (pretrained on Kinetics-400) into a MobileNet3D student
+          for on-device video action recognition on UCF-101 (101 classes).
+        </p>
+
+        <div style="display: flex; align-items: stretch; justify-content: space-between; gap: 36px; width: 100%;">
+          <div
+            style="flex: 1; text-align: center; padding: 44px 28px; background: var(--blue-bg); border-radius: 18px; border: 1px solid rgba(37, 99, 235, 0.12); display: flex; flex-direction: column; justify-content: center;">
+            <div class="label" style="color: var(--navy); font-size: 0.95rem; letter-spacing: 2px;">Teacher</div>
+            <div style="font-size: 1.85rem; font-weight: 800; color: var(--navy); margin: 14px 0 8px;">3D ResNet-50
+            </div>
+            <div class="big-num" style="color: var(--navy); font-size: 4.4rem;">88.82%</div>
+            <div class="label" style="margin-top: 10px; color: var(--navy-light); font-size: 0.85rem;">Test Accuracy
+            </div>
+            <div style="margin-top: 20px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+              <span class="pill"
+                style="background: rgba(37, 99, 235, 0.12); color: var(--navy); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">~128
+                MB</span>
+              <span class="pill"
+                style="background: rgba(220, 38, 38, 0.10); color: var(--red); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">6.21
+                ms GPU</span>
+              <span class="pill"
+                style="background: rgba(220, 38, 38, 0.10); color: var(--red); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">76.6
+                ms CPU</span>
+            </div>
+          </div>
+
+          <div
+            style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 220px; text-align: center; padding: 0 12px; gap: 24px;">
+
+            <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+              <span class="label"
+                style="color: var(--red); letter-spacing: 1.5px; font-weight: 700; font-size: 0.85rem;">Accuracy
+                Gap</span>
+              <span class="big-num" style="color: var(--red); font-size: 3rem; margin: 4px 0 6px;">−29.3 pp</span>
+              <svg width="150" height="20" viewBox="0 0 150 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 10H136" stroke="var(--red)" stroke-width="3.5" stroke-linecap="round" />
+                <path d="M128 4L139 10L128 16" stroke="var(--red)" stroke-width="3.5" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </div>
+
+
+            <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+              <span class="label"
+                style="color: var(--green); letter-spacing: 1.5px; font-weight: 700; font-size: 0.85rem;">Size
+                Reduction</span>
+              <span class="big-num" style="color: var(--green); font-size: 3rem; margin: 4px 0 6px;">13.5×</span>
+              <svg width="150" height="20" viewBox="0 0 150 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 10H136" stroke="var(--green)" stroke-width="3.5" stroke-linecap="round" />
+                <path d="M128 4L139 10L128 16" stroke="var(--green)" stroke-width="3.5" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </div>
+
+            <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+              <span class="label"
+                style="color: var(--green); letter-spacing: 1.5px; font-weight: 700; font-size: 0.85rem;">Inference
+                Speed</span>
+              <span class="big-num" style="color: var(--green); font-size: 3rem; margin: 4px 0 2px;">1.82×</span>
+              <span style="font-size: 0.78rem; color: var(--gray-400); font-weight: 500; margin-bottom: 6px;">1.66× CPU
+                &nbsp;(BS=1)</span>
+              <svg width="150" height="20" viewBox="0 0 150 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 10H136" stroke="var(--green)" stroke-width="3.5" stroke-linecap="round" />
+                <path d="M128 4L139 10L128 16" stroke="var(--green)" stroke-width="3.5" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </div>
+          </div>
+
+          <div
+            style="flex: 1; text-align: center; padding: 44px 28px; background: var(--gray-50); border-radius: 18px; border: 1px solid var(--gray-200); display: flex; flex-direction: column; justify-content: center;">
+            <div class="label" style="font-size: 0.95rem; letter-spacing: 2px; color: var(--gray-500);">Student</div>
+            <div style="font-size: 1.85rem; font-weight: 800; color: var(--gray-900); margin: 14px 0 8px;">MobileNet3D
+            </div>
+            <div class="big-num" style="color: var(--gray-500); font-size: 4.4rem;">59.48%</div>
+            <div class="label" style="margin-top: 10px; color: var(--gray-500); font-size: 0.85rem;">Test Accuracy
+            </div>
+            <div style="margin-top: 20px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+              <span class="pill"
+                style="background: var(--gray-200); color: var(--gray-700); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">~9.5
+                MB</span>
+              <span class="pill"
+                style="background: rgba(22, 163, 74, 0.12); color: var(--green); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">3.42
+                ms GPU</span>
+              <span class="pill"
+                style="background: rgba(22, 163, 74, 0.12); color: var(--green); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">46.1
+                ms CPU</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<div class="slide" id="s3">
+      <div class="s-head">
+        <div class="s-tag">Experimental Setup</div>
+        <h2 class="s-title">UCF-101 &amp; Group-Aware Split</h2>
+      </div>
+      <div class="s-body">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 16px; justify-content: center;">
+
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;">
+            <div class="kpi">
+              <div class="mid-num" style="color: var(--navy);">101</div>
+              <div class="label">Action Classes</div>
+            </div>
+            <div class="kpi">
+              <div class="mid-num" style="color: var(--purple);">13,320</div>
+              <div class="label">Video Clips</div>
+            </div>
+            <div class="kpi">
+              <div class="mid-num" style="color: var(--amber);">24f</div>
+              <div class="label">@ 112×112 px</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div style="font-size: 1.2rem; font-weight: 700; color: var(--navy); margin-bottom: 6px;">Original Split
+              Structure</div>
+            <p class="body-text">
+              UCF-101 is officially divided only into Train and Test partitions, <strong>lacking an actual validation
+                set</strong> required for proper model selection.
+            </p>
+          </div>
+
+          <div class="panel">
+            <div style="font-size: 1.2rem; font-weight: 700; color: var(--red); margin-bottom: 6px;">⚠️ Data Leakage
+              Risk
+            </div>
+            <p class="body-text">
+              Correlated clips from the same source video share actor &amp; background.
+              Random splits cause <strong>spatial leakage</strong> and inflated accuracy.
+            </p>
+          </div>
+
+          <div class="panel">
+            <div style="font-size: 1.2rem; font-weight: 700; color: var(--green); margin-bottom: 6px;">✅ Group-Aware
+              Split</div>
+            <p class="body-text">
+              Isolation by group ID (<code
+                style="font-family: 'JetBrains Mono'; color: var(--green); font-weight: 600;">_gXX_</code>).
+              No source video shared across Train / Val / Test.
+            </p>
+          </div>
+        </div>
+
+        <div style="width: 380px; display: flex; flex-direction: column; justify-content: center;">
+          <div class="panel" style="height: 100%; display: flex; flex-direction: column;">
+            <div
+              style="font-size: 1rem; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px; color: var(--gray-700);">
+              New Split Distribution</div>
+            <div
+              style="flex: 1; display: flex; align-items: flex-end; justify-content: space-around; gap: 12px; padding-bottom: 8px;">
+              <div
+                style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; width: 30%;">
+                <div style="font-size: 1.1rem; font-weight: 700; color: var(--navy); margin-bottom: 6px;">7,630</div>
+                <div
+                  style="width: 100%; height: 82%; border-radius: 8px 8px 0 0; background: linear-gradient(180deg, var(--navy), #93c5fd);">
+                </div>
+                <div style="font-size: .9rem; font-weight: 600; color: var(--gray-500); margin-top: 10px;">
+                  Train<br><span style="font-weight: 400; font-size: .8rem;">57.3%</span></div>
+              </div>
+              <div
+                style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; width: 30%;">
+                <div style="font-size: 1.1rem; font-weight: 700; color: var(--purple); margin-bottom: 6px;">1,907</div>
+                <div
+                  style="width: 100%; height: 20%; border-radius: 8px 8px 0 0; background: linear-gradient(180deg, var(--purple), #c4b5fd);">
+                </div>
+                <div style="font-size: .9rem; font-weight: 600; color: var(--gray-500); margin-top: 10px;">Val<br><span
+                    style="font-weight: 400; font-size: .8rem;">14.3%</span></div>
+              </div>
+              <div
+                style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; width: 30%;">
+                <div style="font-size: 1.1rem; font-weight: 700; color: var(--amber); margin-bottom: 6px;">3,783</div>
+                <div
+                  style="width: 100%; height: 40%; border-radius: 8px 8px 0 0; background: linear-gradient(180deg, var(--amber), #fde68a);">
+                </div>
+                <div style="font-size: .9rem; font-weight: 600; color: var(--gray-500); margin-top: 10px;">Test<br><span
+                    style="font-weight: 400; font-size: .8rem;">28.4%</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<div class="slide" id="s4">
+  <div class="s-head">
+    <div class="s-tag">Failure Cases</div>
+    <h2 class="s-title">Augmentation Trade-off &amp; Data Leakage</h2>
+    <div class="s-sub">All tests: T=10, a=0.7, 24f &nbsp;·&nbsp; Why light augmentation was chosen</div>
+  </div>
+  <div class="s-body" style="flex-direction: column; gap: 0; flex: 1; justify-content: center;">
+    <div
+      style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; width: 100%; height: 520px; align-items: stretch;">
+
+      <!-- Panel 1 -->
+      <div class="panel"
+        style="padding: 32px 28px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: inset 0 0 0 2px #fde68a; height: 100%; box-sizing: border-box;">
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <div style="font-size: 1.4rem; font-weight: 800; color: var(--navy);">1. Minimal Augmentation</div>
+          <div style="display: flex; gap: 16px; text-align: center;">
+            <div style="flex:1; padding: 18px 8px; background: var(--gray-100); border-radius: 10px;">
+              <div class="label"
+                style="font-size: 0.82rem; font-weight: 700; color: var(--gray-500); margin-bottom: 4px;">With Leak
+              </div>
+              <div class="mid-num" style="color: var(--gray-700); margin: 6px 0; font-size: 2.6rem; font-weight: 900;">
+                65.7%</div>
+              <div style="font-size: 0.95rem; color: var(--gray-500); font-weight: 700;">Top-5: 87.8%</div>
+            </div>
+            <div style="flex:1; padding: 18px 8px; background: var(--amber-bg); border-radius: 10px;">
+              <div class="label" style="color: var(--amber); font-size: 0.82rem; font-weight: 700; margin-bottom: 4px;">
+                No Leak</div>
+              <div class="mid-num" style="color: var(--amber); margin: 6px 0; font-size: 2.6rem; font-weight: 900;">
+                59.3%</div>
+              <div style="font-size: 0.95rem; color: var(--gray-500); font-weight: 700;">Top-5: 83.6%</div>
+            </div>
+          </div>
+        </div>
+        <div
+          style="margin-top: 32px; border-top: 1px dashed var(--gray-200); padding-top: 24px; flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-start;">
+          <div
+            style="font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gray-500); margin-bottom: 16px;">
+            Configuration</div>
+          <ul
+            style="font-size: 0.95rem; line-height: 1.6; color: var(--gray-700); margin: 0; padding-left: 18px; list-style: disc; display: flex; flex-direction: column; gap: 12px;">
+            <li><strong>Spatial crop:</strong> Random Crop (112×112)</li>
+            <li><strong>Flips:</strong> Horizontal Flip (p=0.5)</li>
+            <li><strong>Color jitter:</strong> Disabled (0.0)</li>
+            <li><strong>Random Erasing:</strong> Disabled</li>
+            <li><strong>Temporal stride:</strong> Fixed (max_stride=1)</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Panel 2 -->
+      <div class="panel"
+        style="padding: 32px 28px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: inset 0 0 0 2px #bbf7d0; height: 100%; box-sizing: border-box; background: #fcfdfd;">
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <div
+            style="font-size: 1.4rem; font-weight: 800; color: var(--navy); display: flex; align-items: center; gap: 8px;">
+            2. Light Augmentation <span style="color: var(--green); font-size: 1.5rem;">✓</span>
+          </div>
+          <div style="display: flex; gap: 16px; text-align: center;">
+            <div style="flex:1; padding: 18px 8px; background: var(--gray-100); border-radius: 10px;">
+              <div class="label"
+                style="font-size: 0.82rem; font-weight: 700; color: var(--gray-500); margin-bottom: 4px;">With Leak
+              </div>
+              <div class="mid-num" style="color: var(--gray-700); margin: 6px 0; font-size: 2.6rem; font-weight: 900;">
+                69.5%</div>
+              <div style="font-size: 0.95rem; color: var(--gray-500); font-weight: 700;">Top-5: 90.3%</div>
+            </div>
+            <div style="flex:1; padding: 18px 8px; background: var(--green-bg); border-radius: 10px;">
+              <div class="label" style="color: var(--green); font-size: 0.82rem; font-weight: 700; margin-bottom: 4px;">
+                No Leak</div>
+              <div class="mid-num" style="color: var(--green); margin: 6px 0; font-size: 2.6rem; font-weight: 900;">
+                64.5%</div>
+              <div style="font-size: 0.95rem; color: var(--gray-500); font-weight: 700;">Top-5: 87.4%</div>
+            </div>
+          </div>
+        </div>
+        <div
+          style="margin-top: 32px; border-top: 1px dashed var(--gray-200); padding-top: 24px; flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-start;">
+          <div
+            style="font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gray-500); margin-bottom: 16px;">
+            Configuration</div>
+          <ul
+            style="font-size: 0.95rem; line-height: 1.6; color: var(--gray-700); margin: 0; padding-left: 18px; list-style: disc; display: flex; flex-direction: column; gap: 12px;">
+            <li><strong>Spatial crop:</strong> Random Crop (112×112)</li>
+            <li><strong>Flips:</strong> Horizontal Flip (p=0.5)</li>
+            <li><strong>Color jitter:</strong> Light (0.1)</li>
+            <li><strong>Random Erasing:</strong> 5% probability</li>
+            <li><strong>Temporal stride:</strong> Fixed (max_stride=1)</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Panel 3 -->
+      <div class="panel"
+        style="padding: 32px 28px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: inset 0 0 0 2px #fecaca; height: 100%; box-sizing: border-box;">
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <div style="font-size: 1.4rem; font-weight: 800; color: var(--navy);">3. Strong Augmentation</div>
+          <div style="display: flex; gap: 16px; text-align: center;">
+            <div style="flex:1; padding: 18px 8px; background: var(--gray-100); border-radius: 10px;">
+              <div class="label"
+                style="font-size: 0.82rem; font-weight: 700; color: var(--gray-500); margin-bottom: 4px;">With Leak
+              </div>
+              <div class="mid-num" style="color: var(--gray-700); margin: 6px 0; font-size: 2.6rem; font-weight: 900;">
+                55.83%</div>
+              <div style="font-size: 0.95rem; color: var(--gray-500); font-weight: 700;">Top-5: 83.27%</div>
+            </div>
+            <div style="flex:1; padding: 18px 8px; background: var(--red-bg); border-radius: 10px;">
+              <div class="label" style="color: var(--red); font-size: 0.82rem; font-weight: 700; margin-bottom: 4px;">No
+                Leak</div>
+              <div class="mid-num" style="color: var(--red); margin: 6px 0; font-size: 2.6rem; font-weight: 900;">50.4%
+              </div>
+              <div style="font-size: 0.95rem; color: var(--gray-500); font-weight: 700;">Top-5: 78.5%</div>
+            </div>
+          </div>
+        </div>
+        <div
+          style="margin-top: 32px; border-top: 1px dashed var(--gray-200); padding-top: 24px; flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-start;">
+          <div
+            style="font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gray-500); margin-bottom: 16px;">
+            Configuration</div>
+          <ul
+            style="font-size: 0.95rem; line-height: 1.6; color: var(--gray-700); margin: 0; padding-left: 18px; list-style: disc; display: flex; flex-direction: column; gap: 12px;">
+            <li><strong>Spatial crop:</strong> Resized Crop (0.6—1.0)</li>
+            <li><strong>Flips:</strong> Horizontal Flip (p=0.5)</li>
+            <li><strong>Color jitter:</strong> Strong (0.2)</li>
+            <li><strong>Random Erasing:</strong> 15% probability</li>
+            <li><strong>Temporal stride:</strong> Variable (max_stride=2)</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s5">
+      <div class="s-head">
+        <div class="s-tag">Quantitative Results</div>
+        <h2 class="s-title">Temperature Sweep &amp; Main Result</h2>
+        <div class="s-sub">Systematic analysis of Student behavior as T varies &nbsp;·&nbsp; a&nbsp;=&nbsp;0.7 fixed
+        </div>
+      </div>
+      <div class="s-body" style="flex-direction: column; gap: 16px; flex: 1; justify-content: stretch; padding-bottom: 24px; box-sizing: border-box;">
+        <table>
+          <thead>
+            <tr>
+              <th>Temperature</th>
+              <th>Best Val Acc</th>
+              <th>Epoch</th>
+              <th>Train Acc</th>
+              <th>Test Top-1</th>
+              <th>Test Top-5</th>
+              <th>Δ vs Baseline</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Minimal Augmentation (no KD)</td>
+              <td>59.18%</td>
+              <td>—</td>
+              <td>99.81%</td>
+              <td>59.48%</td>
+              <td>82.77%</td>
+              <td style="color:var(--gray-500)">ref.</td>
+            </tr>
+            <tr>
+              <td>T = 1</td>
+              <td>62.75%</td>
+              <td>60</td>
+              <td>98.44%</td>
+              <td>62.91%</td>
+              <td>85.59%</td>
+              <td style="color:var(--green);font-weight:600">+3.43%</td>
+            </tr>
+            <tr>
+              <td>T = 5</td>
+              <td>63.12%</td>
+              <td>57</td>
+              <td>95.87%</td>
+              <td>62.07%</td>
+              <td>87.02%</td>
+              <td style="color:var(--green);font-weight:600">+2.59%</td>
+            </tr>
+            <tr>
+              <td>T = 8</td>
+              <td>64.57%</td>
+              <td>56</td>
+              <td>97.59%</td>
+              <td>64.31%</td>
+              <td>87.68%</td>
+              <td style="color:var(--green);font-weight:600">+4.83%</td>
+            </tr>
+            <tr>
+              <td>T = 10</td>
+              <td>64.85%</td>
+              <td>60</td>
+              <td>98.28%</td>
+              <td>64.47%</td>
+              <td>87.44%</td>
+              <td style="color:var(--green);font-weight:600">+4.99%</td>
+            </tr>
+            <tr class="hl">
+              <td><strong>T = 20</strong></td>
+              <td>65.18%</td>
+              <td>59</td>
+              <td>99.05%</td>
+              <td><strong>65.85%</strong></td>
+              <td>87.81%</td>
+              <td style="color:var(--green);font-weight:700">+6.37%</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="panel"
+          style="margin-top: 0; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; flex: 1; box-sizing: border-box; min-height: 330px;">
+          <div
+            style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--navy);">
+            Test Accuracy vs. Temperature Trend
+          </div>
+          <svg width="100%" height="100%" viewBox="0 0 1000 240" fill="none" xmlns="http://www.w3.org/2000/svg"
+            style="overflow: visible;">
+            <defs>
+              <linearGradient id="chart-area-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--blue)" stop-opacity="0.2" />
+                <stop offset="100%" stop-color="var(--blue)" stop-opacity="0.0" />
+              </linearGradient>
+            </defs>
+
+            <line x1="80" y1="200" x2="920" y2="200" stroke="var(--gray-200)" stroke-width="1" />
+            <line x1="80" y1="120" x2="920" y2="120" stroke="var(--gray-200)" stroke-width="1" stroke-dasharray="4 4" />
+            <line x1="80" y1="40" x2="920" y2="40" stroke="var(--gray-200)" stroke-width="1" stroke-dasharray="4 4" />
+
+            <text x="70" y="204" fill="var(--gray-500)" font-size="11" font-weight="600" text-anchor="end">58.0%</text>
+            <text x="70" y="124" fill="var(--gray-500)" font-size="11" font-weight="600" text-anchor="end">62.0%</text>
+            <text x="70" y="44" fill="var(--gray-500)" font-size="11" font-weight="600" text-anchor="end">66.0%</text>
+
+            <line x1="100" y1="200" x2="100" y2="40" stroke="var(--gray-200)" stroke-width="1" stroke-dasharray="2 2" />
+            <line x1="280" y1="200" x2="280" y2="40" stroke="var(--gray-200)" stroke-width="1" stroke-dasharray="2 2" />
+            <line x1="500" y1="200" x2="500" y2="40" stroke="var(--gray-200)" stroke-width="1" stroke-dasharray="2 2" />
+            <line x1="660" y1="200" x2="660" y2="40" stroke="var(--gray-200)" stroke-width="1" stroke-dasharray="2 2" />
+            <line x1="780" y1="200" x2="780" y2="40" stroke="var(--gray-200)" stroke-width="1" stroke-dasharray="2 2" />
+            <line x1="880" y1="200" x2="880" y2="40" stroke="var(--gray-200)" stroke-width="1" stroke-dasharray="2 2" />
+
+            <path d="M 100 200 L 100 170 L 280 102 L 500 119 L 660 74 L 780 71 L 880 43 L 880 200 Z"
+              fill="url(#chart-area-grad)" />
+
+            <path d="M 100 170 L 280 102 L 500 119 L 660 74 L 780 71 L 880 43" stroke="var(--blue)" stroke-width="3.5"
+              stroke-linecap="round" stroke-linejoin="round" />
+
+            <circle cx="100" cy="170" r="5" fill="var(--white)" stroke="var(--gray-500)" stroke-width="3" />
+            <circle cx="280" cy="102" r="5" fill="var(--white)" stroke="var(--blue)" stroke-width="3" />
+            <circle cx="500" cy="119" r="5" fill="var(--white)" stroke="var(--blue)" stroke-width="3" />
+            <circle cx="660" cy="74" r="5" fill="var(--white)" stroke="var(--blue)" stroke-width="3" />
+            <circle cx="780" cy="71" r="5" fill="var(--white)" stroke="var(--blue)" stroke-width="3" />
+            <circle cx="880" cy="43" r="6" fill="var(--white)" stroke="var(--green)" stroke-width="3.5" />
+
+            <text x="100" y="156" fill="var(--gray-500)" font-size="12" font-weight="700"
+              text-anchor="middle">59.48%</text>
+            <text x="280" y="88" fill="var(--blue)" font-size="12" font-weight="700" text-anchor="middle">62.91%</text>
+            <text x="500" y="105" fill="var(--blue)" font-size="12" font-weight="700" text-anchor="middle">62.07%</text>
+            <text x="660" y="60" fill="var(--blue)" font-size="12" font-weight="700" text-anchor="middle">64.31%</text>
+            <text x="780" y="57" fill="var(--blue)" font-size="12" font-weight="700" text-anchor="middle">64.47%</text>
+            <text x="880" y="28" fill="var(--green)" font-size="13" font-weight="800" text-anchor="middle">65.85%</text>
+
+            <text x="100" y="222" fill="var(--gray-500)" font-size="11" font-weight="600"
+              text-anchor="middle">Baseline</text>
+            <text x="280" y="222" fill="var(--gray-700)" font-size="11" font-weight="600" text-anchor="middle">T =
+              1</text>
+            <text x="500" y="222" fill="var(--gray-700)" font-size="11" font-weight="600" text-anchor="middle">T =
+              5</text>
+            <text x="660" y="222" fill="var(--gray-700)" font-size="11" font-weight="600" text-anchor="middle">T =
+              8</text>
+            <text x="780" y="222" fill="var(--gray-700)" font-size="11" font-weight="600" text-anchor="middle">T =
+              10</text>
+            <text x="880" y="222" fill="var(--green)" font-size="11" font-weight="700" text-anchor="middle">T =
+              20</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+<div class="slide" id="s6">
+      <div class="s-head">
+        <div class="s-tag">Qualitative Analysis</div>
+        <h2 class="s-title">Per-Class Accuracy: KD T=20 vs Baseline</h2>
+      </div>
+      <div class="s-body">
+        <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+          <div class="img-frame" style="width: 100%; height: 100%;">
+            <img src="../assets/delta_accuracy_kd_vs_baseline.png" alt="Delta Accuracy">
+          </div>
+        </div>
+        <div style="width: 32%; display: flex; flex-direction: column; gap: 24px; justify-content: center;">
+          <div class="panel">
+            <div style="font-size: 1.15rem; font-weight: 700; color: var(--green); margin-bottom: 8px;">Improvements
+            </div>
+            <p class="body-text">
+              Spatially complex classes (e.g. <strong>WallPushups</strong>, <strong>HeadMassage</strong>) gain most from
+              the Teacher's visual filters.
+            </p>
+          </div>
+          <div class="panel">
+            <div style="font-size: 1.15rem; font-weight: 700; color: var(--red); margin-bottom: 8px;">Regressions</div>
+            <p class="body-text">
+              Fast, cyclic actions (<strong>JumpingJack</strong>, <strong>TennisSwing</strong>) suffer from temporal
+              over-smoothing at high T.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<div class="slide" id="s7" style="padding: 24px 32px 16px;">
+      <div class="s-head" style="margin-bottom: 12px; padding-bottom: 10px;">
+        <div class="s-tag">Qualitative Analysis</div>
+        <h2 class="s-title">Latent Space Analysis via t-SNE</h2>
+        <div class="s-sub">2D projections of pre-classifier embeddings — 10 selected classes</div>
+      </div>
+      <div class="s-body" style="flex-direction: column; justify-content: center; align-items: center; gap: 16px;">
+        <div style="width: 100%; display: flex; justify-content: center; align-items: center;">
+          <img src="../assets/tsne_comparison_4495.png" alt="t-SNE comparison"
+            style="max-height: 440px; max-width: 100%; object-fit: contain;">
+        </div>
+        <p class="body-text"
+          style="font-size: 1.25rem; text-align: center; color: var(--gray-700); line-height: 1.45; margin: 0; max-width: 1000px;">
+          The distilled model (T=20) shows significantly tighter and more distinct class clusters compared to the
+          baseline student, successfully inheriting the well-separated semantic boundaries of the teacher model.
+        </p>
+      </div>
+    </div>
+
+<div class="slide" id="s8" style="padding: 24px 32px 16px;">
+  <div class="s-head" style="margin-bottom: 20px; padding-bottom: 12px;">
+    <div class="s-tag">Advanced Methods</div>
+    <h2 class="s-title">Attention Transfer (AT)</h2>
+    <div class="s-sub" style="font-size: 1.25rem;">Capacity gap impact on intermediate feature alignment</div>
+  </div>
+  <div class="s-body" style="gap: 40px; justify-content: center; align-items: center;">
+
+    <!-- Left Column -->
+    <div style="flex: 1; display: flex; flex-direction: column; height: 100%; justify-content: center; gap: 32px; box-sizing: border-box;">
+      
+      <!-- Attached Header and Image -->
+      <div style="display: flex; flex-direction: column; gap: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border-radius: 12px; overflow: hidden; margin-top: -24px; margin-bottom: 24px; width: 740px; align-self: center;">
+        <div
+          style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; text-align: center; font-size: 1.15rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; background: var(--amber-bg); padding: 12px; color: var(--amber); border: 1px solid var(--gray-200); border-bottom: none; margin: 0;">
+          <div>Pure KD T=20</div>
+          <div>Symmetric AT</div>
+        </div>
+        <div class="img-frame"
+          style="height: 320px; display: flex; justify-content: center; align-items: center; background: white; border: 1px solid var(--gray-200); border-top: none; border-radius: 0; overflow: hidden; padding: 4px; margin: 0;">
+          <img src="../assets/tsne_distill_t20_vs_at_symmetric.png" alt="AT Symmetric t-SNE"
+            style="max-width: 100%; max-height: 100%; object-fit: contain;">
+        </div>
+      </div>
+
+      <!-- Bottom Container (Metrics + Description) -->
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div class="panel"
+          style="border: 1px solid var(--gray-200); padding: 18px 24px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; gap: 16px; background: var(--amber-bg); margin: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+          <div style="text-align: center; flex: 1;">
+            <div class="label" style="font-size: 0.92rem; letter-spacing: 1px; color: var(--navy);">Pure KD T=20</div>
+            <div style="font-size: 2.2rem; font-weight: 800; color: var(--navy); margin-top: 2px; line-height: 1;">
+              65.85%</div>
+          </div>
+
+          <div
+            style="display: flex; flex-direction: column; align-items: center; min-width: 120px; text-align: center;">
+            <span class="label"
+              style="color: var(--red); letter-spacing: 0.5px; font-weight: 700; font-size: 0.85rem; line-height: 1;">Capacity
+              Loss</span>
+            <span style="color: var(--red); font-size: 1.85rem; font-weight: 900; margin: 4px 0;">−1.27%</span>
+            <svg width="110" height="14" viewBox="0 0 110 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5 7H103" stroke="var(--red)" stroke-width="3" stroke-linecap="round" />
+              <path d="M96 2L104 7L96 12" stroke="var(--red)" stroke-width="3" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </div>
+
+          <div style="text-align: center; flex: 1;">
+            <div class="label" style="font-size: 0.92rem; letter-spacing: 1px; color: var(--amber);">Symmetric AT
+            </div>
+            <div style="font-size: 2.2rem; font-weight: 800; color: var(--amber); margin-top: 2px; line-height: 1;">
+              64.58%</div>
+          </div>
+        </div>
+        
+        <div style="font-size: 1.15rem; color: var(--gray-700); line-height: 1.45; padding: 0 8px; border-left: 3px solid var(--amber); padding-left: 12px;">
+          Forced spatial alignment acts as noise due to Student's depthwise convolution capacity limit.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column -->
+    <div style="flex: 1; display: flex; flex-direction: column; height: 100%; justify-content: center; gap: 32px; box-sizing: border-box;">
+      
+      <!-- Attached Header and Image -->
+      <div style="display: flex; flex-direction: column; gap: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border-radius: 12px; overflow: hidden; margin-top: -24px; margin-bottom: 24px; width: 740px; align-self: center;">
+        <div
+          style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; text-align: center; font-size: 1.15rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; background: var(--purple-bg); padding: 12px; color: var(--purple); border: 1px solid var(--gray-200); border-bottom: none; margin: 0;">
+          <div>Pure KD T=20</div>
+          <div>Temporal-Only AT</div>
+        </div>
+        <div class="img-frame"
+          style="height: 320px; display: flex; justify-content: center; align-items: center; background: white; border: 1px solid var(--gray-200); border-top: none; border-radius: 0; overflow: hidden; padding: 4px; margin: 0;">
+          <img src="../assets/tsne_distill_t20_vs_at_temporal.png" alt="AT Temporal t-SNE"
+            style="max-width: 100%; max-height: 100%; object-fit: contain;">
+        </div>
+      </div>
+
+      <!-- Bottom Container (Metrics + Description) -->
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div class="panel"
+          style="border: 1px solid var(--gray-200); padding: 18px 24px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; gap: 16px; background: var(--purple-bg); margin: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+          <div style="text-align: center; flex: 1;">
+            <div class="label" style="font-size: 0.92rem; letter-spacing: 1px; color: var(--navy);">Pure KD T=20</div>
+            <div style="font-size: 2.2rem; font-weight: 800; color: var(--navy); margin-top: 2px; line-height: 1;">
+              65.85%</div>
+          </div>
+
+          <div
+            style="display: flex; flex-direction: column; align-items: center; min-width: 120px; text-align: center;">
+            <span class="label"
+              style="color: var(--red); letter-spacing: 0.5px; font-weight: 700; font-size: 0.85rem; line-height: 1;">Capacity
+              Loss</span>
+            <span style="color: var(--red); font-size: 1.85rem; font-weight: 900; margin: 4px 0;">−0.82%</span>
+            <svg width="110" height="14" viewBox="0 0 110 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5 7H103" stroke="var(--red)" stroke-width="3" stroke-linecap="round" />
+              <path d="M96 2L104 7L96 12" stroke="var(--red)" stroke-width="3" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </div>
+
+          <div style="text-align: center; flex: 1;">
+            <div class="label" style="font-size: 0.92rem; letter-spacing: 1px; color: var(--purple);">Temporal AT
+            </div>
+            <div style="font-size: 2.2rem; font-weight: 800; color: var(--purple); margin-top: 2px; line-height: 1;">
+              65.03%</div>
+          </div>
+        </div>
+
+        <div style="font-size: 1.15rem; color: var(--gray-700); line-height: 1.45; padding: 0 8px; border-left: 3px solid var(--purple); padding-left: 12px;">
+          Removing spatial constraints (&beta;_s=0) attenuates regression, as temporal dynamics are more transferable.
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<div class="slide" id="s9">
+      <div class="s-head">
+        <div class="s-tag">Advanced Methods</div>
+        <h2 class="s-title">Born-Again Networks &amp; Knowledge Collapse</h2>
+        <div class="s-sub">Iterative self-distillation MobileNet3D → MobileNet3D</div>
+      </div>
+      <div class="s-body">
+        <div
+          style="width: 50%; display: flex; flex-direction: column; gap: 20px; justify-content: center; flex-shrink: 0;">
+          <div class="panel" style="padding: 20px 24px;">
+            <div style="font-size: 1.15rem; font-weight: 700; color: var(--red); margin-bottom: 12px;">Iterative
+              Self-Distillation</div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
+              <thead>
+                <tr style="background: var(--red-bg); border-bottom: 2px solid var(--red);">
+                  <th style="font-size: 0.78rem; padding: 8px 10px; color: var(--red); font-weight: 700;">Gen</th>
+                  <th style="font-size: 0.78rem; padding: 8px 10px; color: var(--red); font-weight: 700;">Teacher</th>
+                  <th
+                    style="font-size: 0.78rem; padding: 8px 10px; color: var(--red); font-weight: 700; text-align: center;">
+                    T</th>
+                  <th
+                    style="font-size: 0.78rem; padding: 8px 10px; color: var(--red); font-weight: 700; text-align: center;">
+                    &alpha;</th>
+                  <th
+                    style="font-size: 0.78rem; padding: 8px 10px; color: var(--red); font-weight: 700; text-align: right;">
+                    Accuracy</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="background: var(--blue-bg); font-weight: 600;">
+                  <td style="padding: 8px 10px; color: var(--navy);">Gen 0</td>
+                  <td style="padding: 8px 10px; color: var(--navy);">3D ResNet-50</td>
+                  <td style="padding: 8px 10px; text-align: center; color: var(--navy);">8.0</td>
+                  <td style="padding: 8px 10px; text-align: center; color: var(--navy);">0.7</td>
+                  <td style="padding: 8px 10px; text-align: right; color: var(--navy);">64.31%</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 10px;">Gen 1</td>
+                  <td style="padding: 8px 10px;">MobileNet3D Gen 0</td>
+                  <td style="padding: 8px 10px; text-align: center;">2.5</td>
+                  <td style="padding: 8px 10px; text-align: center;">0.7</td>
+                  <td style="padding: 8px 10px; text-align: right; font-weight: 600;">60.98%</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 10px;">Gen 2</td>
+                  <td style="padding: 8px 10px;">MobileNet3D Gen 1</td>
+                  <td style="padding: 8px 10px; text-align: center;">2.5</td>
+                  <td style="padding: 8px 10px; text-align: center;">0.7</td>
+                  <td style="padding: 8px 10px; text-align: right; font-weight: 600;">60.43%</td>
+                </tr>
+                <tr style="background: var(--red-bg);">
+                  <td style="padding: 8px 10px; color: var(--red);">Gen 3</td>
+                  <td style="padding: 8px 10px; color: var(--red);">MobileNet3D Gen 2</td>
+                  <td style="padding: 8px 10px; text-align: center; color: var(--red);">2.5</td>
+                  <td style="padding: 8px 10px; text-align: center; color: var(--red);">0.7</td>
+                  <td style="padding: 8px 10px; text-align: right; font-weight: 700; color: var(--red);">59.21%</td>
+                </tr>
+                <tr style="border-top: 1px solid var(--gray-300);">
+                  <td style="padding: 8px 10px; color: var(--gray-500);">Baseline</td>
+                  <td style="padding: 8px 10px; color: var(--gray-500);">No Teacher (Scratch)</td>
+                  <td style="padding: 8px 10px; text-align: center; color: var(--gray-500);">—</td>
+                  <td style="padding: 8px 10px; text-align: center; color: var(--gray-500);">—</td>
+                  <td style="padding: 8px 10px; text-align: right; color: var(--gray-500); font-weight: 600;">59.48%
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="panel">
+            <div style="font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; color: var(--navy);">Considerations
+            </div>
+            <p class="body-text" style="font-size: 1.05rem; line-height: 1.45;">
+              A compressed student (64.31%) lacks the visual representational capacity to act as an effective teacher.
+              Distilling at <strong>T=2.5</strong> fails to prevent error propagation, causing progressive degradation
+              back to baseline (59.48%).
+            </p>
+          </div>
+        </div>
+
+        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0;">
+          <div class="panel" style="height: 100%; display: flex; flex-direction: column; padding: 28px;">
+            <div
+              style="font-size: 1rem; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px;">
+              Accuracy Across Generations</div>
+            <div
+              style="flex: 1; position: relative; display: flex; align-items: flex-end; justify-content: space-around; gap: 8px; padding-bottom: 8px;">
+              <div class="ref-label" style="bottom: 40.7%;">Baseline 59.48%</div>
+              <div class="ref-line" style="bottom: 40.7%;"></div>
+              <div class="bar-col">
+                <div class="val" style="color: var(--navy);">64.31%</div>
+                <div class="fill" style="height: 84.6%; background: linear-gradient(180deg, var(--navy), #93c5fd);">
+                </div>
+                <div class="lbl">Gen 0</div>
+              </div>
+              <div class="bar-col">
+                <div class="val" style="color: var(--amber);">60.98%</div>
+                <div class="fill" style="height: 54.3%; background: linear-gradient(180deg, var(--amber), #fde68a);">
+                </div>
+                <div class="lbl">Gen 1</div>
+              </div>
+              <div class="bar-col">
+                <div class="val" style="color: var(--blue);">60.43%</div>
+                <div class="fill" style="height: 49.3%; background: linear-gradient(180deg, var(--blue), #93c5fd);">
+                </div>
+                <div class="lbl">Gen 2</div>
+              </div>
+              <div class="bar-col">
+                <div class="val" style="color: var(--red);">59.21%</div>
+                <div class="fill" style="height: 38.2%; background: linear-gradient(180deg, #b91c1c, #fecaca);"></div>
+                <div class="lbl">Gen 3</div>
+              </div>
+              <div class="bar-col">
+                <div class="val" style="color: var(--green);">59.48%</div>
+                <div class="fill" style="height: 40.7%; background: linear-gradient(180deg, var(--green), #bbf7d0);">
+                </div>
+                <div class="lbl">Baseline</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<div class="slide" id="s10">
+      <div class="s-head" style="margin-bottom: 14px;">
+        <div class="s-tag">Efficiency &amp; Edge Deployment</div>
+        <h2 class="s-title">Cross-Frame Distillation</h2>
+        <div class="s-sub">Asymmetric temporal sub-sampling (T=20, a=0.7) — 16f Student vs 24f Teacher</div>
+      </div>
+      <div class="s-body" style="gap: 36px;">
+        <div style="flex: 1; display: flex; align-items: center; justify-content: center; min-width: 0;">
+          <div class="img-frame" style="width: 100%; height: 100%; border: none; background: transparent;">
+            <img src="../assets/combined_benchmark_plots.png" alt="Benchmark Plots"
+              style="width: 100%; height: 100%; object-fit: contain;">
+          </div>
+        </div>
+
+        <div
+          style="width: 28%; display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 60%; flex-shrink: 0; padding-left: 24px; margin: auto 0;">
+
+          <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%;">
+            <span class="label"
+              style="color: var(--red); letter-spacing: 1.5px; font-weight: 700; font-size: 1.05rem;">Performance
+              Gap</span>
+            <span class="big-num" style="color: var(--red); font-size: 3.8rem; margin: 8px 0 12px;">−3.17%</span>
+            <div
+              style="font-size: 1.0rem; font-weight: 600; color: var(--gray-700); line-height: 1.35; max-width: 260px;">
+              65.85% (24f) &rarr; 62.68% (16f)
+            </div>
+            <div
+              style="font-size: 0.92rem; color: var(--gray-500); line-height: 1.3; margin-top: 6px; max-width: 260px;">
+              Minimal accuracy cost for temporal compression
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%;">
+            <span class="label"
+              style="color: var(--green); letter-spacing: 1.5px; font-weight: 700; font-size: 1.05rem;">Inference
+              Speedup</span>
+            <span class="big-num" style="color: var(--green); font-size: 3.8rem; margin: 8px 0 12px;">2.11×</span>
+            <div style="font-size: 1.0rem; font-weight: 600; color: var(--green); line-height: 1.35; max-width: 260px;">
+              CPU latency halved (-52.6%)
+            </div>
+            <div
+              style="font-size: 0.92rem; color: var(--gray-500); line-height: 1.3; margin-top: 6px; max-width: 260px;">
+              GPU throughput boosted by +68.8%
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+<div class="slide" id="s11">
+      <div class="s-head">
+        <div class="s-tag">Conclusions</div>
+        <h2 class="s-title">Key Takeaways &amp; Future Work</h2>
+      </div>
+      <div class="s-body" style="gap: 32px;">
+        <div style="width: 64%; display: flex; flex-direction: column; height: 100%;">
+          <div
+            style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: center; margin-bottom: 12px;">
+            <div
+              style="font-size: 1.15rem; font-weight: 700; color: var(--navy); text-transform: uppercase; border-bottom: 2px solid var(--navy-light); padding-bottom: 6px; letter-spacing: 0.5px;">
+              No Frame Dist. (24f)</div>
+            <div
+              style="font-size: 1.15rem; font-weight: 700; color: var(--green); text-transform: uppercase; border-bottom: 2px solid var(--green); padding-bottom: 6px; letter-spacing: 0.5px;">
+              Cross-Frame Dist. (16f)</div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; flex: 1;">
+
+            <div style="display: flex; flex-direction: column; gap: 12px; height: 100%;">
+              <div class="panel"
+                style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center; padding: 12px; background: var(--blue-bg)">
+                <span class="label"
+                  style="color: var(--navy-light); letter-spacing: 0.5px; font-weight: 700; font-size: 0.9rem;">Accuracy</span>
+                <div style="display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 4px 0;">
+                  <span style="font-size: 2.6rem; font-weight: 800; color: var(--navy); line-height: 1;">65.85%</span>
+                  <span style="font-size: 1.5rem; font-weight: 700; color: var(--blue); line-height: 1;">+6.37 pp</span>
+                </div>
+                <div style="font-size: 0.92rem; color: var(--gray-500); line-height: 1.2;">vs. 59.48% Baseline</div>
+              </div>
+
+              <div class="panel"
+                style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center; padding: 12px; background: var(--gray-50)">
+                <span class="label"
+                  style="color: var(--gray-500); letter-spacing: 0.5px; font-weight: 700; font-size: 0.9rem;">CPU
+                  Latency</span>
+                <div style="font-size: 2.1rem; font-weight: 700; color: var(--navy); margin: 4px 0; line-height: 1;">
+                  53.52 ms</div>
+                <div style="font-size: 0.92rem; color: var(--gray-500); line-height: 1.2;">24-frame computational load
+                </div>
+              </div>
+
+              <div class="panel"
+                style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center; padding: 12px; background: var(--gray-50)">
+                <span class="label"
+                  style="color: var(--gray-500); letter-spacing: 0.5px; font-weight: 700; font-size: 0.9rem;">GPU
+                  Throughput</span>
+                <div style="font-size: 2.1rem; font-weight: 700; color: var(--navy); margin: 4px 0; line-height: 1;">991
+                  v/s</div>
+                <div style="font-size: 0.92rem; color: var(--gray-500); line-height: 1.2;">Standard throughput</div>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px; height: 100%;">
+              <div class="panel"
+                style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center; padding: 12px; background: var(--red-bg)">
+                <span class="label"
+                  style="color: var(--navy-light); letter-spacing: 0.5px; font-weight: 700; font-size: 0.9rem;">Accuracy</span>
+                <div style="display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 4px 0;">
+                  <span style="font-size: 2.6rem; font-weight: 800; color: var(--navy); line-height: 1;">62.68%</span>
+                  <span style="font-size: 1.5rem; font-weight: 700; color: var(--red); line-height: 1;">−3.17%</span>
+                </div>
+                <div style="font-size: 0.92rem; color: var(--gray-500); line-height: 1.2;">vs. 65.85% Teacher</div>
+              </div>
+
+              <div class="panel"
+                style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center; padding: 12px; background: var(--green-bg)">
+                <span class="label"
+                  style="color: var(--navy-light); letter-spacing: 0.5px; font-weight: 700; font-size: 0.9rem;">CPU
+                  Latency</span>
+                <div style="display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 4px 0;">
+                  <span style="font-size: 2.1rem; font-weight: 800; color: var(--green); line-height: 1;">25.36
+                    ms</span>
+                  <span style="font-size: 1.4rem; font-weight: 700; color: var(--green); line-height: 1;">-52.6%
+                    (2.11×)</span>
+                </div>
+                <div style="font-size: 0.92rem; color: var(--gray-500); line-height: 1.2;">Latency halved on Edge CPU
+                </div>
+              </div>
+
+              <div class="panel"
+                style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center; padding: 12px; background: var(--purple-bg)">
+                <span class="label"
+                  style="color: var(--navy-light); letter-spacing: 0.5px; font-weight: 700; font-size: 0.9rem;">GPU
+                  Throughput</span>
+                <div style="display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 4px 0;">
+                  <span style="font-size: 2.1rem; font-weight: 800; color: var(--purple); line-height: 1;">1673
+                    v/s</span>
+                  <span style="font-size: 1.4rem; font-weight: 700; color: var(--purple); line-height: 1;">+68.8%</span>
+                </div>
+                <div style="font-size: 0.92rem; color: var(--gray-500); line-height: 1.2;">Register &amp; Tensor Core
+                  alignment</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div
+          style="width: 32%; display: flex; flex-direction: column; justify-content: space-between; height: 100%; padding-left: 24px">
+
+          <div class="panel"
+            style="padding: 16px 20px; background: var(--gray-50); flex: 1; margin-bottom: 12px; display: flex; flex-direction: column; justify-content: center;">
+            <div style="font-size: 1.25rem; font-weight: 700; color: var(--navy); margin-bottom: 4px;">Lessons Learned
+            </div>
+            <p style="font-size: 1.05rem; line-height: 1.45; color: var(--gray-700);">
+              The spatial capacity gap limits intermediate feature transfer. Logit distillation at high temperature
+              ($T=20$) is the most stable guide.
+            </p>
+          </div>
+
+          <div class="panel"
+            style="padding: 16px 20px; background: var(--gray-50); flex: 1; margin-bottom: 12px; display: flex; flex-direction: column; justify-content: center;">
+            <div style="font-size: 1.25rem; font-weight: 700; color: var(--navy); margin-bottom: 4px;">Key Limitations
+            </div>
+            <p style="font-size: 1.05rem; line-height: 1.45; color: var(--gray-700); margin: 0;">
+              &bull; Spatial capacity bottleneck of the Student.<br>
+              &bull; Over-smoothing on fast, periodic actions.<br>
+              &bull; Recursive collapse in self-distillation without oracle.
+            </p>
+          </div>
+
+          <div class="panel"
+            style="padding: 16px 20px; background: var(--gray-50); flex: 1; display: flex; flex-direction: column; justify-content: center;">
+            <div style="font-size: 1.25rem; font-weight: 700; color: var(--navy); margin-bottom: 4px;">Future Work</div>
+            <p style="font-size: 1.05rem; line-height: 1.45; color: var(--gray-700);">
+              Dynamic temperature calibration to prevent self-distillation collapse, and training on flexible temporal
+              boundaries (variable stride).
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+<div class="slide slide-title-page" id="s_backup_sep">
+      <div class="course-badge">Additional Material</div>
+      <h1 style="font-size: 3.8rem; font-weight: 900; color: var(--navy); margin-bottom: 8px;">Backup Slides</h1>
+      <p style="font-size: 1.35rem; color: var(--navy-light);">Quantitative plots, qualitative detailed analyses, and CM
+        predictions.</p>
+    </div>
+
+<div class="slide" id="s12">
+      <div class="s-head">
+        <div class="s-tag">Backup — Training Dynamics</div>
+        <h2 class="s-title">Training Curves — KD T=20, a=0.7</h2>
+        <div class="s-sub">Loss, accuracy, and LR schedule over 60 epochs</div>
+      </div>
+      <div class="s-body"
+        style="display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 18px;">
+        <div class="img-frame" style="padding: 6px;"><img src="../assets/kd_t20_a07_24f_lightaug_loss.png" alt="Loss">
+        </div>
+        <div class="img-frame" style="padding: 6px;"><img src="../assets/kd_t20_a07_24f_lightaug_accuracy.png"
+            alt="Accuracy"></div>
+        <div class="img-frame" style="padding: 6px;"><img src="../assets/kd_t20_a07_24f_lightaug_lr.png" alt="LR"></div>
+        <div class="panel" style="display: flex; flex-direction: column; justify-content: center;">
+          <div style="font-size: 1.2rem; font-weight: 700; color: var(--navy); margin-bottom: 12px;">Stability &amp;
+            Convergence</div>
+          <p class="body-text">
+            Stable training over 60 epochs. First 10 epochs serve as warmup with hard targets before soft distillation
+            loss activates.
+          </p>
+          <p class="body-text" style="margin-top: 10px;">
+            No strong overfitting divergence — regularization works optimally with T=20.
+          </p>
+        </div>
+      </div>
+    </div>
+
+<div class="slide" id="s13">
+  <div class="s-head" style="margin-bottom: 14px;">
+    <div class="s-tag">Backup - Error Analysis</div>
+    <h2 class="s-title">Confusion Matrix &amp; Error Analysis</h2>
+    <div class="s-sub">Baseline vs KD T=20 - Top 25 worst classes</div>
+  </div>
+  <div class="s-body" style="gap: 18px;">
+    <div
+      style="flex: 1; display: flex; flex-direction: column; align-items: center; background: var(--gray-50); border-radius: 12px; padding: 10px;">
+      <span
+        style="font-size: .9rem; font-weight: 700; color: var(--amber); text-transform: uppercase; margin-bottom: 8px;">Baseline
+        - 59.48%</span>
+      <div class="img-frame" style="flex: 1; width: 100%; border: none; background: transparent;">
+        <img src="../assets/predictions_baseline_ls005_24f_lightaug_top25.png" alt="Baseline confusion matrix">
+      </div>
+    </div>
+    <div
+      style="flex: 1; display: flex; flex-direction: column; align-items: center; background: var(--gray-50); border-radius: 12px; padding: 10px;">
+      <span
+        style="font-size: .9rem; font-weight: 700; color: var(--navy); text-transform: uppercase; margin-bottom: 8px;">KD
+        T=20 - 65.85%</span>
+      <div class="img-frame" style="flex: 1; width: 100%; border: none; background: transparent;">
+        <img src="../assets/predictions_kd_t20_a07_24f_lightaug_top25.png" alt="KD confusion matrix">
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s14">
+  <div class="s-head" style="margin-bottom: 20px; padding-bottom: 12px;">
+    <div class="s-tag">Backup - Attention Transfer</div>
+    <h2 class="s-title">Attention Transfer Loss: Before and After</h2>
+    <div class="s-sub" style="font-size: 1.25rem;">Decomposing 3D video features to resolve the spatial-temporal
+      collapse</div>
+  </div>
+  <div class="s-body" style="flex-direction: column; justify-content: center; flex: 1; min-height: 0;">
+    <div
+      style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; width: 100%; height: 530px; align-items: stretch; margin: auto 0;">
+
+      <!-- Left Panel: BEFORE -->
+      <div class="panel"
+        style="border: 1px solid var(--gray-200); padding: 28px 28px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 12px; background: var(--gray-50); box-sizing: border-box; height: 100%;">
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div
+            style="font-size: 1.35rem; font-weight: 800; color: var(--red); display: flex; align-items: center; gap: 8px;">
+            <span>Before: Single Collapsed Loss</span>
+          </div>
+
+          <!-- Formula Box -->
+          <div
+            style="font-family: 'Cambria Math', 'STIX Two Math', 'Times New Roman', serif; font-size: 1.15rem; padding: 10px 14px; background: white; border: 1px solid var(--gray-200); border-radius: 8px; font-style: italic; text-align: center; color: var(--gray-900); line-height: 1.4;">
+            <div>ℒ<sub>AT</sub> = &sum;<sub>l</sub> || normalize(mean<sub>c</sub>(F²))<sub>flat</sub> - ... ||²</div>
+          </div>
+
+          <!-- Explanation Bullets -->
+          <ul
+            style="font-size: 0.98rem; line-height: 1.55; color: var(--gray-700); margin: 0; padding-left: 18px; list-style: disc; display: flex; flex-direction: column; gap: 12px;">
+            <li><strong>Block Mismatch:</strong> Hooked ResNet stages <strong style="color: var(--red);">[3, 4,
+                5]</strong>. Stage 5 is the classifier head (produces 2D logits `[B,
+              101]`), which caused runtime crashes and zero gradient contribution.</li>
+            <li><strong>1D Interpolation Mismatch:</strong> Resizing a flattened 1D vector of shape `[T × H × W]` treats
+              space and time as a single coordinate line. This mathematically mixed pixels across frame boundaries and
+              unrelated spatial points, destroying feature geometry.</li>
+            <li><strong>Temporal Signal Dilution:</strong> Normalizing the entire flattened space meant temporal peaks
+              were washed out by spatial dimensions.</li>
+          </ul>
+        </div>
+
+        <!-- Result Card -->
+        <div
+          style="padding: 14px; background: white; border: 1px solid var(--gray-200); border-radius: 8px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+          <div class="label" style="color: var(--red); font-size: 0.78rem; font-weight: 700;">Run
+            4391</div>
+          <div style="font-size: 2.2rem; font-weight: 900; color: var(--red); margin-top: 4px;">59.14% <span
+              style="font-size: 1.1rem; font-weight: 600;">(Top-1)</span></div>
+          <div style="font-size: 0.85rem; color: var(--gray-500); font-weight: 500; margin-top: 2px;">Severe accuracy
+            collapse under noisy gradients</div>
+        </div>
+      </div>
+
+      <!-- Right Panel: AFTER -->
+      <div class="panel"
+        style="border: 1px solid var(--gray-200); padding: 28px 28px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 12px; background: var(--gray-50); box-sizing: border-box; height: 100%;">
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div
+            style="font-size: 1.35rem; font-weight: 800; color: var(--green); display: flex; align-items: center; gap: 8px;">
+            <span>After: Spatial &amp; Temporal Decomposition</span>
+          </div>
+
+          <!-- Formula Box -->
+          <div
+            style="font-family: 'Cambria Math', 'STIX Two Math', 'Times New Roman', serif; font-size: 1.15rem; padding: 10px 14px; background: white; border: 1px solid var(--gray-200); border-radius: 8px; font-style: italic; text-align: center; color: var(--gray-900); line-height: 1.4;">
+            <div style="font-weight: 700; color: var(--navy);">ℒ<sub>AT</sub> = &beta;<sub>s</sub>ℒ<sub>spatial</sub> +
+              &beta;<sub>t</sub>ℒ<sub>temporal</sub></div>
+          </div>
+
+          <!-- Explanation Bullets -->
+          <ul
+            style="font-size: 0.98rem; line-height: 1.55; color: var(--gray-700); margin: 0; padding-left: 18px; list-style: disc; display: flex; flex-direction: column; gap: 12px;">
+            <li><strong>Correct Block Pairing:</strong> Hooked ResNet stages <strong style="color: var(--green);">[2, 3,
+                4]</strong> (intermediate 3D features: `[B, C, T, H, W]`), correctly matching student stages <strong
+                style="color: var(--green);">[2, 4, 6]</strong>.</li>
+            <li><strong>2D Bilinear Interpolation:</strong> Spatial attention is calculated as `mean<sub>c,t</sub>(F²)`
+              and resized spatially via 2D bilinear interpolation, preserving frame layout.</li>
+            <li><strong>Temporal AT Isolation:</strong> Temporal attention is calculated as `mean<sub>c,h,w</sub>(F²)`
+              yielding `[B, T]`, which is transferred directly without any interpolation noise.</li>
+          </ul>
+        </div>
+
+        <!-- Result Card -->
+        <div
+          style="padding: 14px; background: white; border: 1px solid var(--gray-200); border-radius: 8px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+          <div class="label" style="color: var(--green); font-size: 0.78rem; font-weight: 700;">
+            Run 4601</div>
+          <div style="font-size: 2.2rem; font-weight: 900; color: var(--green); margin-top: 4px;">64.58% <span
+              style="font-size: 1.1rem; font-weight: 600;">(Symmetric)</span> &nbsp;·&nbsp; 65.03% <span
+              style="font-size: 1.1rem; font-weight: 600;">(Temporal)</span></div>
+          <div style="font-size: 0.85rem; color: var(--gray-500); font-weight: 500; margin-top: 2px;">Successful feature
+            alignment and positive transfer</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!--
+<div class="slide" id="s15">
+      <div class="s-head">
+        <div class="s-tag">Backup - Configurations</div>
+        <h2 class="s-title">Experiment Configs by Model Type</h2>
+        <div class="s-sub">Main YAML families used across teacher, baseline, KD, AT, Born Again, and cross-frame runs
+        </div>
+      </div>
+      <div class="s-body" style="flex-direction: column; gap: 14px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: .84rem;">
+          <thead>
+            <tr>
+              <th>Config</th>
+              <th>Model</th>
+              <th>Frames</th>
+              <th>Training</th>
+              <th>Optimizer</th>
+              <th>KD / AT</th>
+              <th>Augmentation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>teacher_24f_evalsplit</strong></td>
+              <td>3D ResNet-50<br>pretrained</td>
+              <td>24</td>
+              <td>50 ep<br>BS 12<br>LS .1</td>
+              <td>SGD<br>lr 7e-4<br>wd .001</td>
+              <td>-</td>
+              <td>jitter .1<br>erase .05<br>stride 1</td>
+            </tr>
+            <tr>
+              <td><strong>baseline_ls005_24f_lightaug</strong></td>
+              <td>MobileNet3D<br>width 1.0</td>
+              <td>24</td>
+              <td>60 ep<br>BS 16<br>LS .05</td>
+              <td>AdamW<br>lr 5e-4<br>wd .01</td>
+              <td>CE only</td>
+              <td>jitter .1<br>erase .05<br>stride 1</td>
+            </tr>
+            <tr>
+              <td><strong>distillation_t8_a07</strong></td>
+              <td>MobileNet3D<br>teacher ResNet</td>
+              <td>24</td>
+              <td>60 ep<br>BS 16<br>warmup 5</td>
+              <td>AdamW<br>lr 5e-4<br>wd .01</td>
+              <td>T=8<br>alpha=.7</td>
+              <td>light aug</td>
+            </tr>
+            <tr>
+              <td><strong>optimized KD</strong></td>
+              <td>MobileNet3D<br>teacher ResNet</td>
+              <td>24</td>
+              <td>60 ep<br>BS 16<br>warmup 10</td>
+              <td>AdamW<br>cosine</td>
+              <td>T=10<br>alpha=.9</td>
+              <td>light aug</td>
+            </tr>
+            <tr>
+              <td><strong>AT symmetric</strong></td>
+              <td>MobileNet3D<br>teacher ResNet</td>
+              <td>24</td>
+              <td>60 ep<br>BS 16<br>warmup 5</td>
+              <td>AdamW<br>lr 5e-4</td>
+              <td>T=20 alpha=.7<br>beta_s=.05 beta_t=.05<br>[2,3,4] to [2,4,6]</td>
+              <td>light aug</td>
+            </tr>
+            <tr style="background: var(--green-bg);">
+              <td><strong>AT temporal-only</strong></td>
+              <td>MobileNet3D<br>teacher ResNet</td>
+              <td>24</td>
+              <td>60 ep<br>BS 16<br>warmup 5</td>
+              <td>AdamW<br>lr 5e-4</td>
+              <td><strong>T=20 alpha=.7<br>beta_s=0 beta_t=.1<br>[2,3,4] to [2,4,6]</strong></td>
+              <td>light aug</td>
+            </tr>
+            <tr>
+              <td><strong>Born Again AT</strong></td>
+              <td>MobileNet3D<br>teacher MobileNet3D</td>
+              <td>24</td>
+              <td>50 ep<br>BS 16</td>
+              <td>AdamW<br>lr 5e-4<br>wd .01</td>
+              <td>T=2.5 alpha=.5<br>beta_s=.05 beta_t=.05<br>[2,4,6] to [2,4,6]</td>
+              <td>eval split</td>
+            </tr>
+            <tr>
+              <td><strong>Cross-frame KD</strong></td>
+              <td>MobileNet3D<br>teacher ResNet</td>
+              <td>24 to 16</td>
+              <td>60 ep<br>BS 16<br>warmup 5</td>
+              <td>AdamW<br>lr 5e-4<br>wd .01</td>
+              <td>T=20 alpha=.7<br>student_frames=16</td>
+              <td>light aug</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+-->
+
+  </div>
+    <div id="nav">
+      <button class="nbtn" id="prev" title="Previous" disabled>←</button>
+      <div class="nav-mid">
+        <div class="pbar-bg">
+          <div class="pbar-fg" id="pbar"></div>
+        </div>
+        <div class="ptext" id="counter">1 / 15</div>
+      </div>
+      <div class="keys"><span>Navigate</span> <kbd>←</kbd> <kbd>→</kbd> <span>or</span> <kbd>Space</kbd></div>
+      <button class="nbtn" id="next" title="Next">→</button>
+    </div>
+
+    <div id="image-modal">
+      <div id="modal-caption"></div>
+      <img id="modal-img" src="" alt="Zoomed Image">
+    </div>
+
+    <script>
+      const S = document.querySelectorAll('.slide');
+      const P = document.getElementById('prev');
+      const N = document.getElementById('next');
+      const B = document.getElementById('pbar');
+      const C = document.getElementById('counter');
+      let i = 0;
+      const T = S.length;
+
+      function fitDeck() {
+        const scale = Math.min(window.innerWidth / 1600, window.innerHeight / 900);
+        document.documentElement.style.setProperty('--deck-scale', scale);
+      }
+
+      function go() {
+        S.forEach((s, j) => s.classList.toggle('active', j === i));
+        P.disabled = i === 0;
+        N.disabled = i === T - 1;
+        B.style.width = (i / (T - 1) * 100) + '%';
+        C.textContent = (i + 1) + ' / ' + T;
+      }
+
+      P.addEventListener('click', () => { if (i > 0) { i--; go(); } });
+      N.addEventListener('click', () => { if (i < T - 1) { i++; go(); } });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (i < T - 1) { i++; go(); } }
+        else if (e.key === 'ArrowLeft') { e.preventDefault(); if (i > 0) { i--; go(); } }
+        else if (e.key === 'Home') { e.preventDefault(); i = 0; go(); }
+        else if (e.key === 'End') { e.preventDefault(); i = T - 1; go(); }
+      });
+      let tx = 0;
+      document.addEventListener('touchstart', e => tx = e.changedTouches[0].screenX);
+      document.addEventListener('touchend', e => {
+        const d = tx - e.changedTouches[0].screenX;
+        if (d > 50 && i < T - 1) { i++; go(); }
+        else if (d < -50 && i > 0) { i--; go(); }
+      });
+      window.addEventListener('resize', fitDeck);
+      fitDeck();
+      go();
+
+      // === IMAGE ZOOM MODAL LOGIC ===
+      const modal = document.getElementById('image-modal');
+      const modalImg = document.getElementById('modal-img');
+      const modalCaption = document.getElementById('modal-caption');
+
+      document.addEventListener('click', e => {
+        if (e.target.tagName === 'IMG' && e.target.closest('.slide')) {
+          modalImg.src = e.target.src;
+          modalImg.alt = e.target.alt;
+
+          // Custom captions for Attention Transfer plots
+          if (e.target.src.includes('tsne_distill_t20_vs_at_symmetric.png')) {
+            modalCaption.innerHTML = '<div style="color: #93c5fd; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Pure KD T=20</div><div style="color: #fbbf24; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Symmetric AT</div>';
+            modalCaption.style.display = 'flex';
+          } else if (e.target.src.includes('tsne_distill_t20_vs_at_temporal.png')) {
+            modalCaption.innerHTML = '<div style="color: #93c5fd; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Pure KD T=20</div><div style="color: #c084fc; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Temporal-Only AT</div>';
+            modalCaption.style.display = 'flex';
+          } else {
+            modalCaption.style.display = 'none';
+          }
+
+          modal.style.display = 'flex';
+          modal.offsetHeight; // Force reflow
+          modal.classList.add('active');
+        }
+      });
+
+      function closeModal() {
+        modal.classList.remove('active');
+        setTimeout(() => {
+          if (!modal.classList.contains('active')) {
+            modal.style.display = 'none';
+            modalCaption.style.display = 'none';
+          }
+        }, 300);
+      }
+
+      modal.addEventListener('click', closeModal);
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+          closeModal();
+        }
+      });
+    </script>
+</body>
+
+</html>

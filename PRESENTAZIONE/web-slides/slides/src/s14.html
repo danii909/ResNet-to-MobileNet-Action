@@ -1,0 +1,97 @@
+<div class="slide" id="s14">
+  <div class="s-head" style="margin-bottom: 20px; padding-bottom: 12px;">
+    <div class="s-tag">Backup - Attention Transfer</div>
+    <h2 class="s-title">Attention Transfer Loss: Before and After</h2>
+    <div class="s-sub" style="font-size: 1.25rem;">Decomposing 3D video features to resolve the spatial-temporal
+      collapse</div>
+  </div>
+  <div class="s-body" style="flex-direction: column; justify-content: center; flex: 1; min-height: 0;">
+    <div
+      style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; width: 100%; height: 530px; align-items: stretch; margin: auto 0;">
+
+      <!-- Left Panel: BEFORE -->
+      <div class="panel"
+        style="border: 1px solid var(--gray-200); padding: 28px 28px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 12px; background: var(--gray-50); box-sizing: border-box; height: 100%;">
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div
+            style="font-size: 1.35rem; font-weight: 800; color: var(--red); display: flex; align-items: center; gap: 8px;">
+            <span>Before: Single Collapsed Loss</span>
+          </div>
+
+          <!-- Formula Box -->
+          <div
+            style="font-family: 'Cambria Math', 'STIX Two Math', 'Times New Roman', serif; font-size: 1.15rem; padding: 10px 14px; background: white; border: 1px solid var(--gray-200); border-radius: 8px; font-style: italic; text-align: center; color: var(--gray-900); line-height: 1.4;">
+            <div>ℒ<sub>AT</sub> = &sum;<sub>l</sub> || normalize(mean<sub>c</sub>(F²))<sub>flat</sub> - ... ||²</div>
+          </div>
+
+          <!-- Explanation Bullets -->
+          <ul
+            style="font-size: 0.98rem; line-height: 1.55; color: var(--gray-700); margin: 0; padding-left: 18px; list-style: disc; display: flex; flex-direction: column; gap: 12px;">
+            <li><strong>Block Mismatch:</strong> Hooked ResNet stages <strong style="color: var(--red);">[3, 4,
+                5]</strong>. Stage 5 is the classifier head (produces 2D logits `[B,
+              101]`), which caused runtime crashes and zero gradient contribution.</li>
+            <li><strong>1D Interpolation Mismatch:</strong> Resizing a flattened 1D vector of shape `[T × H × W]` treats
+              space and time as a single coordinate line. This mathematically mixed pixels across frame boundaries and
+              unrelated spatial points, destroying feature geometry.</li>
+            <li><strong>Temporal Signal Dilution:</strong> Normalizing the entire flattened space meant temporal peaks
+              were washed out by spatial dimensions.</li>
+          </ul>
+        </div>
+
+        <!-- Result Card -->
+        <div
+          style="padding: 14px; background: white; border: 1px solid var(--gray-200); border-radius: 8px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+          <div class="label" style="color: var(--red); font-size: 0.78rem; font-weight: 700;">Run
+            4391</div>
+          <div style="font-size: 2.2rem; font-weight: 900; color: var(--red); margin-top: 4px;">59.14% <span
+              style="font-size: 1.1rem; font-weight: 600;">(Top-1)</span></div>
+          <div style="font-size: 0.85rem; color: var(--gray-500); font-weight: 500; margin-top: 2px;">Severe accuracy
+            collapse under noisy gradients</div>
+        </div>
+      </div>
+
+      <!-- Right Panel: AFTER -->
+      <div class="panel"
+        style="border: 1px solid var(--gray-200); padding: 28px 28px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 12px; background: var(--gray-50); box-sizing: border-box; height: 100%;">
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div
+            style="font-size: 1.35rem; font-weight: 800; color: var(--green); display: flex; align-items: center; gap: 8px;">
+            <span>After: Spatial &amp; Temporal Decomposition</span>
+          </div>
+
+          <!-- Formula Box -->
+          <div
+            style="font-family: 'Cambria Math', 'STIX Two Math', 'Times New Roman', serif; font-size: 1.15rem; padding: 10px 14px; background: white; border: 1px solid var(--gray-200); border-radius: 8px; font-style: italic; text-align: center; color: var(--gray-900); line-height: 1.4;">
+            <div style="font-weight: 700; color: var(--navy);">ℒ<sub>AT</sub> = &beta;<sub>s</sub>ℒ<sub>spatial</sub> +
+              &beta;<sub>t</sub>ℒ<sub>temporal</sub></div>
+          </div>
+
+          <!-- Explanation Bullets -->
+          <ul
+            style="font-size: 0.98rem; line-height: 1.55; color: var(--gray-700); margin: 0; padding-left: 18px; list-style: disc; display: flex; flex-direction: column; gap: 12px;">
+            <li><strong>Correct Block Pairing:</strong> Hooked ResNet stages <strong style="color: var(--green);">[2, 3,
+                4]</strong> (intermediate 3D features: `[B, C, T, H, W]`), correctly matching student stages <strong
+                style="color: var(--green);">[2, 4, 6]</strong>.</li>
+            <li><strong>2D Bilinear Interpolation:</strong> Spatial attention is calculated as `mean<sub>c,t</sub>(F²)`
+              and resized spatially via 2D bilinear interpolation, preserving frame layout.</li>
+            <li><strong>Temporal AT Isolation:</strong> Temporal attention is calculated as `mean<sub>c,h,w</sub>(F²)`
+              yielding `[B, T]`, which is transferred directly without any interpolation noise.</li>
+          </ul>
+        </div>
+
+        <!-- Result Card -->
+        <div
+          style="padding: 14px; background: white; border: 1px solid var(--gray-200); border-radius: 8px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+          <div class="label" style="color: var(--green); font-size: 0.78rem; font-weight: 700;">
+            Run 4601</div>
+          <div style="font-size: 2.2rem; font-weight: 900; color: var(--green); margin-top: 4px;">64.58% <span
+              style="font-size: 1.1rem; font-weight: 600;">(Symmetric)</span> &nbsp;·&nbsp; 65.03% <span
+              style="font-size: 1.1rem; font-weight: 600;">(Temporal)</span></div>
+          <div style="font-size: 0.85rem; color: var(--gray-500); font-weight: 500; margin-top: 2px;">Successful feature
+            alignment and positive transfer</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

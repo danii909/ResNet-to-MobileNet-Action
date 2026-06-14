@@ -15,4 +15,13 @@ experiments/checkpoints/
 
 .DS_Store
 
-wandb
+
+/tests/
+/wandb/
+/scripts/
+/scratch/
+/obsolete-results/
+/docs/
+/assets/
+/cluster/*
+!/cluster/aliases.sh

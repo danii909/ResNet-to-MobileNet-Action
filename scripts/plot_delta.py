@@ -14,16 +14,15 @@ except Exception as e:
     print("Install pandas, matplotlib, seaborn, scikit-learn and retry.")
     sys.exit(1)
 
-# Percorsi ai risultati (adatta se necessario)
+# Path to results
 PROJECT_ROOT = Path(__file__).parent.parent
 RESULTS_ROOT = PROJECT_ROOT / "results" / "Train-eval-test-split (group-aware)"
 PREDS_DIR = RESULTS_ROOT / "predictions"
 OUT_DIR = RESULTS_ROOT / "figures"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# Definisci i file da confrontare (adatta i nomi ai tuoi CSV migliori)
+# Files to compare (Baseline vs T=20)
 BASELINE_CSV = PREDS_DIR / "predictions_baseline_ls005_24f_lightaug.csv"
-# Esempio: usiamo il modello con T=20 che ti ha dato l'accuracy migliore
 KD_CSV = PREDS_DIR / "predictions_kd_t20_a07_24f_lightaug.csv" 
 
 def _resolve_prediction_columns(df: pd.DataFrame) -> tuple[str, str]:
@@ -106,11 +105,11 @@ def plot_delta_accuracy():
                  va='center', ha=ha, fontsize=10, fontweight='bold')
 
     plt.axvline(0, color='black', linewidth=1.5, linestyle='--')
-    plt.xlabel('Delta Accuracy (%) -> (KD - Baseline)', fontsize=12)
-    plt.title('Impatto della Knowledge Distillation per Classe (Top Miglioramenti vs Peggioramenti)', fontsize=14, pad=20)
+    plt.xlabel('Delta Accuracy (%) (KD T=20 - Baseline)', fontsize=12)
+    plt.title('Knowledge Distillation Impact per Class (Top Improvements vs Regressions)', fontsize=14, pad=20)
     plt.grid(axis='x', linestyle='--', alpha=0.5)
     
-    # Aggiusta i margini per far spazio ai testi
+    # Adjust margins to fit labels
     xlim = plt.xlim()
     plt.xlim(xlim[0] - 5, xlim[1] + 5)
     
@@ -118,7 +117,7 @@ def plot_delta_accuracy():
     
     out_path = OUT_DIR / "delta_accuracy_kd_vs_baseline.png"
     plt.savefig(out_path, dpi=300, bbox_inches='tight')
-    print(f"\nSalvataggio grafico Delta Accuracy completato -> {out_path}")
+    print(f"\nDelta Accuracy plot saved -> {out_path}")
     plt.close()
 
 if __name__ == "__main__":

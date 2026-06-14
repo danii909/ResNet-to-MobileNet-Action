@@ -1,5 +1,0 @@
-experiment: at_symmetric
-best_eval_acc: 58.2474
-epochs: 50
-final_train_loss: 0.531258
-final_eval_loss: 1.815227

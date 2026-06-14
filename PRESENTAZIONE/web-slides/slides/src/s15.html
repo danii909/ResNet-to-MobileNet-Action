@@ -1,0 +1,97 @@
+<div class="slide" id="s15">
+      <div class="s-head">
+        <div class="s-tag">Backup - Configurations</div>
+        <h2 class="s-title">Experiment Configs by Model Type</h2>
+        <div class="s-sub">Main YAML families used across teacher, baseline, KD, AT, Born Again, and cross-frame runs
+        </div>
+      </div>
+      <div class="s-body" style="flex-direction: column; gap: 14px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: .84rem;">
+          <thead>
+            <tr>
+              <th>Config</th>
+              <th>Model</th>
+              <th>Frames</th>
+              <th>Training</th>
+              <th>Optimizer</th>
+              <th>KD / AT</th>
+              <th>Augmentation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>teacher_24f_evalsplit</strong></td>
+              <td>3D ResNet-50<br>pretrained</td>
+              <td>24</td>
+              <td>50 ep<br>BS 12<br>LS .1</td>
+              <td>SGD<br>lr 7e-4<br>wd .001</td>
+              <td>-</td>
+              <td>jitter .1<br>erase .05<br>stride 1</td>
+            </tr>
+            <tr>
+              <td><strong>baseline_ls005_24f_lightaug</strong></td>
+              <td>MobileNet3D<br>width 1.0</td>
+              <td>24</td>
+              <td>60 ep<br>BS 16<br>LS .05</td>
+              <td>AdamW<br>lr 5e-4<br>wd .01</td>
+              <td>CE only</td>
+              <td>jitter .1<br>erase .05<br>stride 1</td>
+            </tr>
+            <tr>
+              <td><strong>distillation_t8_a07</strong></td>
+              <td>MobileNet3D<br>teacher ResNet</td>
+              <td>24</td>
+              <td>60 ep<br>BS 16<br>warmup 5</td>
+              <td>AdamW<br>lr 5e-4<br>wd .01</td>
+              <td>T=8<br>alpha=.7</td>
+              <td>light aug</td>
+            </tr>
+            <tr>
+              <td><strong>optimized KD</strong></td>
+              <td>MobileNet3D<br>teacher ResNet</td>
+              <td>24</td>
+              <td>60 ep<br>BS 16<br>warmup 10</td>
+              <td>AdamW<br>cosine</td>
+              <td>T=10<br>alpha=.9</td>
+              <td>light aug</td>
+            </tr>
+            <tr>
+              <td><strong>AT symmetric</strong></td>
+              <td>MobileNet3D<br>teacher ResNet</td>
+              <td>24</td>
+              <td>60 ep<br>BS 16<br>warmup 5</td>
+              <td>AdamW<br>lr 5e-4</td>
+              <td>T=20 alpha=.7<br>beta_s=.05 beta_t=.05<br>[2,3,4] to [2,4,6]</td>
+              <td>light aug</td>
+            </tr>
+            <tr style="background: var(--green-bg);">
+              <td><strong>AT temporal-only</strong></td>
+              <td>MobileNet3D<br>teacher ResNet</td>
+              <td>24</td>
+              <td>60 ep<br>BS 16<br>warmup 5</td>
+              <td>AdamW<br>lr 5e-4</td>
+              <td><strong>T=20 alpha=.7<br>beta_s=0 beta_t=.1<br>[2,3,4] to [2,4,6]</strong></td>
+              <td>light aug</td>
+            </tr>
+            <tr>
+              <td><strong>Born Again AT</strong></td>
+              <td>MobileNet3D<br>teacher MobileNet3D</td>
+              <td>24</td>
+              <td>50 ep<br>BS 16</td>
+              <td>AdamW<br>lr 5e-4<br>wd .01</td>
+              <td>T=2.5 alpha=.5<br>beta_s=.05 beta_t=.05<br>[2,4,6] to [2,4,6]</td>
+              <td>eval split</td>
+            </tr>
+            <tr>
+              <td><strong>Cross-frame KD</strong></td>
+              <td>MobileNet3D<br>teacher ResNet</td>
+              <td>24 to 16</td>
+              <td>60 ep<br>BS 16<br>warmup 5</td>
+              <td>AdamW<br>lr 5e-4<br>wd .01</td>
+              <td>T=20 alpha=.7<br>student_frames=16</td>
+              <td>light aug</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>

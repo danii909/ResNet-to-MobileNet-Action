@@ -1,0 +1,54 @@
+\babel@toc {italian}{}\relax 
+\babel@toc {italian}{}\relax 
+\contentsline {chapter}{\numberline {1}Introduzione}{3}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Obiettivi del Progetto}{3}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Organizzazione della Relazione}{4}{section.1.2}%
+\contentsline {chapter}{\numberline {2}Background Teorico}{5}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Knowledge Distillation}{5}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Formulazione Matematica}{5}{subsection.2.1.1}%
+\contentsline {subsection}{\numberline {2.1.2}Ruolo della Temperatura}{5}{subsection.2.1.2}%
+\contentsline {section}{\numberline {2.2}Attention Transfer}{6}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}AT per Immagini 2D}{6}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}Estensione al Video 3D: Attenzione Spaziale e Temporale}{6}{subsection.2.2.2}%
+\contentsline {subsection}{\numberline {2.2.3}Loss Totale di Distillation con AT}{7}{subsection.2.2.3}%
+\contentsline {section}{\numberline {2.3}Born-Again Networks}{7}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Visualizzazione t-SNE}{7}{section.2.4}%
+\contentsline {chapter}{\numberline {3}Architetture dei Modelli}{8}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Teacher: 3D ResNet-50 (\texttt {slow\_r50})}{8}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Student: MobileNet3D}{9}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Confronto Dimensionale}{10}{section.3.3}%
+\contentsline {section}{\numberline {3.4}Accoppiamento dei Layer per l'Attention Transfer}{10}{section.3.4}%
+\contentsline {chapter}{\numberline {4}Dataset e Protocollo Sperimentale}{11}{chapter.4}%
+\contentsline {section}{\numberline {4.1}UCF-101}{11}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Caricamento e Pre-processing}{11}{subsection.4.1.1}%
+\contentsline {section}{\numberline {4.2}Il Problema del Data Leakage}{11}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Evoluzione degli Split}{11}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {4.2.2}Impatto Sulle Metriche}{12}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}Implementazione dello Split Group-Aware}{12}{subsection.4.2.3}%
+\contentsline {section}{\numberline {4.3}Protocollo Sperimentale Finale}{12}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Infrastruttura Computazionale}{13}{section.4.4}%
+\contentsline {chapter}{\numberline {5}Implementazione della Pipeline}{14}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Architettura della Pipeline}{14}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Funzione di Loss Combinata}{14}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Il Bug del Block 5 (``Key~5'')}{15}{section.5.3}%
+\contentsline {section}{\numberline {5.4}Gestione dell'Interpolazione Spaziale}{15}{section.5.4}%
+\contentsline {section}{\numberline {5.5}Warmup per la Knowledge Distillation}{16}{section.5.5}%
+\contentsline {section}{\numberline {5.6}Mixed Precision Training}{16}{section.5.6}%
+\contentsline {chapter}{\numberline {6}Risultati Sperimentali}{17}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Modelli di Riferimento}{17}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Knowledge Distillation: Risultato Principale}{17}{section.6.2}%
+\contentsline {section}{\numberline {6.3}Temperature Scaling Ablation}{18}{section.6.3}%
+\contentsline {subsection}{\numberline {6.3.1}Analisi dei Risultati}{19}{subsection.6.3.1}%
+\contentsline {section}{\numberline {6.4}Attention Transfer}{19}{section.6.4}%
+\contentsline {subsection}{\numberline {6.4.1}Analisi del Risultato Negativo}{20}{subsection.6.4.1}%
+\contentsline {section}{\numberline {6.5}Born-Again Networks}{20}{section.6.5}%
+\contentsline {subsection}{\numberline {6.5.1}Collasso Generazionale}{20}{subsection.6.5.1}%
+\contentsline {section}{\numberline {6.6}Visualizzazione t-SNE dello Spazio Latente}{21}{section.6.6}%
+\contentsline {section}{\numberline {6.7}Confusion Matrix}{22}{section.6.7}%
+\contentsline {section}{\numberline {6.8}Riepilogo Quantitativo}{24}{section.6.8}%
+\contentsline {chapter}{\numberline {7}Conclusioni e Lavori Futuri}{25}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Sintesi dei Risultati}{25}{section.7.1}%
+\contentsline {section}{\numberline {7.2}Lezioni Apprese}{25}{section.7.2}%
+\contentsline {section}{\numberline {7.3}Limiti del Lavoro}{26}{section.7.3}%
+\contentsline {section}{\numberline {7.4}Lavori Futuri}{26}{section.7.4}%
+\contentsline {section}{\numberline {7.5}Dichiarazione sull'Uso dell'IA}{26}{section.7.5}%

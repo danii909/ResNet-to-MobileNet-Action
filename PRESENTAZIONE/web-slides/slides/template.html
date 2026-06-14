@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Distillation for Mobile Action Recognition</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+
+  <style>
+    :root {
+      --white: #ffffff;
+      --off-white: #f5f6f8;
+      --gray-50: #f9fafb;
+      --gray-100: #f0f1f3;
+      --gray-200: #e2e4e8;
+      --gray-300: #c9cdd4;
+      --gray-500: #6b7280;
+      --gray-700: #374151;
+      --gray-900: #111827;
+
+      --navy: #1b2e4a;
+      --navy-light: #2d4a7c;
+      --blue: #2563eb;
+      --blue-bg: #eff6ff;
+      --green: #16a34a;
+      --green-bg: #f0fdf4;
+      --red: #dc2626;
+      --red-bg: #fef2f2;
+      --amber: #d97706;
+      --amber-bg: #fffbeb;
+      --purple: #7c3aed;
+      --purple-bg: #f5f3ff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    body {
+      background: var(--white);
+      color: var(--gray-900);
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* === PRESENTATION === */
+    #deck {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 1600px;
+      height: 900px;
+      background: var(--white);
+      border-radius: 0;
+      box-shadow: none;
+      padding: 52px 64px 44px;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(var(--deck-scale, 1));
+      transform-origin: center;
+      transition: opacity .35s ease;
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, -50%) scale(var(--deck-scale, 1));
+      z-index: 10;
+    }
+
+    /* === HEADER === */
+    .s-tag {
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--navy-light);
+      margin-bottom: 8px;
+    }
+
+    .s-title {
+      font-size: 2.1rem;
+      font-weight: 800;
+      color: var(--gray-900);
+      line-height: 1.15;
+      letter-spacing: -.5px;
+    }
+
+    .s-sub {
+      font-size: 1.1rem;
+      color: var(--gray-500);
+      margin-top: 4px;
+      font-weight: 400;
+    }
+
+    .s-head {
+      margin-bottom: 32px;
+      padding-bottom: 18px;
+      border-bottom: 2px solid var(--gray-200);
+    }
+
+    /* === BODY === */
+    .s-body {
+      flex: 1;
+      display: flex;
+      gap: 40px;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* === HELPERS === */
+    .big-num {
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .mid-num {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .label {
+      font-size: .75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--gray-500);
+    }
+
+    .body-text {
+      font-size: 1.15rem;
+      line-height: 1.65;
+      color: var(--gray-700);
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: .8rem;
+      font-weight: 600;
+    }
+
+    .kpi {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 20px 16px;
+      background: var(--gray-50);
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .panel {
+      background: var(--gray-50);
+      border-radius: 14px;
+      padding: 28px 32px;
+    }
+
+    .math-formula {
+      font-family: "Cambria Math", "STIX Two Math", "Times New Roman", serif;
+      font-style: italic;
+      font-size: 1.36rem;
+      line-height: 1.6;
+      color: var(--gray-900);
+      background: white;
+      border-radius: 8px;
+      padding: 16px 20px;
+    }
+
+    .img-frame {
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .img-frame img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    /* === TABLE === */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      font-size: .8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--navy);
+      padding: 14px 14px;
+      text-align: left;
+      background: var(--blue-bg);
+      border-bottom: 2px solid var(--navy);
+    }
+
+    td {
+      font-size: 1.05rem;
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--gray-200);
+      color: var(--gray-700);
+    }
+
+    .hl td {
+      font-weight: 700;
+      color: var(--gray-900);
+      background: #dbeafe;
+    }
+
+    /* === CHART BARS === */
+    .bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 0;
+      height: 100%;
+    }
+
+    .bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      height: 100%;
+      padding: 0 8px;
+    }
+
+    .bar-col .val {
+      font-size: .95rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .bar-col .fill {
+      width: 100%;
+      border-radius: 6px 6px 0 0;
+      transition: filter .2s;
+    }
+
+    .bar-col .fill:hover {
+      filter: brightness(1.08);
+    }
+
+    .bar-col .lbl {
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      margin-top: 10px;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .ref-line {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--green);
+    }
+
+    .ref-label {
+      position: absolute;
+      left: 12px;
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--green);
+      background: var(--white);
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid #bbf7d0;
+      transform: translateY(-50%);
+      z-index: 3;
+    }
+
+    /* === TITLE SLIDE === */
+    .slide-title-page {
+      justify-content: center;
+      align-items: flex-start;
+      gap: 16px;
+      background: linear-gradient(135deg, #fff 0%, #eff6ff 60%, #e0e7ff 100%);
+      padding-left: 72px;
+    }
+
+    .slide-title-page .course-badge {
+      background: var(--navy);
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      padding: 10px 24px;
+      border-radius: 8px;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+    }
+
+    .slide-title-page h1 {
+      font-size: 4.8rem;
+      font-weight: 900;
+      color: var(--navy);
+      line-height: 1.08;
+      letter-spacing: -1.5px;
+      max-width: 1200px;
+    }
+
+    .slide-title-page .tagline {
+      font-size: 1.6rem;
+      color: var(--gray-500);
+      max-width: 1000px;
+      line-height: 1.55;
+      margin-top: 6px;
+    }
+
+    .slide-title-page .meta-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+      margin-top: 36px;
+      padding-top: 36px;
+      border-top: 2px solid var(--gray-200);
+      width: 100%;
+    }
+
+    .slide-title-page .meta-grid .mi {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .slide-title-page .meta-grid .mi .ml {
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--amber);
+    }
+
+    .slide-title-page .meta-grid .mi .mv {
+      font-size: 1.25rem;
+      color: var(--gray-900);
+      margin-top: 6px;
+      font-weight: 500;
+    }
+
+    .slide-title-page .meta-grid .mi a {
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* === NAV === */
+    #nav {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      width: 93vw;
+      max-width: 1440px;
+      margin-top: 18px;
+      z-index: 20;
+    }
+
+    .nbtn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--white);
+      border: 1px solid var(--gray-300);
+      color: var(--gray-700);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, .06);
+    }
+
+    .nbtn:hover:not(:disabled) {
+      background: var(--navy);
+      color: #fff;
+      border-color: var(--navy);
+    }
+
+    .nbtn:disabled {
+      opacity: .25;
+      cursor: not-allowed;
+    }
+
+    .nav-mid {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex-grow: 1;
+      max-width: 360px;
+    }
+
+    .pbar-bg {
+      width: 100%;
+      height: 5px;
+      background: var(--gray-200);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .pbar-fg {
+      height: 100%;
+      width: 0%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--navy), var(--blue));
+      transition: width .3s;
+    }
+
+    .ptext {
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      letter-spacing: .5px;
+    }
+
+    .keys {
+      font-size: .72rem;
+      color: var(--gray-500);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .keys kbd {
+      background: var(--gray-100);
+      border: 1px solid var(--gray-300);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .68rem;
+    }
+
+    /* === PRINT === */
+    @media print {
+      @page {
+        size: landscape;
+        margin: 0;
+      }
+
+      body {
+        background: #fff !important;
+        overflow: visible !important;
+        height: auto !important;
+      }
+
+      #deck {
+        width: 100% !important;
+        height: auto !important;
+        max-width: none !important;
+        max-height: none !important;
+        display: block !important;
+      }
+
+      .slide {
+        position: relative !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        transform: none !important;
+        page-break-after: always !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+      }
+
+      #nav {
+        display: none !important;
+      }
+    }
+
+    /* === IMAGE ZOOM MODAL === */
+    .slide img {
+      cursor: zoom-in;
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .slide img:hover {
+      transform: scale(1.015);
+    }
+
+    #image-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(17, 24, 39, 0.95);
+      z-index: 99999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-out;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    #image-modal.active {
+      opacity: 1;
+    }
+
+    #modal-img {
+      max-width: 95vw;
+      max-height: 95vh;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.5);
+      transform: scale(0.95);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    #image-modal.active #modal-img {
+      transform: scale(1);
+    }
+
+    #modal-caption {
+      position: absolute;
+      top: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      gap: 180px;
+      justify-content: center;
+      align-items: center;
+      z-index: 100000;
+      background: rgba(17, 24, 39, 0.9);
+      padding: 12px 36px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+      pointer-events: none;
+    }
+
+    #modal-caption div {
+      font-size: 1.25rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="deck">
+
+        {{SLIDES}}
+
+  </div>
+    <div id="nav">
+      <button class="nbtn" id="prev" title="Previous" disabled>←</button>
+      <div class="nav-mid">
+        <div class="pbar-bg">
+          <div class="pbar-fg" id="pbar"></div>
+        </div>
+        <div class="ptext" id="counter">1 / 15</div>
+      </div>
+      <div class="keys"><span>Navigate</span> <kbd>←</kbd> <kbd>→</kbd> <span>or</span> <kbd>Space</kbd></div>
+      <button class="nbtn" id="next" title="Next">→</button>
+    </div>
+
+    <div id="image-modal">
+      <div id="modal-caption"></div>
+      <img id="modal-img" src="" alt="Zoomed Image">
+    </div>
+
+    <script>
+      const S = document.querySelectorAll('.slide');
+      const P = document.getElementById('prev');
+      const N = document.getElementById('next');
+      const B = document.getElementById('pbar');
+      const C = document.getElementById('counter');
+      let i = 0;
+      const T = S.length;
+
+      function fitDeck() {
+        const scale = Math.min(window.innerWidth / 1600, window.innerHeight / 900);
+        document.documentElement.style.setProperty('--deck-scale', scale);
+      }
+
+      function go() {
+        S.forEach((s, j) => s.classList.toggle('active', j === i));
+        P.disabled = i === 0;
+        N.disabled = i === T - 1;
+        B.style.width = (i / (T - 1) * 100) + '%';
+        C.textContent = (i + 1) + ' / ' + T;
+      }
+
+      P.addEventListener('click', () => { if (i > 0) { i--; go(); } });
+      N.addEventListener('click', () => { if (i < T - 1) { i++; go(); } });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (i < T - 1) { i++; go(); } }
+        else if (e.key === 'ArrowLeft') { e.preventDefault(); if (i > 0) { i--; go(); } }
+        else if (e.key === 'Home') { e.preventDefault(); i = 0; go(); }
+        else if (e.key === 'End') { e.preventDefault(); i = T - 1; go(); }
+      });
+      let tx = 0;
+      document.addEventListener('touchstart', e => tx = e.changedTouches[0].screenX);
+      document.addEventListener('touchend', e => {
+        const d = tx - e.changedTouches[0].screenX;
+        if (d > 50 && i < T - 1) { i++; go(); }
+        else if (d < -50 && i > 0) { i--; go(); }
+      });
+      window.addEventListener('resize', fitDeck);
+      fitDeck();
+      go();
+
+      // === IMAGE ZOOM MODAL LOGIC ===
+      const modal = document.getElementById('image-modal');
+      const modalImg = document.getElementById('modal-img');
+      const modalCaption = document.getElementById('modal-caption');
+
+      document.addEventListener('click', e => {
+        if (e.target.tagName === 'IMG' && e.target.closest('.slide')) {
+          modalImg.src = e.target.src;
+          modalImg.alt = e.target.alt;
+
+          // Custom captions for Attention Transfer plots
+          if (e.target.src.includes('tsne_distill_t20_vs_at_symmetric.png')) {
+            modalCaption.innerHTML = '<div style="color: #93c5fd; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Pure KD T=20</div><div style="color: #fbbf24; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Symmetric AT</div>';
+            modalCaption.style.display = 'flex';
+          } else if (e.target.src.includes('tsne_distill_t20_vs_at_temporal.png')) {
+            modalCaption.innerHTML = '<div style="color: #93c5fd; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Pure KD T=20</div><div style="color: #c084fc; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Temporal-Only AT</div>';
+            modalCaption.style.display = 'flex';
+          } else {
+            modalCaption.style.display = 'none';
+          }
+
+          modal.style.display = 'flex';
+          modal.offsetHeight; // Force reflow
+          modal.classList.add('active');
+        }
+      });
+
+      function closeModal() {
+        modal.classList.remove('active');
+        setTimeout(() => {
+          if (!modal.classList.contains('active')) {
+            modal.style.display = 'none';
+            modalCaption.style.display = 'none';
+          }
+        }, 300);
+      }
+
+      modal.addEventListener('click', closeModal);
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+          closeModal();
+        }
+      });
+    </script>
+</body>
+
+</html>

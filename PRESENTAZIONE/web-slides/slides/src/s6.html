@@ -1,0 +1,30 @@
+<div class="slide" id="s6">
+      <div class="s-head">
+        <div class="s-tag">Qualitative Analysis</div>
+        <h2 class="s-title">Per-Class Accuracy: KD T=20 vs Baseline</h2>
+      </div>
+      <div class="s-body">
+        <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+          <div class="img-frame" style="width: 100%; height: 100%;">
+            <img src="../assets/delta_accuracy_kd_vs_baseline.png" alt="Delta Accuracy">
+          </div>
+        </div>
+        <div style="width: 32%; display: flex; flex-direction: column; gap: 24px; justify-content: center;">
+          <div class="panel">
+            <div style="font-size: 1.15rem; font-weight: 700; color: var(--green); margin-bottom: 8px;">Improvements
+            </div>
+            <p class="body-text">
+              Spatially complex classes (e.g. <strong>WallPushups</strong>, <strong>HeadMassage</strong>) gain most from
+              the Teacher's visual filters.
+            </p>
+          </div>
+          <div class="panel">
+            <div style="font-size: 1.15rem; font-weight: 700; color: var(--red); margin-bottom: 8px;">Regressions</div>
+            <p class="body-text">
+              Fast, cyclic actions (<strong>JumpingJack</strong>, <strong>TennisSwing</strong>) suffer from temporal
+              over-smoothing at high T.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>

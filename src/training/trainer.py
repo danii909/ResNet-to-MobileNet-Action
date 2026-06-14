@@ -14,6 +14,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from src.training.losses import CombinedKDATLoss, KDLoss
+from src.training.temporal import temporal_subsample
 from src.utils import logger
 
 
@@ -66,6 +67,21 @@ class Trainer:
             5 if self.mode in ("distillation", "distillation_at") else 0,
         )
         self.current_epoch = 0
+
+        # Cross-Frame KD: Student receives fewer frames than Teacher.
+        # When student_frames is set (and < dataset.num_frames), temporal
+        # sub-sampling is applied on-the-fly inside _compute_loss.
+        kd_cfg = config.get("distillation", {})
+        teacher_frames = config.get("dataset", {}).get("num_frames", 24)
+        student_frames = kd_cfg.get("student_frames")  # None = same as teacher
+        if student_frames is not None and student_frames < teacher_frames:
+            self.student_frames = int(student_frames)
+            print(
+                f"[Trainer] Cross-Frame KD enabled: "
+                f"Teacher={teacher_frames}f → Student={self.student_frames}f"
+            )
+        else:
+            self.student_frames = None  # standard same-frame KD
         self.hard_criterion = nn.CrossEntropyLoss(label_smoothing=self.label_smoothing)
 
         # Setup teacher for distillation
@@ -221,6 +237,7 @@ class Trainer:
                 "at_beta_temporal": kd_cfg.get("at_beta_temporal", kd_cfg.get("at_beta")),
                 "teacher_keys": kd_cfg.get("teacher_keys"),
                 "student_keys": kd_cfg.get("student_keys"),
+                "student_frames": kd_cfg.get("student_frames"),
             },
         }
 
@@ -278,6 +295,11 @@ class Trainer:
                 f"temperature: {summary['distillation']['temperature']}",
                 f"alpha: {summary['distillation']['alpha']}",
             ])
+            if summary["distillation"]["student_frames"] is not None:
+                lines.append(
+                    f"student_frames: {summary['distillation']['student_frames']} "
+                    f"(cross-frame KD)"
+                )
             if self.mode == "distillation_at":
                 lines.extend([
                     f"at_beta_spatial: {summary['distillation']['at_beta_spatial']}",
@@ -545,24 +567,42 @@ class Trainer:
         acc = 100.0 * correct / total
         return {"train_loss": avg_loss, "train_acc": acc}
 
+    def _get_student_clips(self, clips: torch.Tensor) -> torch.Tensor:
+        """Return temporally sub-sampled clips for the Student if cross-frame KD is active."""
+        if self.student_frames is not None:
+            return temporal_subsample(clips, self.student_frames)
+        return clips
+
     def _compute_loss(self, clips: torch.Tensor, labels: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        """Compute loss depending on training mode."""
+        """Compute loss depending on training mode.
+
+        In cross-frame KD (student_frames < teacher_frames), the Teacher
+        receives the full clip while the Student receives a temporally
+        sub-sampled version. Both produce logits over the same label space,
+        so the KD loss is computed normally on the logit pairs.
+        """
         if self.mode in ("teacher_finetune", "baseline"):
             logits = self.model(clips)
             return self.criterion(logits, labels), logits
 
         elif self.mode == "distillation":
-            student_logits = self.model(clips)
+            # Student forward: possibly sub-sampled temporal resolution
+            student_clips = self._get_student_clips(clips)
+            student_logits = self.model(student_clips)
             if self.current_epoch < self.kd_warmup_epochs:
                 return self.hard_criterion(student_logits, labels), student_logits
+            # Teacher forward: full temporal resolution, no gradients
             with torch.no_grad():
                 teacher_logits = self.teacher(clips)
             return self.criterion(student_logits, teacher_logits, labels), student_logits
 
         elif self.mode == "distillation_at":
-            student_logits = self.model(clips)
+            # Student forward: possibly sub-sampled temporal resolution
+            student_clips = self._get_student_clips(clips)
+            student_logits = self.model(student_clips)
             if self.current_epoch < self.kd_warmup_epochs:
                 return self.hard_criterion(student_logits, labels), student_logits
+            # Teacher forward: full temporal resolution, no gradients
             with torch.no_grad():
                 teacher_logits = self.teacher(clips)
             teacher_feats = self.teacher.get_intermediate_features()
@@ -577,6 +617,13 @@ class Trainer:
 
     @torch.no_grad()
     def _evaluate(self, epoch: int) -> dict:
+        """Evaluate the model on the eval set.
+
+        In cross-frame KD, the Student is evaluated EXCLUSIVELY on its
+        sub-sampled frames (student_frames) to measure real-world accuracy
+        at reduced temporal cost.  This ensures the reported metrics reflect
+        actual inference conditions.
+        """
         self.model.eval()
         correct = 0
         correct_top5 = 0
@@ -584,13 +631,20 @@ class Trainer:
         running_loss = 0.0
         ce_criterion = nn.CrossEntropyLoss()
 
-        pbar = tqdm(self.eval_loader, desc=f"Eval {epoch+1}", leave=True, file=sys.stdout)
+        eval_desc = f"Eval {epoch+1}"
+        if self.student_frames is not None:
+            eval_desc += f" ({self.student_frames}f)"
+
+        pbar = tqdm(self.eval_loader, desc=eval_desc, leave=True, file=sys.stdout)
         for clips, labels in pbar:
             clips = clips.to(self.device, non_blocking=True)
             labels = labels.to(self.device, non_blocking=True)
 
+            # In cross-frame KD, evaluate the student on its sub-sampled frames
+            eval_clips = self._get_student_clips(clips) if self.student_frames is not None else clips
+
             with torch.amp.autocast("cuda", enabled=self.use_amp):
-                logits = self.model(clips)
+                logits = self.model(eval_clips)
                 loss = ce_criterion(logits, labels)
 
             running_loss += loss.item() * clips.size(0)
