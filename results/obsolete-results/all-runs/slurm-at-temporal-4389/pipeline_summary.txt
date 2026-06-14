@@ -1,9 +1,0 @@
-Pipeline Summary — AT Temporal Experiments
-============================================================
-job_tag: slurm-at-temporal-4389
-slurm_job_id: 4389
-root_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-at-temporal-4389
-teacher_checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4201/teacher/teacher_finetune_best.pth
-
-Reference baseline (slurm-train-eval-4201 KD-only): 63.78% best_eval_acc
-

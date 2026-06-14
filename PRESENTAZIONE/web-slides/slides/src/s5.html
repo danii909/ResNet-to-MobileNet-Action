@@ -1,0 +1,145 @@
+<div class="slide" id="s5">
+      <div class="s-head">
+        <div class="s-tag">Quantitative Results</div>
+        <h2 class="s-title">Temperature Sweep &amp; Main Result</h2>
+        <div class="s-sub">Systematic analysis of Student behavior as T varies &nbsp;·&nbsp; a&nbsp;=&nbsp;0.7 fixed
+        </div>
+      </div>
+      <div class="s-body" style="flex-direction: column; gap: 16px; flex: 1; justify-content: stretch; padding-bottom: 24px; box-sizing: border-box;">
+        <table>
+          <thead>
+            <tr>
+              <th>Temperature</th>
+              <th>Best Val Acc</th>
+              <th>Epoch</th>
+              <th>Train Acc</th>
+              <th>Test Top-1</th>
+              <th>Test Top-5</th>
+              <th>Δ vs Baseline</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Minimal Augmentation (no KD)</td>
+              <td>59.18%</td>
+              <td>—</td>
+              <td>99.81%</td>
+              <td>59.48%</td>
+              <td>82.77%</td>
+              <td style="color:var(--gray-500)">ref.</td>
+            </tr>
+            <tr>
+              <td>T = 1</td>
+              <td>62.75%</td>
+              <td>60</td>
+              <td>98.44%</td>
+              <td>62.91%</td>
+              <td>85.59%</td>
+              <td style="color:var(--green);font-weight:600">+3.43%</td>
+            </tr>
+            <tr>
+              <td>T = 5</td>
+              <td>63.12%</td>
+              <td>57</td>
+              <td>95.87%</td>
+              <td>62.07%</td>
+              <td>87.02%</td>
+              <td style="color:var(--green);font-weight:600">+2.59%</td>
+            </tr>
+            <tr>
+              <td>T = 8</td>
+              <td>64.57%</td>
+              <td>56</td>
+              <td>97.59%</td>
+              <td>64.31%</td>
+              <td>87.68%</td>
+              <td style="color:var(--green);font-weight:600">+4.83%</td>
+            </tr>
+            <tr>
+              <td>T = 10</td>
+              <td>64.85%</td>
+              <td>60</td>
+              <td>98.28%</td>
+              <td>64.47%</td>
+              <td>87.44%</td>
+              <td style="color:var(--green);font-weight:600">+4.99%</td>
+            </tr>
+            <tr class="hl">
+              <td><strong>T = 20</strong></td>
+              <td>65.18%</td>
+              <td>59</td>
+              <td>99.05%</td>
+              <td><strong>65.85%</strong></td>
+              <td>87.81%</td>
+              <td style="color:var(--green);font-weight:700">+6.37%</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="panel"
+          style="margin-top: 0; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; flex: 1; box-sizing: border-box; min-height: 330px;">
+          <div
+            style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--navy);">
+            Test Accuracy vs. Temperature Trend
+          </div>
+          <svg width="100%" height="100%" viewBox="0 0 1000 240" fill="none" xmlns="http://www.w3.org/2000/svg"
+            style="overflow: visible;">
+            <defs>
+              <linearGradient id="chart-area-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--blue)" stop-opacity="0.2" />
+                <stop offset="100%" stop-color="var(--blue)" stop-opacity="0.0" />
+              </linearGradient>
+            </defs>
+
+            <line x1="80" y1="200" x2="920" y2="200" stroke="var(--gray-200)" stroke-width="1" />
+            <line x1="80" y1="120" x2="920" y2="120" stroke="var(--gray-200)" stroke-width="1" stroke-dasharray="4 4" />
+            <line x1="80" y1="40" x2="920" y2="40" stroke="var(--gray-200)" stroke-width="1" stroke-dasharray="4 4" />
+
+            <text x="70" y="204" fill="var(--gray-500)" font-size="11" font-weight="600" text-anchor="end">58.0%</text>
+            <text x="70" y="124" fill="var(--gray-500)" font-size="11" font-weight="600" text-anchor="end">62.0%</text>
+            <text x="70" y="44" fill="var(--gray-500)" font-size="11" font-weight="600" text-anchor="end">66.0%</text>
+
+            <line x1="100" y1="200" x2="100" y2="40" stroke="var(--gray-200)" stroke-width="1" stroke-dasharray="2 2" />
+            <line x1="280" y1="200" x2="280" y2="40" stroke="var(--gray-200)" stroke-width="1" stroke-dasharray="2 2" />
+            <line x1="500" y1="200" x2="500" y2="40" stroke="var(--gray-200)" stroke-width="1" stroke-dasharray="2 2" />
+            <line x1="660" y1="200" x2="660" y2="40" stroke="var(--gray-200)" stroke-width="1" stroke-dasharray="2 2" />
+            <line x1="780" y1="200" x2="780" y2="40" stroke="var(--gray-200)" stroke-width="1" stroke-dasharray="2 2" />
+            <line x1="880" y1="200" x2="880" y2="40" stroke="var(--gray-200)" stroke-width="1" stroke-dasharray="2 2" />
+
+            <path d="M 100 200 L 100 170 L 280 102 L 500 119 L 660 74 L 780 71 L 880 43 L 880 200 Z"
+              fill="url(#chart-area-grad)" />
+
+            <path d="M 100 170 L 280 102 L 500 119 L 660 74 L 780 71 L 880 43" stroke="var(--blue)" stroke-width="3.5"
+              stroke-linecap="round" stroke-linejoin="round" />
+
+            <circle cx="100" cy="170" r="5" fill="var(--white)" stroke="var(--gray-500)" stroke-width="3" />
+            <circle cx="280" cy="102" r="5" fill="var(--white)" stroke="var(--blue)" stroke-width="3" />
+            <circle cx="500" cy="119" r="5" fill="var(--white)" stroke="var(--blue)" stroke-width="3" />
+            <circle cx="660" cy="74" r="5" fill="var(--white)" stroke="var(--blue)" stroke-width="3" />
+            <circle cx="780" cy="71" r="5" fill="var(--white)" stroke="var(--blue)" stroke-width="3" />
+            <circle cx="880" cy="43" r="6" fill="var(--white)" stroke="var(--green)" stroke-width="3.5" />
+
+            <text x="100" y="156" fill="var(--gray-500)" font-size="12" font-weight="700"
+              text-anchor="middle">59.48%</text>
+            <text x="280" y="88" fill="var(--blue)" font-size="12" font-weight="700" text-anchor="middle">62.91%</text>
+            <text x="500" y="105" fill="var(--blue)" font-size="12" font-weight="700" text-anchor="middle">62.07%</text>
+            <text x="660" y="60" fill="var(--blue)" font-size="12" font-weight="700" text-anchor="middle">64.31%</text>
+            <text x="780" y="57" fill="var(--blue)" font-size="12" font-weight="700" text-anchor="middle">64.47%</text>
+            <text x="880" y="28" fill="var(--green)" font-size="13" font-weight="800" text-anchor="middle">65.85%</text>
+
+            <text x="100" y="222" fill="var(--gray-500)" font-size="11" font-weight="600"
+              text-anchor="middle">Baseline</text>
+            <text x="280" y="222" fill="var(--gray-700)" font-size="11" font-weight="600" text-anchor="middle">T =
+              1</text>
+            <text x="500" y="222" fill="var(--gray-700)" font-size="11" font-weight="600" text-anchor="middle">T =
+              5</text>
+            <text x="660" y="222" fill="var(--gray-700)" font-size="11" font-weight="600" text-anchor="middle">T =
+              8</text>
+            <text x="780" y="222" fill="var(--gray-700)" font-size="11" font-weight="600" text-anchor="middle">T =
+              10</text>
+            <text x="880" y="222" fill="var(--green)" font-size="11" font-weight="700" text-anchor="middle">T =
+              20</text>
+          </svg>
+        </div>
+      </div>
+    </div>

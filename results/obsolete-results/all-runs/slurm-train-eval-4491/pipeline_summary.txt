@@ -1,6 +1,0 @@
-Pipeline Summary
-============================================================
-job_tag: slurm-train-eval-4491
-slurm_job_id: 4491
-root_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4491
-

@@ -1,0 +1,100 @@
+<div class="slide" id="s2">
+      <div class="s-head">
+        <div class="s-tag">Problem &amp; Motivation</div>
+        <h2 class="s-title">The Capacity Gap</h2>
+      </div>
+      <div class="s-body" style="flex-direction: column; justify-content: center; gap: 48px;">
+        <p class="body-text"
+          style="font-size: 1.4rem; line-height: 1.75; color: var(--gray-800); text-align: center; max-width: 1050px; margin: 12px auto 0;">
+          <strong>Goal:</strong> Compress a 3D ResNet-50 teacher (pretrained on Kinetics-400) into a MobileNet3D student
+          for on-device video action recognition on UCF-101 (101 classes).
+        </p>
+
+        <div style="display: flex; align-items: stretch; justify-content: space-between; gap: 36px; width: 100%;">
+          <div
+            style="flex: 1; text-align: center; padding: 44px 28px; background: var(--blue-bg); border-radius: 18px; border: 1px solid rgba(37, 99, 235, 0.12); display: flex; flex-direction: column; justify-content: center;">
+            <div class="label" style="color: var(--navy); font-size: 0.95rem; letter-spacing: 2px;">Teacher</div>
+            <div style="font-size: 1.85rem; font-weight: 800; color: var(--navy); margin: 14px 0 8px;">3D ResNet-50
+            </div>
+            <div class="big-num" style="color: var(--navy); font-size: 4.4rem;">88.82%</div>
+            <div class="label" style="margin-top: 10px; color: var(--navy-light); font-size: 0.85rem;">Test Accuracy
+            </div>
+            <div style="margin-top: 20px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+              <span class="pill"
+                style="background: rgba(37, 99, 235, 0.12); color: var(--navy); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">~128
+                MB</span>
+              <span class="pill"
+                style="background: rgba(220, 38, 38, 0.10); color: var(--red); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">6.21
+                ms GPU</span>
+              <span class="pill"
+                style="background: rgba(220, 38, 38, 0.10); color: var(--red); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">76.6
+                ms CPU</span>
+            </div>
+          </div>
+
+          <div
+            style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 220px; text-align: center; padding: 0 12px; gap: 24px;">
+
+            <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+              <span class="label"
+                style="color: var(--red); letter-spacing: 1.5px; font-weight: 700; font-size: 0.85rem;">Accuracy
+                Gap</span>
+              <span class="big-num" style="color: var(--red); font-size: 3rem; margin: 4px 0 6px;">−29.3 pp</span>
+              <svg width="150" height="20" viewBox="0 0 150 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 10H136" stroke="var(--red)" stroke-width="3.5" stroke-linecap="round" />
+                <path d="M128 4L139 10L128 16" stroke="var(--red)" stroke-width="3.5" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </div>
+
+
+            <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+              <span class="label"
+                style="color: var(--green); letter-spacing: 1.5px; font-weight: 700; font-size: 0.85rem;">Size
+                Reduction</span>
+              <span class="big-num" style="color: var(--green); font-size: 3rem; margin: 4px 0 6px;">13.5×</span>
+              <svg width="150" height="20" viewBox="0 0 150 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 10H136" stroke="var(--green)" stroke-width="3.5" stroke-linecap="round" />
+                <path d="M128 4L139 10L128 16" stroke="var(--green)" stroke-width="3.5" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </div>
+
+            <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+              <span class="label"
+                style="color: var(--green); letter-spacing: 1.5px; font-weight: 700; font-size: 0.85rem;">Inference
+                Speed</span>
+              <span class="big-num" style="color: var(--green); font-size: 3rem; margin: 4px 0 2px;">1.82×</span>
+              <span style="font-size: 0.78rem; color: var(--gray-400); font-weight: 500; margin-bottom: 6px;">1.66× CPU
+                &nbsp;(BS=1)</span>
+              <svg width="150" height="20" viewBox="0 0 150 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 10H136" stroke="var(--green)" stroke-width="3.5" stroke-linecap="round" />
+                <path d="M128 4L139 10L128 16" stroke="var(--green)" stroke-width="3.5" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </div>
+          </div>
+
+          <div
+            style="flex: 1; text-align: center; padding: 44px 28px; background: var(--gray-50); border-radius: 18px; border: 1px solid var(--gray-200); display: flex; flex-direction: column; justify-content: center;">
+            <div class="label" style="font-size: 0.95rem; letter-spacing: 2px; color: var(--gray-500);">Student</div>
+            <div style="font-size: 1.85rem; font-weight: 800; color: var(--gray-900); margin: 14px 0 8px;">MobileNet3D
+            </div>
+            <div class="big-num" style="color: var(--gray-500); font-size: 4.4rem;">59.48%</div>
+            <div class="label" style="margin-top: 10px; color: var(--gray-500); font-size: 0.85rem;">Test Accuracy
+            </div>
+            <div style="margin-top: 20px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+              <span class="pill"
+                style="background: var(--gray-200); color: var(--gray-700); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">~9.5
+                MB</span>
+              <span class="pill"
+                style="background: rgba(22, 163, 74, 0.12); color: var(--green); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">3.42
+                ms GPU</span>
+              <span class="pill"
+                style="background: rgba(22, 163, 74, 0.12); color: var(--green); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">46.1
+                ms CPU</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>

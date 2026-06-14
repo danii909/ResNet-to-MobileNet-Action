@@ -7,17 +7,31 @@ from pathlib import Path
 try:
     import pandas as pd
     import matplotlib.pyplot as plt
-    import seaborn as sns
 except Exception as e:
-    print("Missing plotting dependencies:", e)
-    print("Install pandas, matplotlib, seaborn in your environment and retry.")
+    print("Missing core plotting dependencies:", e)
+    print("Install pandas, matplotlib in your environment and retry.")
     sys.exit(1)
 
-sns.set(style="whitegrid")
+try:
+    import seaborn as sns
+    sns.set(style="whitegrid")
+except ImportError:
+    sns = None
+    # Fallback to matplotlib whitegrid-like styling with seaborn deep colors
+    plt.rcParams['axes.facecolor'] = 'white'
+    plt.rcParams['axes.edgecolor'] = '#cccccc'
+    plt.rcParams['axes.grid'] = True
+    plt.rcParams['grid.color'] = '#e5e5e5'
+    plt.rcParams['grid.linestyle'] = '-'
+    plt.rcParams['axes.prop_cycle'] = plt.cycler(color=['#4c72b0', '#dd8452', '#55a868', '#c44e52', '#8172b3'])
 
 # Navigate to project root (parent of scripts directory)
 PROJECT_ROOT = Path(__file__).parent.parent
-ROOT = PROJECT_ROOT / "results" / "Training" / "Train-eval-test-split (group-aware)"
+if len(sys.argv) > 1:
+    ROOT = Path(sys.argv[1])
+else:
+    ROOT = PROJECT_ROOT / "results" / "Training" / "Train-eval-test-split (group-aware)"
+
 if not ROOT.exists():
     print(f"Root folder not found: {ROOT}")
     sys.exit(1)
@@ -41,17 +55,24 @@ for mf in metrics_files:
     # We'll pick parent.parent as experiment dir to store figures
     experiment_dir = mf.parents[1]
     exp_name = experiment_dir.name
+    if exp_name in ["distillation", "baseline", "teacher", "train", "eval", "test"]:
+        exp_name = f"{mf.parents[2].name}_{exp_name}"
     out_dir = experiment_dir / "figures"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     epochs = df["epoch"] if "epoch" in df.columns else df.index
 
+    # Determine columns with fallbacks (e.g. test_* -> eval_*)
+    eval_loss_col = "eval_loss" if "eval_loss" in df.columns else ("test_loss" if "test_loss" in df.columns else None)
+    eval_acc_col = "eval_acc" if "eval_acc" in df.columns else ("test_acc" if "test_acc" in df.columns else None)
+    eval_acc_top5_col = "eval_acc_top5" if "eval_acc_top5" in df.columns else ("test_acc_top5" if "test_acc_top5" in df.columns else None)
+
     # Loss plot
     plt.figure(figsize=(8, 4))
     if "train_loss" in df.columns:
         plt.plot(epochs, df["train_loss"], label="train_loss")
-    if "eval_loss" in df.columns:
-        plt.plot(epochs, df["eval_loss"], label="eval_loss")
+    if eval_loss_col:
+        plt.plot(epochs, df[eval_loss_col], label="eval_loss")
     plt.xlabel("epoch")
     plt.ylabel("loss")
     plt.title(f"Loss vs Epoch - {exp_name}")
@@ -65,10 +86,10 @@ for mf in metrics_files:
     plt.figure(figsize=(8, 4))
     if "train_acc" in df.columns:
         plt.plot(epochs, df["train_acc"], label="train_acc")
-    if "eval_acc" in df.columns:
-        plt.plot(epochs, df["eval_acc"], label="eval_acc")
-    if "eval_acc_top5" in df.columns:
-        plt.plot(epochs, df["eval_acc_top5"], label="eval_acc_top5")
+    if eval_acc_col:
+        plt.plot(epochs, df[eval_acc_col], label="eval_acc")
+    if eval_acc_top5_col:
+        plt.plot(epochs, df[eval_acc_top5_col], label="eval_acc_top5")
     plt.xlabel("epoch")
     plt.ylabel("accuracy (%)")
     plt.title(f"Accuracy vs Epoch - {exp_name}")
@@ -92,8 +113,8 @@ for mf in metrics_files:
 
     # Summary text file
     best_eval = None
-    if "eval_acc" in df.columns:
-        best_eval = float(df["eval_acc"].max())
+    if eval_acc_col:
+        best_eval = float(df[eval_acc_col].max())
     elif "best_eval_acc" in df.columns:
         best_eval = float(df["best_eval_acc"].max())
 
@@ -118,8 +139,8 @@ for mf in metrics_files:
     if "epoch" in df.columns and "train_loss" in df.columns:
         summary_lines.append(f"epochs: {int(df['epoch'].max())+1}")
         summary_lines.append(f"final_train_loss: {df['train_loss'].iloc[-1]:.6f}")
-    if "eval_loss" in df.columns:
-        summary_lines.append(f"final_eval_loss: {df['eval_loss'].iloc[-1]:.6f}")
+    if eval_loss_col:
+        summary_lines.append(f"final_eval_loss: {df[eval_loss_col].iloc[-1]:.6f}")
 
     (out_dir / f"{exp_name}_metrics_summary.txt").write_text("\n".join(summary_lines))
     print(f"Wrote plots for {exp_name} -> {out_dir}")

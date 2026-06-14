@@ -1,0 +1,27 @@
+<div class="slide" id="s13">
+  <div class="s-head" style="margin-bottom: 14px;">
+    <div class="s-tag">Backup - Error Analysis</div>
+    <h2 class="s-title">Confusion Matrix &amp; Error Analysis</h2>
+    <div class="s-sub">Baseline vs KD T=20 - Top 25 worst classes</div>
+  </div>
+  <div class="s-body" style="gap: 18px;">
+    <div
+      style="flex: 1; display: flex; flex-direction: column; align-items: center; background: var(--gray-50); border-radius: 12px; padding: 10px;">
+      <span
+        style="font-size: .9rem; font-weight: 700; color: var(--amber); text-transform: uppercase; margin-bottom: 8px;">Baseline
+        - 59.48%</span>
+      <div class="img-frame" style="flex: 1; width: 100%; border: none; background: transparent;">
+        <img src="../assets/predictions_baseline_ls005_24f_lightaug_top25.png" alt="Baseline confusion matrix">
+      </div>
+    </div>
+    <div
+      style="flex: 1; display: flex; flex-direction: column; align-items: center; background: var(--gray-50); border-radius: 12px; padding: 10px;">
+      <span
+        style="font-size: .9rem; font-weight: 700; color: var(--navy); text-transform: uppercase; margin-bottom: 8px;">KD
+        T=20 - 65.85%</span>
+      <div class="img-frame" style="flex: 1; width: 100%; border: none; background: transparent;">
+        <img src="../assets/predictions_kd_t20_a07_24f_lightaug_top25.png" alt="KD confusion matrix">
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,5 +1,0 @@
-Pipeline Summary - 3 KD Experiments
-============================================================
-job_tag: slurm-train-eval-4430
-root_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4430
-
