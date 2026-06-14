@@ -1,0 +1,38 @@
+Pipeline Summary
+============================================================
+job_tag: slurm-train-eval-4675
+slurm_job_id: 4675
+root_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4675
+
+[crossframe_kd_t24_s16]
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4675/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4675/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+[config]
+mode: distillation
+model.type: student
+dataset.use_eval_split: 
+dataset.eval_ratio: 
+dataset.split_seed: 
+dataset.max_temporal_stride: 
+training.batch_size: 16
+training.lr: 0.0005
+training.weight_decay: 0.01
+training.label_smoothing: 
+training.kd_warmup_epochs: 
+distillation.teacher_checkpoint: experiments/checkpoints/slurm-train-eval-4495/teacher_24f_lightaug/teacher_finetune_best.pth
+distillation.temperature: 20.0
+distillation.alpha: 0.7
+[train results]
+best_eval_acc: 60.68
+best_epoch: 59
+final_train_acc: 98.61
+final_eval_acc: 60.40
+final_eval_top5: 83.83
+[eval results]
+checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4675/distillation_best.pth
+top1: 62.6751255617235
+top5: 86.20142743854085
+
+

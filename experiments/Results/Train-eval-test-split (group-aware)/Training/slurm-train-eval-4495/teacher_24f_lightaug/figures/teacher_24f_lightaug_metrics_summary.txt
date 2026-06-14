@@ -1,0 +1,5 @@
+experiment: teacher_24f_lightaug
+best_eval_acc: 92.3618
+epochs: 50
+final_train_loss: 1.101194
+final_eval_loss: 0.328430

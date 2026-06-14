@@ -1,0 +1,122 @@
+Temperature Sweep Summary
+============================================================
+job_tag: slurm-train-eval-4565
+slurm_job_id: 4565
+root_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4565
+teacher_ckpt: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4495/teacher_24f_lightaug/teacher_finetune_best.pth
+baseline_ckpt: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4495/baseline_ls005_24f_lightaug/baseline_best.pth
+base_config: experiments/configs/distillation_t8_a07_24f_lightaug.yaml
+temperatures: 1 5 10 20
+
+[kd_t1_a07_24f_lightaug]
+temperature: 1
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4565/kd_t1_a07_24f_lightaug/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4565/kd_t1_a07_24f_lightaug/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+tsne_plot: tsne_temperature_t1
+[config]
+mode: distillation
+model.type: student
+training.batch_size: 16
+training.lr: 0.0005
+training.weight_decay: 0.01
+training.label_smoothing: 
+distillation.teacher_checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4495/teacher_24f_lightaug/teacher_finetune_best.pth
+distillation.temperature: 1
+distillation.alpha: 0.7
+[train results]
+best_eval_acc: 62.75
+best_epoch: 60
+final_train_acc: 98.44
+final_eval_acc: 62.75
+final_eval_top5: 83.93
+[eval results]
+checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4565/kd_t1_a07_24f_lightaug/distillation_best.pth
+top1: 62.91303198519693
+top5: 85.59344435633095
+
+[kd_t5_a07_24f_lightaug]
+temperature: 5
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4565/kd_t5_a07_24f_lightaug/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4565/kd_t5_a07_24f_lightaug/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+tsne_plot: tsne_temperature_t5
+[config]
+mode: distillation
+model.type: student
+training.batch_size: 16
+training.lr: 0.0005
+training.weight_decay: 0.01
+training.label_smoothing: 
+distillation.teacher_checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4495/teacher_24f_lightaug/teacher_finetune_best.pth
+distillation.temperature: 5
+distillation.alpha: 0.7
+[train results]
+best_eval_acc: 63.12
+best_epoch: 57
+final_train_acc: 95.87
+final_eval_acc: 62.56
+final_eval_top5: 85.94
+[eval results]
+checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4565/kd_t5_a07_24f_lightaug/distillation_best.pth
+top1: 62.06714247951361
+top5: 87.02088289717156
+
+[kd_t10_a07_24f_lightaug]
+temperature: 10
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4565/kd_t10_a07_24f_lightaug/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4565/kd_t10_a07_24f_lightaug/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+tsne_plot: tsne_temperature_t10
+[config]
+mode: distillation
+model.type: student
+training.batch_size: 16
+training.lr: 0.0005
+training.weight_decay: 0.01
+training.label_smoothing: 
+distillation.teacher_checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4495/teacher_24f_lightaug/teacher_finetune_best.pth
+distillation.temperature: 10
+distillation.alpha: 0.7
+[train results]
+best_eval_acc: 64.85
+best_epoch: 60
+final_train_acc: 98.28
+final_eval_acc: 64.85
+final_eval_top5: 86.41
+[eval results]
+checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4565/kd_t10_a07_24f_lightaug/distillation_best.pth
+top1: 64.47264076130055
+top5: 87.44382765001322
+
+[kd_t20_a07_24f_lightaug]
+temperature: 20
+train_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4565/kd_t20_a07_24f_lightaug/train
+eval_dir: /home/brbdnl01e03e017o/dl26-projects/experiments/logs/slurm-train-eval-4565/kd_t20_a07_24f_lightaug/eval
+train_status: SUCCESS
+eval_status: SUCCESS
+tsne_plot: tsne_temperature_t20
+[config]
+mode: distillation
+model.type: student
+training.batch_size: 16
+training.lr: 0.0005
+training.weight_decay: 0.01
+training.label_smoothing: 
+distillation.teacher_checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4495/teacher_24f_lightaug/teacher_finetune_best.pth
+distillation.temperature: 20
+distillation.alpha: 0.7
+[train results]
+best_eval_acc: 65.18
+best_epoch: 59
+final_train_acc: 99.05
+final_eval_acc: 63.64
+final_eval_top5: 85.75
+[eval results]
+checkpoint: /home/brbdnl01e03e017o/dl26-projects/experiments/checkpoints/slurm-train-eval-4565/kd_t20_a07_24f_lightaug/distillation_best.pth
+top1: 65.84721120803594
+top5: 87.81390430874967
+
