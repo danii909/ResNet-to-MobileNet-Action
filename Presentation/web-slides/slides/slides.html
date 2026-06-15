@@ -1862,6 +1862,61 @@
   </div>
 </div>
 
+<div class="slide" id="s_at_limits">
+  <div class="s-head" style="margin-bottom: 20px; padding-bottom: 12px;">
+    <div class="s-tag">Backup - Attention Transfer</div>
+    <h2 class="s-title">Analysis of Attention Transfer Limitations</h2>
+    <div class="s-sub" style="font-size: 1.25rem;">Theoretical barriers of classical attention transfer in lightweight student training</div>
+  </div>
+  <div class="s-body" style="flex-direction: column; justify-content: center; flex: 1; min-height: 0;">
+    <div
+      style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; width: 100%; height: 530px; align-items: stretch; margin: auto 0;">
+
+      <!-- Left Panel: Information Collapse -->
+      <div class="panel"
+        style="border: 1px solid var(--gray-200); padding: 28px 28px; display: flex; flex-direction: column; justify-content: flex-start; border-radius: 12px; background: var(--gray-50); box-sizing: border-box; height: 100%; gap: 16px;">
+        <div style="font-size: 1.35rem; font-weight: 800; color: var(--navy);">
+          1. Attention Loss &amp; Information Collapse
+        </div>
+        <div style="font-size: 1.05rem; font-weight: 700; color: var(--blue); border-bottom: 1px solid var(--gray-200); padding-bottom: 8px;">
+          Key Bottleneck: Channel Pooling
+        </div>
+        <p class="body-text" style="font-size: 1rem; line-height: 1.5; color: var(--gray-800); margin: 0;">
+          To align mismatched feature map dimensions, classical AT averages activation maps along the channel axis. This mathematical flattening results in a severe loss of representation:
+        </p>
+        <ul
+          style="font-size: 0.98rem; line-height: 1.55; color: var(--gray-700); margin: 0; padding-left: 18px; list-style: disc; display: flex; flex-direction: column; gap: 12px;">
+          <li><strong>Feature Flattening:</strong> Collapsing the channel dimension merges specialized filters (textures, edges, motion directions) into a generic spatial-temporal map.</li>
+          <li><strong>Loss of Semantics:</strong> The student is forced to learn <em>where</em> or <em>when</em> to look, but misses the underlying semantic explanation (the <em>why</em>).</li>
+          <li><strong>Coarse Regularization:</strong> The student mimics a highly-abstracted projection rather than the rich visual filters that drive the teacher's decisions.</li>
+        </ul>
+      </div>
+
+      <!-- Right Panel: Capacity Gap -->
+      <div class="panel"
+        style="border: 1px solid var(--gray-200); padding: 28px 28px; display: flex; flex-direction: column; justify-content: flex-start; border-radius: 12px; background: var(--gray-50); box-sizing: border-box; height: 100%; gap: 16px;">
+        <div style="font-size: 1.35rem; font-weight: 800; color: var(--navy);">
+          2. Capacity Gap &amp; Structural Mismatch
+        </div>
+        <div style="font-size: 1.05rem; font-weight: 700; color: var(--blue); border-bottom: 1px solid var(--gray-200); padding-bottom: 8px;">
+          Key Conflict: Geometric Incompatibility
+        </div>
+        <p class="body-text" style="font-size: 1rem; line-height: 1.5; color: var(--gray-800); margin: 0;">
+          The student model's architectural constraints limit its capacity to mimic the teacher's representations due to fundamental differences in conv designs:
+        </p>
+        <ul
+          style="font-size: 0.98rem; line-height: 1.55; color: var(--gray-700); margin: 0; padding-left: 18px; list-style: disc; display: flex; flex-direction: column; gap: 12px;">
+          <li><strong>Convolutional Disparity:</strong> The teacher utilizes standard 3D convolutions that extract joint space-time-channel correlations.</li>
+          <li><strong>Depthwise Factorization:</strong> The student (MobileNet3D) uses Depthwise Separable Convolutions, which strictly isolate spatial-temporal filters from channel mixtures.</li>
+          <li><strong>Gradient Conflict:</strong> Forcing the student to replicate complex attention maps creates an over-constrained optimization. This leads to conflicting gradients (noise) that degrade overall convergence.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
 <!--
 <div class="slide" id="s15">
       <div class="s-head">
