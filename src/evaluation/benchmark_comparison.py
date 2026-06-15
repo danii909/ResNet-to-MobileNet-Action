@@ -151,7 +151,7 @@ def main():
             "saved": saved_pct
         })
 
-    # Let's also do a CPU benchmark check for batch size 1 and 8 if device is CUDA, to show CPU performance
+    # Run CPU benchmark for batch sizes 1 and 8 when the primary device is CUDA, to report CPU performance separately.
     if device.type == "cuda":
         print(f"\n============================================================")
         print(f"CPU BENCHMARK (Batch Size: 1 & 8)")

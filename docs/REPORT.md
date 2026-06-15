@@ -1,5 +1,10 @@
 # Technical Report: Knowledge Distillation for Mobile Action Recognition
 
+**Student:** Daniele Barbagallo (1000015334)  
+**Course:** Deep Learning (DL26)  
+**Professor:** Prof. Antonino Furnari  
+**Institution:** Università degli Studi di Catania — DMI  
+
 This report documents the design, implementation, and experimental analysis of the **Knowledge Distillation (KD)** pipeline for compressing 3D video action recognition models, corresponding to **Track 6** of the course.
 
 ---
@@ -82,7 +87,7 @@ When spatial resolutions differed (e.g., Teacher `14×14` vs. Student `4×4`), t
 *   **Consequence (Spatial-Temporal Collapse):** Applying 1D interpolation to a flattened vector mixes unrelated spatial and temporal coordinates. In 1D, the bottom-right pixel of frame $t$ is contiguous with the top-left pixel of frame $t+1$; interpolating between them introduces destructive noise.
 
 ### 4.2 Solution: Separate Spatial and Temporal Decomposition
-To resolve the collapse, we decomposed the 5D feature maps $F \in \mathbb{R}^{B \times C \times T \times H \times W}$ by computing two separate attention maps:
+To resolve the collapse, the 5D feature maps $F \in \mathbb{R}^{B \times C \times T \times H \times W}$ are decomposed by computing two separate attention maps:
 
 1.  **Spatial Attention ($A_{\text{spatial}}$):** Average over channels and the temporal dimension.
     $$A_{\text{spatial}}(F) = \text{L2\_normalize}\left(\text{mean}_{c,t}\left(F^2\right)\right) \in \mathbb{R}^{B \times H \cdot W}$$
@@ -107,7 +112,7 @@ Despite the mathematical fixes, introducing AT led to a regression in validation
 
 ## 5. Born-Again Networks (Iterative Self-Distillation)
 
-The Born-Again Networks (BAN) framework (Furlanello et al., 2018) suggests that training a student of the same size as the teacher via distillation can lead to superior performance. We evaluated this iterative self-distillation over 3 generations:
+The Born-Again Networks (BAN) framework (Furlanello et al., 2018) suggests that training a student of the same size as the teacher via distillation can lead to superior performance. This iterative self-distillation was evaluated over 3 generations:
 
 | Generation | Teacher Source | Val Top-1 | Test Top-1 | $\Delta$ vs Gen 0 |
 | :---: | :---: | :---: | :---: | :---: |
@@ -126,7 +131,7 @@ The experiments revealed a progressive degradation (generational collapse), with
 
 ## 6. Cross-Frame Distillation: Asymmetric Temporal Sub-Sampling
 
-For resource-constrained edge deployment, we implemented **Cross-Frame Knowledge Distillation** as a Pareto-optimal trade-off. In this configuration:
+For resource-constrained edge deployment, **Cross-Frame Knowledge Distillation** was implemented as a Pareto-optimal trade-off. In this configuration:
 *   The **Teacher** processes the full **24-frame** clip to extract high-fidelity spatial-temporal representations.
 *   The **Student** receives a sub-sampled **16-frame** version of the same clip. The sub-sampling is performed uniformly along the temporal dimension using `torch.linspace` (implemented on GPU in [temporal.py](file:///i:/Development%202.0/KD_Project/src/training/temporal.py)).
 *   The Student is distilled using the optimal logit-based KD configuration ($T=20$, $\alpha=0.7$).
@@ -151,7 +156,7 @@ During training in Automatic Mixed Precision (AMP) mode, the Attention Transfer 
 During the attention map computation, squaring the feature maps ($F^2$) on tensors containing large activation values exceeded the maximum representable value in Float16 ($65,504$). This produced `NaN` or `Inf` values that propagated through the loss and destroyed the student's weights.
 
 ### The Solution
-We isolated the attention map calculation, casting the tensors to **Float32 (single precision)** before the squaring operation, and then returned the normalized attention map (which falls within a safe range):
+The attention map calculation is isolated, casting the tensors to **Float32 (single precision)** before the squaring operation, and then returning the normalized attention map (which falls within a safe range):
 ```python
 # Explicit casting to float32 inside AMP to prevent FP16 overflow
 f = features.float()                # Force conversion to float32
@@ -163,15 +168,15 @@ This adjustment guaranteed numerical stability during training while preserving 
 
 ## 8. Future Work
 
-To overcome the capacity and structural bottlenecks discovered, we propose two future directions:
+To overcome the capacity and structural bottlenecks discovered, two future directions are proposed:
 
 ### 8.1 Variable Temporal Stride for Fast Actions
-To prevent *temporal over-smoothing* caused by high distillation temperatures ($T=20$) on fast, cyclic actions (e.g., *JumpingJack*, *TennisSwing*), we propose incorporating a variable temporal stride:
+To prevent *temporal over-smoothing* caused by high distillation temperatures ($T=20$) on fast, cyclic actions (e.g., *JumpingJack*, *TennisSwing*), the approach proposes incorporating a variable temporal stride:
 *   **Dynamic Sampling:** Instead of training on clips extracted with a fixed stride ($s=1$), the temporal stride is randomly sampled at each epoch (e.g., $s \sim \mathcal{U}(\{1, 2, 3\})$).
 *   **Temporal Invariance:** This forces the student to learn action representations at multiple speeds, making logit-based KD robust to soft-probability smoothing and preserving high-frequency motion transitions.
 
 ### 8.2 Feature Alignment via Learnable Adapter Blocks (AT)
-The structural gap between the teacher's standard 3D convolutions and the student's depthwise separable 3D convolutions limits the effectiveness of spatial attention transfer. We propose introducing adapter blocks:
+The structural gap between the teacher's standard 3D convolutions and the student's depthwise separable 3D convolutions limits the effectiveness of spatial attention transfer. A promising solution consists in introducing adapter blocks:
 *   **Learnable Adapters:** During training, lightweight $1\times1\times1$ convolutional modules $\Phi$ are inserted into the student's feature extraction pathway prior to attention map computation: $\hat{A}^S = \text{Attention}(\Phi(F^S))$.
 *   **Space Projection:** The AT loss is computed between this projected student map and the teacher's map: $\mathcal{L}_{\text{AT}} = \text{MSE}(\hat{A}^S, A^T)$. The adapter learns to map the student's representation into the teacher's feature space, filtering structural mismatch noise.
 *   **Zero Latency Overhead at Inference:** Upon training completion, the adapter $\Phi$ is discarded. The student model retains its original lightweight architecture with zero additional runtime cost.
@@ -180,7 +185,7 @@ The structural gap between the teacher's standard 3D convolutions and the studen
 
 ## 9. References and Source Analysis
 
-The table below maps the bibliographical references used in this project, explaining their core scientific contribution and their implementation in our codebase:
+The table below maps the bibliographical references used in this project, explaining their core scientific contribution and their implementation in the codebase:
 
 | Reference Citation | Core Scientific Contribution | Implementation in Codebase |
 | :--- | :--- | :--- |
