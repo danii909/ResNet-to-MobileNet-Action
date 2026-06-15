@@ -105,8 +105,9 @@ Despite the mathematical fixes, introducing AT led to a regression in validation
 *   **Temporal-Only AT ($\beta_s=0, \beta_t=0.10$):** **59.04%** Val Top-1.
 
 #### Physical Rationale for the Regression:
-1.  **Convolution Mismatch (Spatial Capacity Gap):** The teacher's standard 3D convolutions combine channels freely, generating rich attention maps. The student (MobileNet3D) uses *depthwise separable* convolutions, where channels are processed in isolation during spatial convolution. This structural limitation prevents the student from modeling the teacher's spatial attention; forcing it via AT loss acts as destructive noise.
-2.  **Temporal Transferability:** The fact that the *Temporal-Only* variant recovers nearly 1 percentage point compared to the symmetric one confirms that the spatial signal acted as a harmful constraint, whereas the temporal evolution of the action is highly transferable.
+1.  **Attention Loss & Information Collapse (Channel Pooling Bottleneck):** Classical Attention Transfer aligns student and teacher maps of different dimensions by collapsing the channel axis (averaging over $C$). This projection functions as a destructive bottleneck: it merges and flattens the teacher's specialized filter responses (such as edge, texture, or direction detectors). The student receives basic spatial-temporal guidance on *where* or *when* to focus, but loses the dense semantic richness and the underlying justification of *why* those areas are critical.
+2.  **Convolution Mismatch (Spatial Capacity Gap):** The teacher's standard 3D convolutions combine channels freely, generating rich attention maps. The student (MobileNet3D) uses *depthwise separable* convolutions, where channels are processed in isolation during spatial convolution. This structural limitation prevents the student from modeling the teacher's spatial attention; forcing it via AT loss acts as destructive noise.
+3.  **Temporal Transferability:** The fact that the *Temporal-Only* variant recovers nearly 1 percentage point compared to the symmetric one confirms that the spatial signal acted as a harmful constraint, whereas the temporal evolution of the action is highly transferable.
 
 ---
 
