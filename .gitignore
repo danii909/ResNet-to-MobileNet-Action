@@ -15,6 +15,7 @@ experiments/checkpoints/
 
 .DS_Store
 
+.cache/
 
 /tests/
 /wandb/
