@@ -99,15 +99,16 @@ To resolve the collapse, the 5D feature maps $F \in \mathbb{R}^{B \times C \time
 The total Attention Transfer loss is formulated as:
 $$\mathcal{L}_{\text{AT}} = \beta_s \sum_i \text{MSE}\left(A^T_{\text{spatial},i}, A^S_{\text{spatial},i}\right) + \beta_t \sum_i \text{MSE}\left(A^T_{\text{temporal},i}, A^S_{\text{temporal},i}\right)$$
 
-### 4.3 Analysis of the Negative Result of AT
-Despite the mathematical fixes, introducing AT led to a regression in validation metrics:
-*   **Symmetric AT ($\beta_s=0.05, \beta_t=0.05$):** **58.25%** Val Top-1 (below baseline).
-*   **Temporal-Only AT ($\beta_s=0, \beta_t=0.10$):** **59.04%** Val Top-1.
+### 4.3 Analysis of the Results of AT
+Despite the mathematical fixes, introducing AT underperformed compared to pure logit-based distillation (65.85%):
+*   **Naive AT (Before):** **59.14%** (below baseline).
+*   **Symmetric AT ($\beta_s=0.05, \beta_t=0.05$):** **64.58%**.
+*   **Temporal-Only AT ($\beta_s=0, \beta_t=0.10$):** **65.03%**.
 
-#### Physical Rationale for the Regression:
+#### Physical Rationale for the Performance:
 1.  **Attention Loss & Information Collapse (Channel Pooling Bottleneck):** Classical Attention Transfer aligns student and teacher maps of different dimensions by collapsing the channel axis (averaging over $C$). This projection functions as a destructive bottleneck: it merges and flattens the teacher's specialized filter responses (such as edge, texture, or direction detectors). The student receives basic spatial-temporal guidance on *where* or *when* to focus, but loses the dense semantic richness and the underlying justification of *why* those areas are critical.
 2.  **Convolution Mismatch (Spatial Capacity Gap):** The teacher's standard 3D convolutions combine channels freely, generating rich attention maps. The student (MobileNet3D) uses *depthwise separable* convolutions, where channels are processed in isolation during spatial convolution. This structural limitation prevents the student from modeling the teacher's spatial attention; forcing it via AT loss acts as destructive noise.
-3.  **Temporal Transferability:** The fact that the *Temporal-Only* variant recovers nearly 1 percentage point compared to the symmetric one confirms that the spatial signal acted as a harmful constraint, whereas the temporal evolution of the action is highly transferable.
+3.  **Temporal Transferability:** The fact that the *Temporal-Only* variant recovers performance compared to the symmetric one confirms that the spatial signal acted as a harmful constraint, whereas the temporal evolution of the action is highly transferable.
 
 ---
 
