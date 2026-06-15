@@ -598,105 +598,105 @@
     </div>
 
 <div class="slide" id="s2">
-      <div class="s-head">
-        <div class="s-tag">Problem &amp; Motivation</div>
-        <h2 class="s-title">The Capacity Gap</h2>
+  <div class="s-head">
+    <div class="s-tag">Problem &amp; Motivation</div>
+    <h2 class="s-title">The Capacity Gap</h2>
+  </div>
+  <div class="s-body" style="flex-direction: column; justify-content: flex-start; gap: 44px; padding-top: 60px;">
+    <p class="body-text"
+      style="font-size: 1.4rem; line-height: 1.75; color: var(--gray-800); text-align: center; max-width: 1050px; margin: 12px auto 0;">
+      <strong>Goal:</strong> Compress a 3D ResNet-50 teacher (pretrained on Kinetics-400) into a MobileNet3D student
+      for on-device video action recognition on UCF-101 (101 classes).
+    </p>
+
+    <div style="display: flex; align-items: stretch; justify-content: space-between; gap: 36px; width: 100%;">
+      <div
+        style="flex: 1; text-align: center; padding: 44px 28px; background: var(--blue-bg); border-radius: 18px; border: 1px solid rgba(37, 99, 235, 0.12); display: flex; flex-direction: column; justify-content: center;">
+        <div class="label" style="color: var(--navy); font-size: 0.95rem; letter-spacing: 2px;">Teacher</div>
+        <div style="font-size: 1.85rem; font-weight: 800; color: var(--navy); margin: 14px 0 8px;">3D ResNet-50
+        </div>
+        <div class="big-num" style="color: var(--navy); font-size: 4.4rem;">88.82%</div>
+        <div class="label" style="margin-top: 10px; color: var(--navy-light); font-size: 0.85rem;">Test Accuracy
+        </div>
+        <div style="margin-top: 20px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+          <span class="pill"
+            style="background: rgba(37, 99, 235, 0.12); color: var(--navy); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">~128
+            MB</span>
+          <span class="pill"
+            style="background: rgba(220, 38, 38, 0.10); color: var(--red); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">6.21
+            ms GPU</span>
+          <span class="pill"
+            style="background: rgba(220, 38, 38, 0.10); color: var(--red); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">76.6
+            ms CPU</span>
+        </div>
       </div>
-      <div class="s-body" style="flex-direction: column; justify-content: center; gap: 48px;">
-        <p class="body-text"
-          style="font-size: 1.4rem; line-height: 1.75; color: var(--gray-800); text-align: center; max-width: 1050px; margin: 12px auto 0;">
-          <strong>Goal:</strong> Compress a 3D ResNet-50 teacher (pretrained on Kinetics-400) into a MobileNet3D student
-          for on-device video action recognition on UCF-101 (101 classes).
-        </p>
 
-        <div style="display: flex; align-items: stretch; justify-content: space-between; gap: 36px; width: 100%;">
-          <div
-            style="flex: 1; text-align: center; padding: 44px 28px; background: var(--blue-bg); border-radius: 18px; border: 1px solid rgba(37, 99, 235, 0.12); display: flex; flex-direction: column; justify-content: center;">
-            <div class="label" style="color: var(--navy); font-size: 0.95rem; letter-spacing: 2px;">Teacher</div>
-            <div style="font-size: 1.85rem; font-weight: 800; color: var(--navy); margin: 14px 0 8px;">3D ResNet-50
-            </div>
-            <div class="big-num" style="color: var(--navy); font-size: 4.4rem;">88.82%</div>
-            <div class="label" style="margin-top: 10px; color: var(--navy-light); font-size: 0.85rem;">Test Accuracy
-            </div>
-            <div style="margin-top: 20px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
-              <span class="pill"
-                style="background: rgba(37, 99, 235, 0.12); color: var(--navy); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">~128
-                MB</span>
-              <span class="pill"
-                style="background: rgba(220, 38, 38, 0.10); color: var(--red); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">6.21
-                ms GPU</span>
-              <span class="pill"
-                style="background: rgba(220, 38, 38, 0.10); color: var(--red); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">76.6
-                ms CPU</span>
-            </div>
-          </div>
+      <div
+        style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 220px; text-align: center; padding: 0 12px; gap: 24px;">
 
-          <div
-            style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 220px; text-align: center; padding: 0 12px; gap: 24px;">
-
-            <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
-              <span class="label"
-                style="color: var(--red); letter-spacing: 1.5px; font-weight: 700; font-size: 0.85rem;">Accuracy
-                Gap</span>
-              <span class="big-num" style="color: var(--red); font-size: 3rem; margin: 4px 0 6px;">−29.3 pp</span>
-              <svg width="150" height="20" viewBox="0 0 150 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10 10H136" stroke="var(--red)" stroke-width="3.5" stroke-linecap="round" />
-                <path d="M128 4L139 10L128 16" stroke="var(--red)" stroke-width="3.5" stroke-linecap="round"
-                  stroke-linejoin="round" />
-              </svg>
-            </div>
+        <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+          <span class="label"
+            style="color: var(--red); letter-spacing: 1.5px; font-weight: 700; font-size: 0.85rem;">Accuracy
+            Gap</span>
+          <span class="big-num" style="color: var(--red); font-size: 3rem; margin: 4px 0 6px;">−29.3 pp</span>
+          <svg width="150" height="20" viewBox="0 0 150 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 10H136" stroke="var(--red)" stroke-width="3.5" stroke-linecap="round" />
+            <path d="M128 4L139 10L128 16" stroke="var(--red)" stroke-width="3.5" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </div>
 
 
-            <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
-              <span class="label"
-                style="color: var(--green); letter-spacing: 1.5px; font-weight: 700; font-size: 0.85rem;">Size
-                Reduction</span>
-              <span class="big-num" style="color: var(--green); font-size: 3rem; margin: 4px 0 6px;">13.5×</span>
-              <svg width="150" height="20" viewBox="0 0 150 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10 10H136" stroke="var(--green)" stroke-width="3.5" stroke-linecap="round" />
-                <path d="M128 4L139 10L128 16" stroke="var(--green)" stroke-width="3.5" stroke-linecap="round"
-                  stroke-linejoin="round" />
-              </svg>
-            </div>
+        <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+          <span class="label"
+            style="color: var(--green); letter-spacing: 1.5px; font-weight: 700; font-size: 0.85rem;">Size
+            Reduction</span>
+          <span class="big-num" style="color: var(--green); font-size: 3rem; margin: 4px 0 6px;">13.5×</span>
+          <svg width="150" height="20" viewBox="0 0 150 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 10H136" stroke="var(--green)" stroke-width="3.5" stroke-linecap="round" />
+            <path d="M128 4L139 10L128 16" stroke="var(--green)" stroke-width="3.5" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </div>
 
-            <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
-              <span class="label"
-                style="color: var(--green); letter-spacing: 1.5px; font-weight: 700; font-size: 0.85rem;">Inference
-                Speed</span>
-              <span class="big-num" style="color: var(--green); font-size: 3rem; margin: 4px 0 2px;">1.82×</span>
-              <span style="font-size: 0.78rem; color: var(--gray-400); font-weight: 500; margin-bottom: 6px;">1.66× CPU
-                &nbsp;(BS=1)</span>
-              <svg width="150" height="20" viewBox="0 0 150 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10 10H136" stroke="var(--green)" stroke-width="3.5" stroke-linecap="round" />
-                <path d="M128 4L139 10L128 16" stroke="var(--green)" stroke-width="3.5" stroke-linecap="round"
-                  stroke-linejoin="round" />
-              </svg>
-            </div>
-          </div>
+        <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+          <span class="label"
+            style="color: var(--green); letter-spacing: 1.5px; font-weight: 700; font-size: 0.85rem;">Inference
+            Speed</span>
+          <span class="big-num" style="color: var(--green); font-size: 3rem; margin: 4px 0 2px;">1.82×</span>
+          <span style="font-size: 0.78rem; color: var(--gray-400); font-weight: 500; margin-bottom: 6px;">1.66× CPU
+            &nbsp;(BS=1)</span>
+          <svg width="150" height="20" viewBox="0 0 150 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 10H136" stroke="var(--green)" stroke-width="3.5" stroke-linecap="round" />
+            <path d="M128 4L139 10L128 16" stroke="var(--green)" stroke-width="3.5" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </div>
+      </div>
 
-          <div
-            style="flex: 1; text-align: center; padding: 44px 28px; background: var(--gray-50); border-radius: 18px; border: 1px solid var(--gray-200); display: flex; flex-direction: column; justify-content: center;">
-            <div class="label" style="font-size: 0.95rem; letter-spacing: 2px; color: var(--gray-500);">Student</div>
-            <div style="font-size: 1.85rem; font-weight: 800; color: var(--gray-900); margin: 14px 0 8px;">MobileNet3D
-            </div>
-            <div class="big-num" style="color: var(--gray-500); font-size: 4.4rem;">59.48%</div>
-            <div class="label" style="margin-top: 10px; color: var(--gray-500); font-size: 0.85rem;">Test Accuracy
-            </div>
-            <div style="margin-top: 20px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
-              <span class="pill"
-                style="background: var(--gray-200); color: var(--gray-700); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">~9.5
-                MB</span>
-              <span class="pill"
-                style="background: rgba(22, 163, 74, 0.12); color: var(--green); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">3.42
-                ms GPU</span>
-              <span class="pill"
-                style="background: rgba(22, 163, 74, 0.12); color: var(--green); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">46.1
-                ms CPU</span>
-            </div>
-          </div>
+      <div
+        style="flex: 1; text-align: center; padding: 44px 28px; background: var(--gray-50); border-radius: 18px; border: 1px solid var(--gray-200); display: flex; flex-direction: column; justify-content: center;">
+        <div class="label" style="font-size: 0.95rem; letter-spacing: 2px; color: var(--gray-500);">Student</div>
+        <div style="font-size: 1.85rem; font-weight: 800; color: var(--gray-900); margin: 14px 0 8px;">MobileNet3D
+        </div>
+        <div class="big-num" style="color: var(--gray-500); font-size: 4.4rem;">59.48%</div>
+        <div class="label" style="margin-top: 10px; color: var(--gray-500); font-size: 0.85rem;">Test Accuracy
+        </div>
+        <div style="margin-top: 20px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+          <span class="pill"
+            style="background: var(--gray-200); color: var(--gray-700); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">~9.5
+            MB</span>
+          <span class="pill"
+            style="background: rgba(22, 163, 74, 0.12); color: var(--green); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">3.42
+            ms GPU</span>
+          <span class="pill"
+            style="background: rgba(22, 163, 74, 0.12); color: var(--green); font-size: 0.95rem; padding: 8px 18px; font-weight: 600;">46.1
+            ms CPU</span>
         </div>
       </div>
     </div>
+  </div>
+</div>
 
 <div class="slide" id="s3">
       <div class="s-head">
@@ -790,6 +790,153 @@
         </div>
       </div>
     </div>
+
+<div class="slide" id="s_loss">
+  <div class="s-head">
+    <div class="s-tag">Theory &amp; Formulation</div>
+    <h2 class="s-title">Knowledge Distillation Loss</h2>
+    <div class="s-sub">Balanced objective function for knowledge transfer</div>
+  </div>
+  <div class="s-body" style="flex-direction: column; justify-content: center; align-items: center; gap: 48px;">
+
+    <!-- Formula Container Centered -->
+    <div
+      style="display: flex; justify-content: center; align-items: flex-start; gap: 12px; font-family: 'Cambria Math', 'STIX Two Math', 'Times New Roman', serif; font-size: 3.0rem; font-style: italic; color: var(--navy); margin-top: 10px;">
+
+      <!-- Left Side: L_total = -->
+      <div style="display: inline-flex; align-items: center; margin-top: 10px; padding-right: 4px;">
+        <span>ℒ<span
+            style="font-size: 1.4rem; font-family: 'Inter', sans-serif; font-style: normal; font-weight: 700; position: relative; top: 0.3em; margin-left: 1px;">total</span>
+          &nbsp;=&nbsp;</span>
+      </div>
+
+      <!-- Term 1: Soft Loss -->
+      <div style="display: flex; flex-direction: column; align-items: center; width: auto;">
+        <!-- The math expression -->
+        <div
+          style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; padding: 0 4px;">
+          <span style="color: var(--blue); font-weight: 700; font-style: normal;">&alpha;</span>
+          <span style="font-style: normal; color: var(--gray-400); margin: 0 4px;">&middot;</span>
+          <span style="color: var(--purple); font-weight: 700;">T</span><span
+            style="font-size: 1.5rem; font-family: 'Inter', sans-serif; font-weight: 700; position: relative; top: -0.5em; margin-left: 1px; color: var(--purple);">2</span>
+          <span style="font-style: normal; color: var(--gray-400); margin: 0 4px;">&middot;</span>
+          <span>D<span
+              style="font-size: 1.4rem; font-family: 'Inter', sans-serif; font-style: normal; font-weight: 700; position: relative; top: 0.3em; margin-left: 1px;">KL</span></span>
+          <span style="font-style: normal; margin: 0 4px;">(</span>
+          <span>&sigma;</span>
+          <span style="font-style: normal; margin: 0 4px;">(</span>
+          <span>z</span><span
+            style="font-size: 1.5rem; font-family: 'Inter', sans-serif; font-weight: 700; position: relative; top: -0.5em; margin-left: 1px;">S</span>
+          <span style="font-style: normal; margin: 0 6px; color: var(--gray-400);">/</span>
+          <span style="color: var(--purple); font-weight: 700;">T</span>
+          <span style="font-style: normal; margin: 0 4px;">)</span>
+          <span style="font-style: normal; font-weight: 300; margin: 0 10px; color: var(--gray-400);">∥</span>
+          <span>&sigma;</span>
+          <span style="font-style: normal; margin: 0 4px;">(</span>
+          <span>z</span><span
+            style="font-size: 1.5rem; font-family: 'Inter', sans-serif; font-weight: 700; position: relative; top: -0.5em; margin-left: 1px;">T</span>
+          <span style="font-style: normal; margin: 0 6px; color: var(--gray-400);">/</span>
+          <span style="color: var(--purple); font-weight: 700;">T</span>
+          <span style="font-style: normal; margin: 0 4px;">)</span>
+          <span style="font-style: normal; margin: 0 4px;">)</span>
+        </div>
+
+        <!-- SVG Underbrace -->
+        <svg width="100%" height="24" viewBox="0 0 100 20" preserveAspectRatio="none"
+          style="overflow: visible; color: var(--purple); margin: 12px 0 6px;">
+          <path d="M 0,2 C 10,2 15,14 45,14 C 48,14 49,18 50,19 C 51,18 52,14 55,14 C 85,14 90,2 100,2" fill="none"
+            stroke="currentColor" stroke-width="1.8" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+        </svg>
+
+        <!-- Underbrace label -->
+        <span
+          style="font-size: 1.6rem; font-weight: 700; color: var(--purple); font-style: normal; font-family: 'Inter', sans-serif;">ℒ<sub>soft</sub></span>
+      </div>
+
+      <!-- Plus operator -->
+      <div style="display: inline-flex; align-items: center; margin-top: 10px; padding: 0 10px;">
+        <span>+</span>
+      </div>
+
+      <!-- Term 2: Hard Loss -->
+      <div style="display: flex; flex-direction: column; align-items: center; width: auto;">
+        <!-- The math expression -->
+        <div
+          style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; padding: 0 4px;">
+          <span style="font-style: normal; margin: 0 4px;">(</span>
+          <span>1</span>
+          <span style="font-style: normal; margin: 0 6px; color: var(--navy);">&minus;</span>
+          <span style="color: var(--blue); font-weight: 700; font-style: normal;">&alpha;</span>
+          <span style="font-style: normal; margin: 0 4px;">)</span>
+          <span style="font-style: normal; color: var(--gray-400); margin: 0 4px;">&middot;</span>
+          <span>ℒ<span
+              style="font-size: 1.4rem; font-family: 'Inter', sans-serif; font-style: normal; font-weight: 700; position: relative; top: 0.3em; margin-left: 1px;">CE</span></span>
+          <span style="font-style: normal; margin: 0 4px;">(</span>
+          <span>z</span><span
+            style="font-size: 1.5rem; font-family: 'Inter', sans-serif; font-weight: 700; position: relative; top: -0.5em; margin-left: 1px;">S</span>
+          <span style="font-style: normal; margin: 0 4px;">,</span>
+          <span style="margin-left: 6px;">y</span>
+          <span style="font-style: normal; margin: 0 4px;">)</span>
+        </div>
+
+        <!-- SVG Underbrace -->
+        <svg width="100%" height="24" viewBox="0 0 100 20" preserveAspectRatio="none"
+          style="overflow: visible; color: var(--green); margin: 12px 0 6px;">
+          <path d="M 0,2 C 10,2 15,14 45,14 C 48,14 49,18 50,19 C 51,18 52,14 55,14 C 85,14 90,2 100,2" fill="none"
+            stroke="currentColor" stroke-width="1.8" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+        </svg>
+
+        <!-- Underbrace label -->
+        <span
+          style="font-size: 1.6rem; font-weight: 700; color: var(--green); font-style: normal; font-family: 'Inter', sans-serif;">ℒ<sub>hard</sub></span>
+      </div>
+
+    </div>
+
+    <!-- Barebones Explanations of Alpha and T -->
+    <div style="margin-top: 50px; display: flex; justify-content: center; gap: 80px; width: 100%; max-width: 1150px;">
+
+      <!-- Alpha -->
+      <div style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px;">
+        <div
+          style="font-size: 2.6rem; font-weight: 800; color: var(--blue); display: flex; align-items: center; gap: 8px;">
+          &alpha; = 0.7
+        </div>
+        <div
+          style="font-size: 1.1rem; color: var(--gray-500); text-transform: uppercase; letter-spacing: 2px; font-weight: 700;">
+          Target Balancing
+        </div>
+        <p class="body-text"
+          style="font-size: 1.15rem; line-height: 1.6; color: var(--gray-700); max-width: 500px; margin-top: 4px;">
+          Always set to <strong>0.7</strong> for the majority of experiments to prioritize mimicking the Teacher's soft
+          targets (70%) over the hard ground truth labels (30%).
+        </p>
+      </div>
+
+      <!-- Divider line -->
+      <div style="width: 1px; background: var(--gray-200); align-self: stretch;"></div>
+
+      <!-- Temperature -->
+      <div style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px;">
+        <div
+          style="font-size: 2.6rem; font-weight: 800; color: var(--purple); display: flex; align-items: center; gap: 8px;">
+          T &isin; {1, 5, 8, 10, 20}
+        </div>
+        <div
+          style="font-size: 1.1rem; color: var(--gray-500); text-transform: uppercase; letter-spacing: 2px; font-weight: 700;">
+          Logit Scaling
+        </div>
+        <p class="body-text"
+          style="font-size: 1.15rem; line-height: 1.6; color: var(--gray-700); max-width: 500px; margin-top: 4px;">
+          The main hyperparameter varied across experiments to control the smoothness of probability distributions,
+          extracting latent inter-class similarities.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+</div>
 
 <div class="slide" id="s4">
   <div class="s-head">
@@ -1071,37 +1218,6 @@
       </div>
     </div>
 
-<div class="slide" id="s6">
-      <div class="s-head">
-        <div class="s-tag">Qualitative Analysis</div>
-        <h2 class="s-title">Per-Class Accuracy: KD T=20 vs Baseline</h2>
-      </div>
-      <div class="s-body">
-        <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-          <div class="img-frame" style="width: 100%; height: 100%;">
-            <img src="../assets/delta_accuracy_kd_vs_baseline.png" alt="Delta Accuracy">
-          </div>
-        </div>
-        <div style="width: 32%; display: flex; flex-direction: column; gap: 24px; justify-content: center;">
-          <div class="panel">
-            <div style="font-size: 1.15rem; font-weight: 700; color: var(--green); margin-bottom: 8px;">Improvements
-            </div>
-            <p class="body-text">
-              Spatially complex classes (e.g. <strong>WallPushups</strong>, <strong>HeadMassage</strong>) gain most from
-              the Teacher's visual filters.
-            </p>
-          </div>
-          <div class="panel">
-            <div style="font-size: 1.15rem; font-weight: 700; color: var(--red); margin-bottom: 8px;">Regressions</div>
-            <p class="body-text">
-              Fast, cyclic actions (<strong>JumpingJack</strong>, <strong>TennisSwing</strong>) suffer from temporal
-              over-smoothing at high T.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-
 <div class="slide" id="s7" style="padding: 24px 32px 16px;">
       <div class="s-head" style="margin-bottom: 12px; padding-bottom: 10px;">
         <div class="s-tag">Qualitative Analysis</div>
@@ -1243,127 +1359,130 @@
 </div>
 
 <div class="slide" id="s9">
-      <div class="s-head">
-        <div class="s-tag">Advanced Methods</div>
-        <h2 class="s-title">Born-Again Networks &amp; Knowledge Collapse</h2>
-        <div class="s-sub">Iterative self-distillation MobileNet3D → MobileNet3D</div>
+  <div class="s-head">
+    <div class="s-tag">Advanced Methods</div>
+    <h2 class="s-title">Born-Again Networks &amp; Knowledge Collapse</h2>
+    <div class="s-sub">Iterative self-distillation MobileNet3D → MobileNet3D</div>
+  </div>
+  <div class="s-body">
+    <div style="width: 50%; display: flex; flex-direction: column; gap: 20px; justify-content: center; flex-shrink: 0;">
+      <div
+        style="font-size: 1.8rem; font-weight: 800; color: var(--red); margin-bottom: 12px; padding: 0 4px; letter-spacing: 0.5px;">
+        &alpha; = 0.5, &nbsp;T = 2.5
       </div>
-      <div class="s-body">
-        <div
-          style="width: 50%; display: flex; flex-direction: column; gap: 20px; justify-content: center; flex-shrink: 0;">
-          <div class="panel" style="padding: 20px 24px;">
-            <div style="font-size: 1.15rem; font-weight: 700; color: var(--red); margin-bottom: 12px;">Iterative
-              Self-Distillation</div>
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
-              <thead>
-                <tr style="background: var(--red-bg); border-bottom: 2px solid var(--red);">
-                  <th style="font-size: 0.78rem; padding: 8px 10px; color: var(--red); font-weight: 700;">Gen</th>
-                  <th style="font-size: 0.78rem; padding: 8px 10px; color: var(--red); font-weight: 700;">Teacher</th>
-                  <th
-                    style="font-size: 0.78rem; padding: 8px 10px; color: var(--red); font-weight: 700; text-align: center;">
-                    T</th>
-                  <th
-                    style="font-size: 0.78rem; padding: 8px 10px; color: var(--red); font-weight: 700; text-align: center;">
-                    &alpha;</th>
-                  <th
-                    style="font-size: 0.78rem; padding: 8px 10px; color: var(--red); font-weight: 700; text-align: right;">
-                    Accuracy</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr style="background: var(--blue-bg); font-weight: 600;">
-                  <td style="padding: 8px 10px; color: var(--navy);">Gen 0</td>
-                  <td style="padding: 8px 10px; color: var(--navy);">3D ResNet-50</td>
-                  <td style="padding: 8px 10px; text-align: center; color: var(--navy);">8.0</td>
-                  <td style="padding: 8px 10px; text-align: center; color: var(--navy);">0.7</td>
-                  <td style="padding: 8px 10px; text-align: right; color: var(--navy);">64.31%</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 10px;">Gen 1</td>
-                  <td style="padding: 8px 10px;">MobileNet3D Gen 0</td>
-                  <td style="padding: 8px 10px; text-align: center;">2.5</td>
-                  <td style="padding: 8px 10px; text-align: center;">0.7</td>
-                  <td style="padding: 8px 10px; text-align: right; font-weight: 600;">60.98%</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 10px;">Gen 2</td>
-                  <td style="padding: 8px 10px;">MobileNet3D Gen 1</td>
-                  <td style="padding: 8px 10px; text-align: center;">2.5</td>
-                  <td style="padding: 8px 10px; text-align: center;">0.7</td>
-                  <td style="padding: 8px 10px; text-align: right; font-weight: 600;">60.43%</td>
-                </tr>
-                <tr style="background: var(--red-bg);">
-                  <td style="padding: 8px 10px; color: var(--red);">Gen 3</td>
-                  <td style="padding: 8px 10px; color: var(--red);">MobileNet3D Gen 2</td>
-                  <td style="padding: 8px 10px; text-align: center; color: var(--red);">2.5</td>
-                  <td style="padding: 8px 10px; text-align: center; color: var(--red);">0.7</td>
-                  <td style="padding: 8px 10px; text-align: right; font-weight: 700; color: var(--red);">59.21%</td>
-                </tr>
-                <tr style="border-top: 1px solid var(--gray-300);">
-                  <td style="padding: 8px 10px; color: var(--gray-500);">Baseline</td>
-                  <td style="padding: 8px 10px; color: var(--gray-500);">No Teacher (Scratch)</td>
-                  <td style="padding: 8px 10px; text-align: center; color: var(--gray-500);">—</td>
-                  <td style="padding: 8px 10px; text-align: center; color: var(--gray-500);">—</td>
-                  <td style="padding: 8px 10px; text-align: right; color: var(--gray-500); font-weight: 600;">59.48%
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="panel">
-            <div style="font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; color: var(--navy);">Considerations
-            </div>
-            <p class="body-text" style="font-size: 1.05rem; line-height: 1.45;">
-              A compressed student (64.31%) lacks the visual representational capacity to act as an effective teacher.
-              Distilling at <strong>T=2.5</strong> fails to prevent error propagation, causing progressive degradation
-              back to baseline (59.48%).
-            </p>
-          </div>
+      <div class="panel" style="padding: 20px 24px;">
+        <div style="font-size: 1.15rem; font-weight: 700; color: var(--red); margin-bottom: 12px;">Iterative
+          Self-Distillation</div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
+          <thead>
+            <tr style="background: var(--red-bg); border-bottom: 2px solid var(--red);">
+              <th style="font-size: 0.78rem; padding: 8px 10px; color: var(--red); font-weight: 700;">Gen</th>
+              <th style="font-size: 0.78rem; padding: 8px 10px; color: var(--red); font-weight: 700;">Teacher</th>
+              <th
+                style="font-size: 0.78rem; padding: 8px 10px; color: var(--red); font-weight: 700; text-align: center;">
+                T</th>
+              <th
+                style="font-size: 0.78rem; padding: 8px 10px; color: var(--red); font-weight: 700; text-align: center;">
+                &alpha;</th>
+              <th
+                style="font-size: 0.78rem; padding: 8px 10px; color: var(--red); font-weight: 700; text-align: right;">
+                Accuracy</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="background: var(--blue-bg); font-weight: 600;">
+              <td style="padding: 8px 10px; color: var(--navy);">Gen 0</td>
+              <td style="padding: 8px 10px; color: var(--navy);">3D ResNet-50</td>
+              <td style="padding: 8px 10px; text-align: center; color: var(--navy);">8.0</td>
+              <td style="padding: 8px 10px; text-align: center; color: var(--navy);">0.7</td>
+              <td style="padding: 8px 10px; text-align: right; color: var(--navy);">64.31%</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 10px;">Gen 1</td>
+              <td style="padding: 8px 10px;">MobileNet3D Gen 0</td>
+              <td style="padding: 8px 10px; text-align: center;">2.5</td>
+              <td style="padding: 8px 10px; text-align: center;">0.5</td>
+              <td style="padding: 8px 10px; text-align: right; font-weight: 600;">60.98%</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 10px;">Gen 2</td>
+              <td style="padding: 8px 10px;">MobileNet3D Gen 1</td>
+              <td style="padding: 8px 10px; text-align: center;">2.5</td>
+              <td style="padding: 8px 10px; text-align: center;">0.5</td>
+              <td style="padding: 8px 10px; text-align: right; font-weight: 600;">60.43%</td>
+            </tr>
+            <tr style="background: var(--red-bg);">
+              <td style="padding: 8px 10px; color: var(--red);">Gen 3</td>
+              <td style="padding: 8px 10px; color: var(--red);">MobileNet3D Gen 2</td>
+              <td style="padding: 8px 10px; text-align: center; color: var(--red);">2.5</td>
+              <td style="padding: 8px 10px; text-align: center; color: var(--red);">0.5</td>
+              <td style="padding: 8px 10px; text-align: right; font-weight: 700; color: var(--red);">59.21%</td>
+            </tr>
+            <tr style="border-top: 1px solid var(--gray-300);">
+              <td style="padding: 8px 10px; color: var(--gray-500);">Baseline</td>
+              <td style="padding: 8px 10px; color: var(--gray-500);">No Teacher (Scratch)</td>
+              <td style="padding: 8px 10px; text-align: center; color: var(--gray-500);">—</td>
+              <td style="padding: 8px 10px; text-align: center; color: var(--gray-500);">—</td>
+              <td style="padding: 8px 10px; text-align: right; color: var(--gray-500); font-weight: 600;">59.48%
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <div style="font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; color: var(--navy);">Considerations
         </div>
+        <p class="body-text" style="font-size: 1.02rem; line-height: 1.45;">
+          A compressed student (64.31%) lacks the visual representational capacity to act as an effective teacher.
+          Distilling at <strong>T=2.5</strong> fails to prevent error propagation, causing progressive degradation
+          back to baseline (59.48%).
+        </p>
+      </div>
+    </div>
 
-        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0;">
-          <div class="panel" style="height: 100%; display: flex; flex-direction: column; padding: 28px;">
-            <div
-              style="font-size: 1rem; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px;">
-              Accuracy Across Generations</div>
-            <div
-              style="flex: 1; position: relative; display: flex; align-items: flex-end; justify-content: space-around; gap: 8px; padding-bottom: 8px;">
-              <div class="ref-label" style="bottom: 40.7%;">Baseline 59.48%</div>
-              <div class="ref-line" style="bottom: 40.7%;"></div>
-              <div class="bar-col">
-                <div class="val" style="color: var(--navy);">64.31%</div>
-                <div class="fill" style="height: 84.6%; background: linear-gradient(180deg, var(--navy), #93c5fd);">
-                </div>
-                <div class="lbl">Gen 0</div>
-              </div>
-              <div class="bar-col">
-                <div class="val" style="color: var(--amber);">60.98%</div>
-                <div class="fill" style="height: 54.3%; background: linear-gradient(180deg, var(--amber), #fde68a);">
-                </div>
-                <div class="lbl">Gen 1</div>
-              </div>
-              <div class="bar-col">
-                <div class="val" style="color: var(--blue);">60.43%</div>
-                <div class="fill" style="height: 49.3%; background: linear-gradient(180deg, var(--blue), #93c5fd);">
-                </div>
-                <div class="lbl">Gen 2</div>
-              </div>
-              <div class="bar-col">
-                <div class="val" style="color: var(--red);">59.21%</div>
-                <div class="fill" style="height: 38.2%; background: linear-gradient(180deg, #b91c1c, #fecaca);"></div>
-                <div class="lbl">Gen 3</div>
-              </div>
-              <div class="bar-col">
-                <div class="val" style="color: var(--green);">59.48%</div>
-                <div class="fill" style="height: 40.7%; background: linear-gradient(180deg, var(--green), #bbf7d0);">
-                </div>
-                <div class="lbl">Baseline</div>
-              </div>
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0;">
+      <div class="panel" style="height: 100%; display: flex; flex-direction: column; padding: 28px;">
+        <div
+          style="font-size: 1rem; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px;">
+          Accuracy Across Generations</div>
+        <div
+          style="flex: 1; position: relative; display: flex; align-items: flex-end; justify-content: space-around; gap: 8px; padding-bottom: 8px;">
+          <div class="ref-label" style="bottom: 40.7%;">Baseline 59.48%</div>
+          <div class="ref-line" style="bottom: 40.7%;"></div>
+          <div class="bar-col">
+            <div class="val" style="color: var(--navy);">64.31%</div>
+            <div class="fill" style="height: 84.6%; background: linear-gradient(180deg, var(--navy), #93c5fd);">
             </div>
+            <div class="lbl">Gen 0</div>
+          </div>
+          <div class="bar-col">
+            <div class="val" style="color: var(--amber);">60.98%</div>
+            <div class="fill" style="height: 54.3%; background: linear-gradient(180deg, var(--amber), #fde68a);">
+            </div>
+            <div class="lbl">Gen 1</div>
+          </div>
+          <div class="bar-col">
+            <div class="val" style="color: var(--blue);">60.43%</div>
+            <div class="fill" style="height: 49.3%; background: linear-gradient(180deg, var(--blue), #93c5fd);">
+            </div>
+            <div class="lbl">Gen 2</div>
+          </div>
+          <div class="bar-col">
+            <div class="val" style="color: var(--red);">59.21%</div>
+            <div class="fill" style="height: 38.2%; background: linear-gradient(180deg, #b91c1c, #fecaca);"></div>
+            <div class="lbl">Gen 3</div>
+          </div>
+          <div class="bar-col">
+            <div class="val" style="color: var(--green);">59.48%</div>
+            <div class="fill" style="height: 40.7%; background: linear-gradient(180deg, var(--green), #bbf7d0);">
+            </div>
+            <div class="lbl">Baseline</div>
           </div>
         </div>
       </div>
     </div>
+  </div>
+</div>
 
 <div class="slide" id="s10">
       <div class="s-head" style="margin-bottom: 14px;">
@@ -1475,9 +1594,9 @@
                   style="color: var(--navy-light); letter-spacing: 0.5px; font-weight: 700; font-size: 0.9rem;">Accuracy</span>
                 <div style="display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 4px 0;">
                   <span style="font-size: 2.6rem; font-weight: 800; color: var(--navy); line-height: 1;">62.68%</span>
-                  <span style="font-size: 1.5rem; font-weight: 700; color: var(--red); line-height: 1;">−3.17%</span>
+                  <span style="font-size: 1.5rem; font-weight: 700; color: var(--red); line-height: 1;">+3.20 pp</span>
                 </div>
-                <div style="font-size: 0.92rem; color: var(--gray-500); line-height: 1.2;">vs. 65.85% Teacher</div>
+                <div style="font-size: 0.92rem; color: var(--gray-500); line-height: 1.2;">vs. 59.48% Baseline</div>
               </div>
 
               <div class="panel"
@@ -1530,19 +1649,19 @@
             style="padding: 16px 20px; background: var(--gray-50); flex: 1; margin-bottom: 12px; display: flex; flex-direction: column; justify-content: center;">
             <div style="font-size: 1.25rem; font-weight: 700; color: var(--navy); margin-bottom: 4px;">Key Limitations
             </div>
-            <p style="font-size: 1.05rem; line-height: 1.45; color: var(--gray-700); margin: 0;">
-              &bull; Spatial capacity bottleneck of the Student.<br>
-              &bull; Over-smoothing on fast, periodic actions.<br>
-              &bull; Recursive collapse in self-distillation without oracle.
+            <p style="font-size: 1.02rem; line-height: 1.5; color: var(--gray-700); margin: 0;">
+              &bull; (KD) High temperature (T=20) over-smooths fast, cyclic actions.<br>
+              &bull; (AT) Spatial capacity gap limits intermediate Feature Distillation.<br>
+              &bull; (BAN) Error propagation &amp; bias accumulation in Born-Again Networks.
             </p>
           </div>
 
           <div class="panel"
             style="padding: 16px 20px; background: var(--gray-50); flex: 1; display: flex; flex-direction: column; justify-content: center;">
             <div style="font-size: 1.25rem; font-weight: 700; color: var(--navy); margin-bottom: 4px;">Future Work</div>
-            <p style="font-size: 1.05rem; line-height: 1.45; color: var(--gray-700);">
-              Dynamic temperature calibration to prevent self-distillation collapse, and training on flexible temporal
-              boundaries (variable stride).
+            <p style="font-size: 1.02rem; line-height: 1.5; color: var(--gray-700); margin: 0;">
+              &bull; <strong>Variable Temporal Stride:</strong> Train with dynamic frame sampling rates to prevent high-T over-smoothing on fast, cyclic actions.<br>
+              &bull; <strong>Flexible Feature Alignment:</strong> Introduce temporary learnable adapter blocks (e.g. 1x1 convs) during training to bridge the AT capacity gap.
             </p>
           </div>
 
@@ -1588,7 +1707,7 @@
   <div class="s-head" style="margin-bottom: 14px;">
     <div class="s-tag">Backup - Error Analysis</div>
     <h2 class="s-title">Confusion Matrix &amp; Error Analysis</h2>
-    <div class="s-sub">Baseline vs KD T=20 - Top 25 worst classes</div>
+    <div class="s-sub">Baseline vs KD T=20 - Full normalized matrices</div>
   </div>
   <div class="s-body" style="gap: 18px;">
     <div
@@ -1597,7 +1716,7 @@
         style="font-size: .9rem; font-weight: 700; color: var(--amber); text-transform: uppercase; margin-bottom: 8px;">Baseline
         - 59.48%</span>
       <div class="img-frame" style="flex: 1; width: 100%; border: none; background: transparent;">
-        <img src="../assets/predictions_baseline_ls005_24f_lightaug_top25.png" alt="Baseline confusion matrix">
+        <img src="../assets/predictions_baseline_ls005_24f_lightaug_full_no_labels.png" alt="Baseline confusion matrix">
       </div>
     </div>
     <div
@@ -1606,7 +1725,43 @@
         style="font-size: .9rem; font-weight: 700; color: var(--navy); text-transform: uppercase; margin-bottom: 8px;">KD
         T=20 - 65.85%</span>
       <div class="img-frame" style="flex: 1; width: 100%; border: none; background: transparent;">
-        <img src="../assets/predictions_kd_t20_a07_24f_lightaug_top25.png" alt="KD confusion matrix">
+        <img src="../assets/predictions_kd_t20_a07_24f_lightaug_full_no_labels.png" alt="KD confusion matrix">
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s6">
+  <div class="s-head">
+    <div class="s-tag">Qualitative Analysis</div>
+    <h2 class="s-title">Per-Class Accuracy: KD T=20 vs Baseline</h2>
+  </div>
+  <div class="s-body">
+    <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+      <div class="img-frame" style="width: 100%; height: 100%;">
+        <img src="../assets/delta_accuracy_kd_vs_baseline.png" alt="Delta Accuracy">
+      </div>
+    </div>
+    <div style="width: 32%; display: flex; flex-direction: column; gap: 16px; justify-content: center; height: 100%;">
+      <div class="panel" style="padding: 16px 20px;">
+        <div style="font-size: 1.15rem; font-weight: 700; color: var(--green); margin-bottom: 6px;">Improvements</div>
+        <p class="body-text" style="font-size: 1rem; line-height: 1.45;">
+          Spatially complex classes (e.g. <strong>WallPushups</strong>, <strong>HeadMassage</strong>) gain most from
+          the Teacher's visual filters.
+        </p>
+      </div>
+      <div class="panel" style="padding: 16px 20px;">
+        <div style="font-size: 1.15rem; font-weight: 700; color: var(--red); margin-bottom: 6px;">Regressions</div>
+        <p class="body-text" style="font-size: 1rem; line-height: 1.45;">
+          Fast, cyclic actions (<strong>JumpingJack</strong>, <strong>TennisSwing</strong>) suffer from temporal
+          over-smoothing at high T.
+        </p>
+      </div>
+      <div class="panel" style="padding: 16px 20px;">
+        <div style="font-size: 1.15rem; font-weight: 700; color: var(--amber); margin-bottom: 6px;">Shared Challenges</div>
+        <p class="body-text" style="font-size: 1rem; line-height: 1.45;">
+          Classes with high structural ambiguity (e.g. <strong>HandstandWalking</strong>, <strong>Nunchucks</strong>) or strong mutual confusion (e.g. <strong>MoppingFloor</strong>) remain unresolved in both models.
+        </p>
       </div>
     </div>
   </div>
@@ -1654,13 +1809,8 @@
 
         <!-- Result Card -->
         <div
-          style="padding: 14px; background: white; border: 1px solid var(--gray-200); border-radius: 8px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-          <div class="label" style="color: var(--red); font-size: 0.78rem; font-weight: 700;">Run
-            4391</div>
-          <div style="font-size: 2.2rem; font-weight: 900; color: var(--red); margin-top: 4px;">59.14% <span
-              style="font-size: 1.1rem; font-weight: 600;">(Top-1)</span></div>
-          <div style="font-size: 0.85rem; color: var(--gray-500); font-weight: 500; margin-top: 2px;">Severe accuracy
-            collapse under noisy gradients</div>
+          style="padding: 18px 14px; background: white; border: 1px solid var(--gray-200); border-radius: 8px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 90px;">
+          <div style="font-size: 2.7rem; font-weight: 900; color: var(--red); line-height: 1.15;">59.14%</div>
         </div>
       </div>
 
@@ -1695,14 +1845,9 @@
 
         <!-- Result Card -->
         <div
-          style="padding: 14px; background: white; border: 1px solid var(--gray-200); border-radius: 8px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-          <div class="label" style="color: var(--green); font-size: 0.78rem; font-weight: 700;">
-            Run 4601</div>
-          <div style="font-size: 2.2rem; font-weight: 900; color: var(--green); margin-top: 4px;">64.58% <span
-              style="font-size: 1.1rem; font-weight: 600;">(Symmetric)</span> &nbsp;·&nbsp; 65.03% <span
-              style="font-size: 1.1rem; font-weight: 600;">(Temporal)</span></div>
-          <div style="font-size: 0.85rem; color: var(--gray-500); font-weight: 500; margin-top: 2px;">Successful feature
-            alignment and positive transfer</div>
+          style="padding: 18px 14px; background: white; border: 1px solid var(--gray-200); border-radius: 8px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 90px; gap: 4px;">
+          <div style="font-size: 2.7rem; font-weight: 900; color: var(--green); line-height: 1.15;">64.58% &nbsp;&middot;&nbsp; 65.03%</div>
+          <div style="font-size: 1.05rem; color: var(--gray-500); font-weight: 600; margin-top: 2px;">Symmetric: &beta;<sub>s</sub>=0.05, &beta;<sub>t</sub>=0.05 &nbsp;&middot;&nbsp; Temporal: &beta;<sub>s</sub>=0, &beta;<sub>t</sub>=0.10</div>
         </div>
       </div>
 
@@ -1817,7 +1962,7 @@
         <div class="pbar-bg">
           <div class="pbar-fg" id="pbar"></div>
         </div>
-        <div class="ptext" id="counter">1 / 15</div>
+        <div class="ptext" id="counter">1 / 16</div>
       </div>
       <div class="keys"><span>Navigate</span> <kbd>←</kbd> <kbd>→</kbd> <span>or</span> <kbd>Space</kbd></div>
       <button class="nbtn" id="next" title="Next">→</button>

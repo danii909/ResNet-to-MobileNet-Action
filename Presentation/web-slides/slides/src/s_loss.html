@@ -1,0 +1,146 @@
+<div class="slide" id="s_loss">
+  <div class="s-head">
+    <div class="s-tag">Theory &amp; Formulation</div>
+    <h2 class="s-title">Knowledge Distillation Loss</h2>
+    <div class="s-sub">Balanced objective function for knowledge transfer</div>
+  </div>
+  <div class="s-body" style="flex-direction: column; justify-content: center; align-items: center; gap: 48px;">
+
+    <!-- Formula Container Centered -->
+    <div
+      style="display: flex; justify-content: center; align-items: flex-start; gap: 12px; font-family: 'Cambria Math', 'STIX Two Math', 'Times New Roman', serif; font-size: 3.0rem; font-style: italic; color: var(--navy); margin-top: 10px;">
+
+      <!-- Left Side: L_total = -->
+      <div style="display: inline-flex; align-items: center; margin-top: 10px; padding-right: 4px;">
+        <span>ℒ<span
+            style="font-size: 1.4rem; font-family: 'Inter', sans-serif; font-style: normal; font-weight: 700; position: relative; top: 0.3em; margin-left: 1px;">total</span>
+          &nbsp;=&nbsp;</span>
+      </div>
+
+      <!-- Term 1: Soft Loss -->
+      <div style="display: flex; flex-direction: column; align-items: center; width: auto;">
+        <!-- The math expression -->
+        <div
+          style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; padding: 0 4px;">
+          <span style="color: var(--blue); font-weight: 700; font-style: normal;">&alpha;</span>
+          <span style="font-style: normal; color: var(--gray-400); margin: 0 4px;">&middot;</span>
+          <span style="color: var(--purple); font-weight: 700;">T</span><span
+            style="font-size: 1.5rem; font-family: 'Inter', sans-serif; font-weight: 700; position: relative; top: -0.5em; margin-left: 1px; color: var(--purple);">2</span>
+          <span style="font-style: normal; color: var(--gray-400); margin: 0 4px;">&middot;</span>
+          <span>D<span
+              style="font-size: 1.4rem; font-family: 'Inter', sans-serif; font-style: normal; font-weight: 700; position: relative; top: 0.3em; margin-left: 1px;">KL</span></span>
+          <span style="font-style: normal; margin: 0 4px;">(</span>
+          <span>&sigma;</span>
+          <span style="font-style: normal; margin: 0 4px;">(</span>
+          <span>z</span><span
+            style="font-size: 1.5rem; font-family: 'Inter', sans-serif; font-weight: 700; position: relative; top: -0.5em; margin-left: 1px;">S</span>
+          <span style="font-style: normal; margin: 0 6px; color: var(--gray-400);">/</span>
+          <span style="color: var(--purple); font-weight: 700;">T</span>
+          <span style="font-style: normal; margin: 0 4px;">)</span>
+          <span style="font-style: normal; font-weight: 300; margin: 0 10px; color: var(--gray-400);">∥</span>
+          <span>&sigma;</span>
+          <span style="font-style: normal; margin: 0 4px;">(</span>
+          <span>z</span><span
+            style="font-size: 1.5rem; font-family: 'Inter', sans-serif; font-weight: 700; position: relative; top: -0.5em; margin-left: 1px;">T</span>
+          <span style="font-style: normal; margin: 0 6px; color: var(--gray-400);">/</span>
+          <span style="color: var(--purple); font-weight: 700;">T</span>
+          <span style="font-style: normal; margin: 0 4px;">)</span>
+          <span style="font-style: normal; margin: 0 4px;">)</span>
+        </div>
+
+        <!-- SVG Underbrace -->
+        <svg width="100%" height="24" viewBox="0 0 100 20" preserveAspectRatio="none"
+          style="overflow: visible; color: var(--purple); margin: 12px 0 6px;">
+          <path d="M 0,2 C 10,2 15,14 45,14 C 48,14 49,18 50,19 C 51,18 52,14 55,14 C 85,14 90,2 100,2" fill="none"
+            stroke="currentColor" stroke-width="1.8" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+        </svg>
+
+        <!-- Underbrace label -->
+        <span
+          style="font-size: 1.6rem; font-weight: 700; color: var(--purple); font-style: normal; font-family: 'Inter', sans-serif;">ℒ<sub>soft</sub></span>
+      </div>
+
+      <!-- Plus operator -->
+      <div style="display: inline-flex; align-items: center; margin-top: 10px; padding: 0 10px;">
+        <span>+</span>
+      </div>
+
+      <!-- Term 2: Hard Loss -->
+      <div style="display: flex; flex-direction: column; align-items: center; width: auto;">
+        <!-- The math expression -->
+        <div
+          style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; padding: 0 4px;">
+          <span style="font-style: normal; margin: 0 4px;">(</span>
+          <span>1</span>
+          <span style="font-style: normal; margin: 0 6px; color: var(--navy);">&minus;</span>
+          <span style="color: var(--blue); font-weight: 700; font-style: normal;">&alpha;</span>
+          <span style="font-style: normal; margin: 0 4px;">)</span>
+          <span style="font-style: normal; color: var(--gray-400); margin: 0 4px;">&middot;</span>
+          <span>ℒ<span
+              style="font-size: 1.4rem; font-family: 'Inter', sans-serif; font-style: normal; font-weight: 700; position: relative; top: 0.3em; margin-left: 1px;">CE</span></span>
+          <span style="font-style: normal; margin: 0 4px;">(</span>
+          <span>z</span><span
+            style="font-size: 1.5rem; font-family: 'Inter', sans-serif; font-weight: 700; position: relative; top: -0.5em; margin-left: 1px;">S</span>
+          <span style="font-style: normal; margin: 0 4px;">,</span>
+          <span style="margin-left: 6px;">y</span>
+          <span style="font-style: normal; margin: 0 4px;">)</span>
+        </div>
+
+        <!-- SVG Underbrace -->
+        <svg width="100%" height="24" viewBox="0 0 100 20" preserveAspectRatio="none"
+          style="overflow: visible; color: var(--green); margin: 12px 0 6px;">
+          <path d="M 0,2 C 10,2 15,14 45,14 C 48,14 49,18 50,19 C 51,18 52,14 55,14 C 85,14 90,2 100,2" fill="none"
+            stroke="currentColor" stroke-width="1.8" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+        </svg>
+
+        <!-- Underbrace label -->
+        <span
+          style="font-size: 1.6rem; font-weight: 700; color: var(--green); font-style: normal; font-family: 'Inter', sans-serif;">ℒ<sub>hard</sub></span>
+      </div>
+
+    </div>
+
+    <!-- Barebones Explanations of Alpha and T -->
+    <div style="margin-top: 50px; display: flex; justify-content: center; gap: 80px; width: 100%; max-width: 1150px;">
+
+      <!-- Alpha -->
+      <div style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px;">
+        <div
+          style="font-size: 2.6rem; font-weight: 800; color: var(--blue); display: flex; align-items: center; gap: 8px;">
+          &alpha; = 0.7
+        </div>
+        <div
+          style="font-size: 1.1rem; color: var(--gray-500); text-transform: uppercase; letter-spacing: 2px; font-weight: 700;">
+          Target Balancing
+        </div>
+        <p class="body-text"
+          style="font-size: 1.15rem; line-height: 1.6; color: var(--gray-700); max-width: 500px; margin-top: 4px;">
+          Always set to <strong>0.7</strong> for the majority of experiments to prioritize mimicking the Teacher's soft
+          targets (70%) over the hard ground truth labels (30%).
+        </p>
+      </div>
+
+      <!-- Divider line -->
+      <div style="width: 1px; background: var(--gray-200); align-self: stretch;"></div>
+
+      <!-- Temperature -->
+      <div style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px;">
+        <div
+          style="font-size: 2.6rem; font-weight: 800; color: var(--purple); display: flex; align-items: center; gap: 8px;">
+          T &isin; {1, 5, 8, 10, 20}
+        </div>
+        <div
+          style="font-size: 1.1rem; color: var(--gray-500); text-transform: uppercase; letter-spacing: 2px; font-weight: 700;">
+          Logit Scaling
+        </div>
+        <p class="body-text"
+          style="font-size: 1.15rem; line-height: 1.6; color: var(--gray-700); max-width: 500px; margin-top: 4px;">
+          The main hyperparameter varied across experiments to control the smoothness of probability distributions,
+          extracting latent inter-class similarities.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+</div>

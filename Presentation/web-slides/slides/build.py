@@ -10,9 +10,9 @@ SLIDES_CONFIG = [
     {"id": "s1", "active": True},
     {"id": "s2", "active": True},
     {"id": "s3", "active": True},
+    {"id": "s_loss", "active": True},
     {"id": "s4", "active": True},
     {"id": "s5", "active": True},
-    {"id": "s6", "active": True},
     {"id": "s7", "active": True},
     {"id": "s8", "active": True},
     {"id": "s9", "active": True},
@@ -21,6 +21,7 @@ SLIDES_CONFIG = [
     {"id": "s_backup_sep", "active": True},
     {"id": "s12", "active": True},
     {"id": "s13", "active": True},
+    {"id": "s6", "active": True},
     {"id": "s14", "active": True},
     {"id": "s15", "active": False},  # Default commented out as in original
 ]

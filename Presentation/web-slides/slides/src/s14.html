@@ -40,13 +40,8 @@
 
         <!-- Result Card -->
         <div
-          style="padding: 14px; background: white; border: 1px solid var(--gray-200); border-radius: 8px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-          <div class="label" style="color: var(--red); font-size: 0.78rem; font-weight: 700;">Run
-            4391</div>
-          <div style="font-size: 2.2rem; font-weight: 900; color: var(--red); margin-top: 4px;">59.14% <span
-              style="font-size: 1.1rem; font-weight: 600;">(Top-1)</span></div>
-          <div style="font-size: 0.85rem; color: var(--gray-500); font-weight: 500; margin-top: 2px;">Severe accuracy
-            collapse under noisy gradients</div>
+          style="padding: 18px 14px; background: white; border: 1px solid var(--gray-200); border-radius: 8px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 90px;">
+          <div style="font-size: 2.7rem; font-weight: 900; color: var(--red); line-height: 1.15;">59.14%</div>
         </div>
       </div>
 
@@ -81,14 +76,9 @@
 
         <!-- Result Card -->
         <div
-          style="padding: 14px; background: white; border: 1px solid var(--gray-200); border-radius: 8px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-          <div class="label" style="color: var(--green); font-size: 0.78rem; font-weight: 700;">
-            Run 4601</div>
-          <div style="font-size: 2.2rem; font-weight: 900; color: var(--green); margin-top: 4px;">64.58% <span
-              style="font-size: 1.1rem; font-weight: 600;">(Symmetric)</span> &nbsp;·&nbsp; 65.03% <span
-              style="font-size: 1.1rem; font-weight: 600;">(Temporal)</span></div>
-          <div style="font-size: 0.85rem; color: var(--gray-500); font-weight: 500; margin-top: 2px;">Successful feature
-            alignment and positive transfer</div>
+          style="padding: 18px 14px; background: white; border: 1px solid var(--gray-200); border-radius: 8px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 90px; gap: 4px;">
+          <div style="font-size: 2.7rem; font-weight: 900; color: var(--green); line-height: 1.15;">64.58% &nbsp;&middot;&nbsp; 65.03%</div>
+          <div style="font-size: 1.05rem; color: var(--gray-500); font-weight: 600; margin-top: 2px;">Symmetric: &beta;<sub>s</sub>=0.05, &beta;<sub>t</sub>=0.05 &nbsp;&middot;&nbsp; Temporal: &beta;<sub>s</sub>=0, &beta;<sub>t</sub>=0.10</div>
         </div>
       </div>
 
