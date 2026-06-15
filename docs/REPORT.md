@@ -1,7 +1,7 @@
 # Technical Report: Knowledge Distillation for Mobile Action Recognition
 
 **Student:** Daniele Barbagallo (1000015334)  
-**Course:** Deep Learning (DL26)  
+**Course:** Deep Learning: Advanced Models and Methods  
 **Professor:** Prof. Antonino Furnari  
 **Institution:** Università degli Studi di Catania — DMI  
 
