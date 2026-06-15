@@ -1,25 +1,29 @@
 # Experiment Configurations
 
-Store your `.yaml` or `.json` files here to manage experiment parameters (hyperparameters, paths).
+YAML configuration files for all training and evaluation runs.
 
-Recommended next runs based on slurm-multiple-runs-4077 analysis:
+## Directory Structure
 
-- distillation_t10_a07_strongaug.yaml
-	- Best KD recipe (T=10, alpha=0.7) + stronger spatial augmentation + temporal stride jitter.
+```
+configs/
+├── experiments/          # Training configs
+│   ├── teacher.yaml              # Teacher fine-tuning (3D ResNet-50)
+│   ├── baseline.yaml             # Student trained from scratch
+│   ├── distillation.yaml         # Logit-based KD (temperature, alpha)
+│   ├── attention_transfer.yaml   # KD + Attention Transfer
+│   ├── born_again.yaml           # Born-Again Networks (BAN)
+│   └── cross_frame.yaml          # Asymmetric temporal distillation (16f/24f)
+└── valid/                # Evaluation-only configs
+    └── ...
+```
 
-- distillation_t10_a07_strongaug_24f.yaml
-	- Same as above, but with 24 frames per clip for longer temporal context.
+## Usage
 
-- distillation_at_t10_a07_strongaug.yaml
-	- KD + Attention Transfer with the same strong augmentation setup.
+All training scripts accept a YAML config and optional CLI overrides:
 
-Recovery sweep (recommended after strongaug regression):
+```bash
+python -m src.training.train --config experiments/configs/experiments/distillation.yaml \
+    --override distillation.temperature=20 distillation.alpha=0.7
+```
 
-- distillation_t10_a07_24f_minaug.yaml
-	- 24 frames with minimal augmentation (stability-first baseline).
-
-- distillation_t10_a07_24f_lightaug.yaml
-	- 24 frames with conservative augmentation.
-
-- distillation_t10_a07_24f_lightaug_lr6e4.yaml
-	- Same as lightaug, with slightly higher LR for faster adaptation.
+See the main [README.md](../../README.md) for full training instructions.

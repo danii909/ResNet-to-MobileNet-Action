@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Report](https://img.shields.io/badge/Report-REPORT.md-blueviolet)](docs/REPORT.md)
 
-> **Group G24 — Project 6**
+> **Track 6 — Knowledge Distillation for Mobile Action Recognition**
 
 A full Knowledge Distillation pipeline to compress a heavy 3D video recognition model into a mobile-ready student, with logit-based KD, Attention Transfer, Born-Again Networks, Cross-Frame Distillation, and AMP stability fixes.
 
@@ -147,8 +147,8 @@ KD_Project/
 │   ├── eval.sh               # SLURM evaluation script
 │   └── aliases.sh            # Bash aliases for cluster shortcuts
 ├── docs/
-│   ├── REPORT.md             # Full technical report (IT)
-│   └── GUIDA_TRAINING_EVAL.md  # Cluster usage guide (IT)
+│   ├── REPORT.md             # Full technical report
+│   └── 03-knowledge-distillation.pdf  # Reference material
 ├── environment.yml           # Conda environment specification
 └── requirements.txt          # Pip dependencies
 ```
@@ -160,7 +160,7 @@ KD_Project/
 ### 1. Clone & Create Environment
 
 ```bash
-git clone https://github.com/danii909/KD_Project.git
+git clone https://github.com/danii909/ResNet-to-MobileNet-Action.git
 cd KD_Project
 conda env create -f environment.yml
 conda activate dl-project

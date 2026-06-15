@@ -36,3 +36,5 @@ experiments/checkpoints/
 
 /walkthrough.md
 /benchmark_test_set.sh
+/backup.md
+/experiments/Results/**/*.md
