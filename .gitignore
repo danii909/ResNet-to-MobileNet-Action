@@ -28,3 +28,8 @@ experiments/checkpoints/
 /assets/
 /cluster/*
 !/cluster/aliases.sh
+
+/Presentation/proto/
+/Presentation/web-slides/slides/backups/
+/Presentation/web-slides/slides/build.py
+/Presentation/web-slides/slides/export_static_deck.py
