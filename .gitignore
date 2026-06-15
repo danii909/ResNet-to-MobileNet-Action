@@ -38,3 +38,4 @@ experiments/checkpoints/
 /benchmark_test_set.sh
 /backup.md
 /experiments/Results/**/*.md
+/experiments/Results/Test_Set_Benchmark/old plots/
