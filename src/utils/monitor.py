@@ -774,7 +774,7 @@ def _parse_log(job: JobInfo) -> None:
             break
 
     # Parse current run for single-job multi-run scripts.
-    # We look for the latest ">>> TRAINING: <run_name>" marker and read its config line.
+    # Look for the latest ">>> TRAINING: <run_name>" marker and read its config line.
     tail_start = max(0, len(lines) - 400)
     tail_lines = lines[tail_start:]
     for i in range(len(tail_lines) - 1, -1, -1):

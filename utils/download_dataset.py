@@ -3,8 +3,8 @@ import argparse
 from pathlib import Path
 import sys
 
-# Add src to path so we can import our dataset utilities
-sys.path.append(str(Path(__file__).parent))
+# Add project root to path to import dataset utilities
+sys.path.append(str(Path(__file__).parent.parent))
 
 from src.datasets.ucf101 import download_ucf101
 

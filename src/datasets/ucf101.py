@@ -637,7 +637,7 @@ def _stratified_group_split_indices(
         cls_groups = groups[cls_idx]
         unique_groups = np.unique(cls_groups)
 
-        # If a class has just one group, we cannot make a disjoint group split.
+        # If a class has just one group, a disjoint group split cannot be made.
         if unique_groups.size <= 1:
             cls_train, cls_eval = _stratified_sample_split_indices(
                 labels[cls_idx], eval_ratio=eval_ratio, seed=seed + int(cls),

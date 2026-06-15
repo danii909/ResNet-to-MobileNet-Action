@@ -36,7 +36,7 @@ def benchmark_model_on_test_set(
     model.eval()
     
     # Warmup
-    # We take a few batches from the dataloader for warmup
+    # Take a few batches from the dataloader for warmup
     warmup_clips = []
     for i, (clips, _) in enumerate(dataloader):
         warmup_clips.append(clips.to(device, non_blocking=True))
@@ -75,9 +75,9 @@ def benchmark_model_on_test_set(
             
         end = time.perf_counter()
         
-        # We record the time taken for the WHOLE batch
+        # Record the time taken for the WHOLE batch
         # To get per-clip latency later or keep per-batch latency.
-        # We will store per-batch time in ms.
+        # Store per-batch time in ms.
         batch_time_ms = (end - start) * 1000.0
         times.append(batch_time_ms / batch_size)  # ms per clip in this batch
 
