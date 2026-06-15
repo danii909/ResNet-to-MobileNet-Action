@@ -97,9 +97,11 @@ To resolve the collapse, the 5D feature maps $F \in \mathbb{R}^{B \times C \time
     *Alignment:* Since the temporal stride is 1 for both models ($T_T = T_S = 24$), no interpolation is needed (direct noise-free transfer).
 
 The total Attention Transfer loss is formulated as:
+
 $$\mathcal{L}_{\text{AT}} = \beta_s \mathcal{L}_{\text{spatial}} + \beta_t \mathcal{L}_{\text{temporal}}$$
 
 Or, detailed across all matching blocks:
+
 $$\mathcal{L}_{\text{AT}} = \beta_s \sum_i \text{MSE}\left(A^T_{\text{spatial},i}, A^S_{\text{spatial},i}\right) + \beta_t \sum_i \text{MSE}\left(A^T_{\text{temporal},i}, A^S_{\text{temporal},i}\right)$$
 
 ### 4.3 Analysis of the Results of AT
