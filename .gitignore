@@ -22,7 +22,9 @@ experiments/checkpoints/
 /scripts/
 /scratch/
 /obsolete-results/
-/docs/
+/docs/*
+!/docs/REPORT.md
+!/docs/03-knowledge-distillation.pdf
 /assets/
 /cluster/*
 !/cluster/aliases.sh

@@ -1,3 +1,0 @@
-CONFIG=experiments/configs/teacher.yaml sbatch cluster/train.sh
-CONFIG=experiments/configs/baseline.yaml sbatch cluster/train.sh
-CONFIG=experiments/configs/distillation.yaml sbatch cluster/train.sh
