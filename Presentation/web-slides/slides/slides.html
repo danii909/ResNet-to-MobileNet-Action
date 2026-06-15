@@ -1247,6 +1247,42 @@
       </div>
     </div>
 
+<div class="slide" id="s6">
+  <div class="s-head">
+    <div class="s-tag">Qualitative Analysis</div>
+    <h2 class="s-title">Per-Class Accuracy: KD T=20 vs Baseline</h2>
+  </div>
+  <div class="s-body">
+    <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+      <div class="img-frame" style="width: 100%; height: 100%;">
+        <img src="../assets/delta_accuracy_kd_vs_baseline.png" alt="Delta Accuracy">
+      </div>
+    </div>
+    <div style="width: 32%; display: flex; flex-direction: column; gap: 16px; justify-content: center; height: 100%;">
+      <div class="panel" style="padding: 16px 20px;">
+        <div style="font-size: 1.15rem; font-weight: 700; color: var(--green); margin-bottom: 6px;">Improvements</div>
+        <p class="body-text" style="font-size: 1rem; line-height: 1.45;">
+          Spatially complex classes (e.g. <strong>WallPushups</strong>, <strong>HeadMassage</strong>) gain most from
+          the Teacher's visual filters.
+        </p>
+      </div>
+      <div class="panel" style="padding: 16px 20px;">
+        <div style="font-size: 1.15rem; font-weight: 700; color: var(--red); margin-bottom: 6px;">Regressions</div>
+        <p class="body-text" style="font-size: 1rem; line-height: 1.45;">
+          Fast, cyclic actions (<strong>JumpingJack</strong>, <strong>TennisSwing</strong>) suffer from temporal
+          over-smoothing at high T.
+        </p>
+      </div>
+      <div class="panel" style="padding: 16px 20px;">
+        <div style="font-size: 1.15rem; font-weight: 700; color: var(--amber); margin-bottom: 6px;">Shared Challenges</div>
+        <p class="body-text" style="font-size: 1rem; line-height: 1.45;">
+          Classes with high structural ambiguity (e.g. <strong>HandstandWalking</strong>, <strong>Nunchucks</strong>) or strong mutual confusion (e.g. <strong>MoppingFloor</strong>) remain unresolved in both models.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="slide" id="s8" style="padding: 24px 32px 16px;">
   <div class="s-head" style="margin-bottom: 20px; padding-bottom: 12px;">
     <div class="s-tag">Advanced Methods</div>
@@ -1733,42 +1769,6 @@
         T=20 - 65.85%</span>
       <div class="img-frame" style="flex: 1; width: 100%; border: none; background: transparent;">
         <img src="../assets/predictions_kd_t20_a07_24f_lightaug_full_no_labels.png" alt="KD confusion matrix">
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="slide" id="s6">
-  <div class="s-head">
-    <div class="s-tag">Qualitative Analysis</div>
-    <h2 class="s-title">Per-Class Accuracy: KD T=20 vs Baseline</h2>
-  </div>
-  <div class="s-body">
-    <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-      <div class="img-frame" style="width: 100%; height: 100%;">
-        <img src="../assets/delta_accuracy_kd_vs_baseline.png" alt="Delta Accuracy">
-      </div>
-    </div>
-    <div style="width: 32%; display: flex; flex-direction: column; gap: 16px; justify-content: center; height: 100%;">
-      <div class="panel" style="padding: 16px 20px;">
-        <div style="font-size: 1.15rem; font-weight: 700; color: var(--green); margin-bottom: 6px;">Improvements</div>
-        <p class="body-text" style="font-size: 1rem; line-height: 1.45;">
-          Spatially complex classes (e.g. <strong>WallPushups</strong>, <strong>HeadMassage</strong>) gain most from
-          the Teacher's visual filters.
-        </p>
-      </div>
-      <div class="panel" style="padding: 16px 20px;">
-        <div style="font-size: 1.15rem; font-weight: 700; color: var(--red); margin-bottom: 6px;">Regressions</div>
-        <p class="body-text" style="font-size: 1rem; line-height: 1.45;">
-          Fast, cyclic actions (<strong>JumpingJack</strong>, <strong>TennisSwing</strong>) suffer from temporal
-          over-smoothing at high T.
-        </p>
-      </div>
-      <div class="panel" style="padding: 16px 20px;">
-        <div style="font-size: 1.15rem; font-weight: 700; color: var(--amber); margin-bottom: 6px;">Shared Challenges</div>
-        <p class="body-text" style="font-size: 1rem; line-height: 1.45;">
-          Classes with high structural ambiguity (e.g. <strong>HandstandWalking</strong>, <strong>Nunchucks</strong>) or strong mutual confusion (e.g. <strong>MoppingFloor</strong>) remain unresolved in both models.
-        </p>
       </div>
     </div>
   </div>
