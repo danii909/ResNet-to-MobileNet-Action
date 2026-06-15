@@ -137,8 +137,8 @@ KD_Project/
 │   └── utils/                # Logging, config parsing, t-SNE visualizations
 ├── experiments/
 │   ├── configs/              # YAML configs for each experiment
-│   │   ├── experiments/      # Main training configs (teacher, baseline, distillation, AT, BAN)
-│   │   └── valid/            # Evaluation-specific configs
+│   │   ├── main/             # Main training configs actually used for final results
+│   │   └── drafts/           # Drafts, tests, and failed hyperparameter trials
 │   ├── checkpoints/          # Saved model weights (.pth)
 │   ├── logs/                 # SLURM and training logs
 │   └── Results/              # Experiment output summaries
@@ -205,33 +205,33 @@ All scripts accept YAML config files with optional CLI overrides via `--override
 ### Step 1 — Fine-tune the Teacher (3D ResNet-50)
 
 ```bash
-python -m src.training.train --config experiments/configs/experiments/teacher.yaml
+python -m src.training.train --config experiments/configs/main/teacher_24f_evalsplit.yaml
 ```
 
 ### Step 2 — Train Baseline Student (from scratch)
 
 ```bash
-python -m src.training.train --config experiments/configs/experiments/baseline.yaml
+python -m src.training.train --config experiments/configs/main/baseline_ls005_24f_lightaug.yaml
 ```
 
 ### Step 3 — Logit-based Knowledge Distillation
 
 ```bash
-python -m src.training.train --config experiments/configs/experiments/distillation.yaml
+python -m src.training.train --config experiments/configs/main/distillation_t8_a07_24f_lightaug.yaml
 ```
 
 Override temperature or alpha from CLI:
 
 ```bash
 python -m src.training.train \
-  --config experiments/configs/experiments/distillation.yaml \
+  --config experiments/configs/main/distillation_t8_a07_24f_lightaug.yaml \
   --override distillation.temperature=20 distillation.alpha=0.7
 ```
 
 ### Step 4 — Attention Transfer
 
 ```bash
-python -m src.training.train --config experiments/configs/experiments/attention_transfer.yaml
+python -m src.training.train --config experiments/configs/main/at_symmetric_t20.yaml
 ```
 
 ### Step 5 — Cross-Frame Distillation (16f Student, 24f Teacher)
@@ -240,14 +240,14 @@ The Student receives a temporally sub-sampled clip (16 frames) while the Teacher
 
 ```bash
 python -m src.training.train \
-  --config experiments/configs/experiments/distillation.yaml \
+  --config experiments/configs/main/distillation_t8_a07_24f_lightaug.yaml \
   --override distillation.temperature=20 distillation.alpha=0.7 distillation.student_frames=16
 ```
 
 Or use a dedicated cross-frame config if available:
 
 ```bash
-python -m src.training.train --config experiments/configs/experiments/cross_frame.yaml
+python -m src.training.train --config experiments/configs/main/crossframe_kd_t24_s16.yaml
 ```
 
 ---
@@ -257,17 +257,17 @@ python -m src.training.train --config experiments/configs/experiments/cross_fram
 ```bash
 # Evaluate Teacher
 python -m src.evaluation.evaluate \
-  --config experiments/configs/experiments/teacher.yaml \
+  --config experiments/configs/main/teacher_24f_evalsplit.yaml \
   --override evaluation.checkpoint=experiments/checkpoints/teacher_finetune_best.pth
 
 # Evaluate best KD Student (T=20)
 python -m src.evaluation.evaluate \
-  --config experiments/configs/experiments/distillation.yaml \
+  --config experiments/configs/main/distillation_t8_a07_24f_lightaug.yaml \
   --override evaluation.checkpoint=experiments/checkpoints/distillation_best.pth
 
 # Evaluate Baseline Student
 python -m src.evaluation.evaluate \
-  --config experiments/configs/experiments/baseline.yaml \
+  --config experiments/configs/main/baseline_ls005_24f_lightaug.yaml \
   --override evaluation.checkpoint=experiments/checkpoints/baseline_best.pth
 ```
 
@@ -305,12 +305,12 @@ train-and-eval
 
 ```bash
 # Using sbatch directly
-CONFIG=experiments/configs/experiments/teacher.yaml \
+CONFIG=experiments/configs/main/teacher_24f_evalsplit.yaml \
 CHECKPOINT=experiments/checkpoints/teacher_finetune_best.pth \
 sbatch cluster/eval.sh
 
 # Using alias
-evaluate experiments/configs/experiments/distillation.yaml experiments/checkpoints/distillation_best.pth
+evaluate experiments/configs/main/distillation_t8_a07_24f_lightaug.yaml experiments/checkpoints/distillation_best.pth
 ```
 
 ### Monitoring
