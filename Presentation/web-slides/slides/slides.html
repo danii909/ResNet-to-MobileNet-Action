@@ -750,6 +750,13 @@
               No source video shared across Train / Val / Test.
             </p>
           </div>
+
+          <div class="panel">
+            <div style="font-size: 1.2rem; font-weight: 700; color: var(--blue); margin-bottom: 6px;">⏱️ Temporal Sampling &amp; Stride</div>
+            <p class="body-text">
+              <strong>Segmented sampling</strong> divides the video into $N$ segments, randomly sampling one frame per segment in training (uniform for eval). Stride is dynamic ($\approx L/N$ frames) to span the entire clip.
+            </p>
+          </div>
         </div>
 
         <div style="width: 380px; display: flex; flex-direction: column; justify-content: center;">
