@@ -6,6 +6,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Report](https://img.shields.io/badge/Report-REPORT.md-blueviolet)](docs/REPORT.md)
 
+**Author:** Daniele Barbagallo (1000015334)  
+**Repository:** [danii909/ResNet-to-MobileNet-Action](https://github.com/danii909/ResNet-to-MobileNet-Action)
+
 > **Track 6 — Knowledge Distillation for Mobile Action Recognition**
 
 A full Knowledge Distillation pipeline to compress a heavy 3D video recognition model into a mobile-ready student, with logit-based KD, Attention Transfer, Born-Again Networks, Cross-Frame Distillation, and AMP stability fixes.
