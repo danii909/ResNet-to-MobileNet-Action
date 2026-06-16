@@ -1,16 +1,32 @@
-<div class="slide" id="s8" style="padding: 24px 32px 16px;">
+<div class="slide" id="s8" style="padding: 24px 32px 16px; position: relative;">
   <div class="s-head" style="margin-bottom: 20px; padding-bottom: 12px;">
     <div class="s-tag">Advanced Methods</div>
     <h2 class="s-title">Attention Transfer (AT)</h2>
     <div class="s-sub" style="font-size: 1.25rem;">Capacity gap impact on intermediate feature alignment</div>
   </div>
+
+  <!-- Premium Styled Formula Centered -->
+  <div style="position: absolute; left: 50%; top: 175px; z-index: 10; display: inline-flex; align-items: center; background: var(--gray-50); padding: 10px 20px; border-radius: 12px; border: 1px solid var(--gray-200); box-shadow: 0 4px 12px rgba(0,0,0,0.02); font-family: 'Inter', sans-serif; transform: translateX(-50%);">
+    <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 1.45rem;">
+      <span style="color: var(--navy); font-weight: 700; background: var(--gray-100); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--gray-300); font-size: 1.35rem;">Loss<sub>AT</sub></span>
+      <span style="color: var(--gray-500); font-weight: 400;">=</span>
+      <span style="color: var(--navy-light); font-weight: 700;">&beta;<sub>s</sub></span>
+      <span style="color: var(--gray-400); font-weight: 300;">&middot;</span>
+      <span style="color: var(--navy); background: var(--gray-100); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--gray-300); font-size: 1.35rem;">Loss<sub>spatial</sub></span>
+      <span style="color: var(--gray-500); font-weight: 400; margin: 0 4px;">+</span>
+      <span style="color: var(--navy-light); font-weight: 700;">&beta;<sub>t</sub></span>
+      <span style="color: var(--gray-400); font-weight: 300;">&middot;</span>
+      <span style="color: var(--navy); background: var(--gray-100); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--gray-300); font-size: 1.35rem;">Loss<sub>temporal</sub></span>
+    </div>
+  </div>
+
   <div class="s-body" style="gap: 40px; justify-content: center; align-items: center;">
 
     <!-- Left Column -->
     <div style="flex: 1; display: flex; flex-direction: column; height: 100%; justify-content: center; gap: 32px; box-sizing: border-box;">
       
       <!-- Attached Header and Image -->
-      <div style="display: flex; flex-direction: column; gap: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border-radius: 12px; overflow: hidden; margin-top: -24px; margin-bottom: 24px; width: 740px; align-self: center;">
+      <div style="display: flex; flex-direction: column; gap: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border-radius: 12px; overflow: hidden; margin-top: 0; margin-bottom: 0; width: 740px; align-self: center;">
         <div
           style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; text-align: center; font-size: 1.15rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; background: var(--amber-bg); padding: 12px; color: var(--amber); border: 1px solid var(--gray-200); border-bottom: none; margin: 0;">
           <div>Pure KD T=20</div>
@@ -53,19 +69,14 @@
               64.58%</div>
           </div>
         </div>
-        
-        <div style="font-size: 1.15rem; color: var(--gray-700); line-height: 1.45; padding: 0 8px; border-left: 3px solid var(--amber); padding-left: 12px;">
-          Forced spatial alignment acts as noise due to Student's depthwise convolution capacity limit.
-        </div>
       </div>
-
     </div>
 
     <!-- Right Column -->
     <div style="flex: 1; display: flex; flex-direction: column; height: 100%; justify-content: center; gap: 32px; box-sizing: border-box;">
       
       <!-- Attached Header and Image -->
-      <div style="display: flex; flex-direction: column; gap: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border-radius: 12px; overflow: hidden; margin-top: -24px; margin-bottom: 24px; width: 740px; align-self: center;">
+      <div style="display: flex; flex-direction: column; gap: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border-radius: 12px; overflow: hidden; margin-top: 0; margin-bottom: 0; width: 740px; align-self: center;">
         <div
           style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; text-align: center; font-size: 1.15rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; background: var(--purple-bg); padding: 12px; color: var(--purple); border: 1px solid var(--gray-200); border-bottom: none; margin: 0;">
           <div>Pure KD T=20</div>
@@ -108,13 +119,7 @@
               65.03%</div>
           </div>
         </div>
-
-        <div style="font-size: 1.15rem; color: var(--gray-700); line-height: 1.45; padding: 0 8px; border-left: 3px solid var(--purple); padding-left: 12px;">
-          Removing spatial constraints (&beta;_s=0) attenuates regression, as temporal dynamics are more transferable.
-        </div>
       </div>
-
     </div>
-
   </div>
 </div>
